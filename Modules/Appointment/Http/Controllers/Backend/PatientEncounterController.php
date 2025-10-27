@@ -1125,7 +1125,7 @@ class PatientEncounterController extends Controller
 
         $module_title ="Encounter Dashboard";
 
-        $data = PatientEncounter::where('id',$id)->with('user','user.cities','user.countries','clinic','doctor','medicalHistroy','prescriptions','EncounterOtherDetails','medicalReport','appointmentdetail','billingrecord')->first();
+        $data = PatientEncounter::where('id',$id)->with('user','user.cities','user.countries','clinic','doctor','medicalHistroy','prescriptions','EncounterOtherDetails','medicalReport','appointmentdetail.clinicservice.systemservice','billingrecord')->first();
         $data['selectedProblemList'] =  $data->medicalHistroy()->where('type','encounter_problem')->get();
         $data['selectedObservationList'] = $data->medicalHistroy()->where('type', 'encounter_observations')->get();
         $data['notesList'] = $data->medicalHistroy()->where('type', 'encounter_notes')->get();

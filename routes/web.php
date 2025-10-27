@@ -246,3 +246,5 @@ Route::group(['prefix' => 'app', 'middleware' => ['auth', 'auth_check']], functi
     Route::get('google-key', [SettingController::class, 'googleKey']);
     Route::get('download-json', [SettingController::class, 'downloadJson']);
 });
+
+Route::get('/razorpay/payment/{order_id}', [\Modules\Frontend\Http\Controllers\AppointmentController::class, 'showRazorpayPaymentPage'])->name('razorpay.payment.page');

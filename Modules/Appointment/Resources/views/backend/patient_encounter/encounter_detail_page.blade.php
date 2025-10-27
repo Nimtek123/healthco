@@ -46,12 +46,12 @@
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-4 mb-3">
                                         <p class="mb-0">{{ __('service.title') }}:</p>
-                                        <p class="mb-0">{{ $data->name ?? '--' }}</p>
+                                        <p class="mb-0">{{ $data->appointmentdetail->clinicservice->systemservice->name ?? '--' }} </p>
                                     </div>
 
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-4 mb-3">
                                         <p class="mb-0">{{ __('appointment.lbl_id') }}:</p>
-                                        <p class="mb-0">{{ $data->id ?? '--' }}</p>
+                                        <p class="mb-0">{{ $data->appointmentdetail->id ?? '--' }}</p>
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-3">
                                         <p class="mb-0">{{ __('appointment.address') }}:</p>

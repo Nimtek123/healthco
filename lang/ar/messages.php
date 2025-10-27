@@ -464,5 +464,7 @@ return [
     'lbl_receptionist' => 'موظف الاستقبال',
     'lbl_dont_have_account' => 'ليس لديك حساب؟',
     'type_reply' => 'اكتب ردك هنا...',
+    'view_full_description' => 'عرض الوصف الكامل',
+    'full_description' => 'الوصف الكامل',
 
     ];

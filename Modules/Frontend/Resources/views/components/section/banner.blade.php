@@ -102,7 +102,7 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6 mt-md-0 mt-4">
-                                        <select id="clinicDropdown" class="form-select select2 bg-body border-0">
+                                        <select id="clinicDropdown" class="form-select select2 bg-body border-0" disabled>
                                             <option value="" disabled selected>{{ __('frontend.select_clinic') }}</option>
                                             @foreach ($clinics as $clinic)
                                                 <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
@@ -187,7 +187,7 @@
             $('#serviceDropdown').select2({
                 width: '100%',
                 allowClear: true,
-                placeholder: '@lang('frontend.select_service')' 
+                placeholder: '@lang('frontend.select_service')'
             });
 
             $('#clinicDropdown').select2({
@@ -276,7 +276,7 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            
+
                             // Clear existing options
                             timeSlotDropdown.empty();
                             timeSlotDropdown.append(new Option('Select Time', ''));
@@ -297,7 +297,7 @@
                             } else {
                                 timeSlotDropdown.append(new Option('No available slots', ''));
                             }
-                            
+
                             timeSlotDropdown.trigger('change');
                             updateButtonState();
                         }
@@ -316,7 +316,7 @@
                 const appointmentTime = timeSlotDropdown.val();
 
                 if (!user_id  || user_type != "user") {
-                 
+
                      window.location.href = "{{ route('login-page') }}";
                  } else {
                      submitForm(serviceId, clinicId, selectedDoctor, appointmentDate, appointmentTime);
@@ -342,7 +342,7 @@
             function submitForm(serviceId, clinicId, selectedDoctor, appointmentDate, appointmentTime) {
                 const selectedPaymentMethod = 'cash';
                 const formData = new FormData();
-                
+
                 formData.append('clinic_id', clinicId);
                 formData.append('selectedDoctor', selectedDoctor);
                 formData.append('service_id', serviceId);
@@ -424,15 +424,15 @@
 
                             // New endpoint needed for getting services by clinic
                             const response = await fetch(`{{ route('getServicesByClinic') }}?clinic_id=${clinicId}`);                            if (!response.ok) throw new Error("Failed to fetch services");
-                            
+
                             const services = await response.json();
-                            
+
                             // Keep existing options and update with available services
                             let currentOptions = new Set(serviceDropdown.find('option').map((_, opt) => opt.value));
-                            
+
                             // Clear all options except the default one
                             serviceDropdown.find('option:not([value=""])').remove();
-                            
+
                             services.forEach(service => {
                                 serviceDropdown.append(new Option(service.name, service.id));
                             });
@@ -441,7 +441,7 @@
                             if (previousServiceSelection && services.some(s => s.id == previousServiceSelection)) {
                                 serviceDropdown.val(previousServiceSelection);
                             }
-                            
+
                             serviceDropdown.prop('disabled', false);
                             serviceDropdown.trigger('change');
                         } catch (error) {
@@ -455,22 +455,22 @@
                 serviceDropdown.on('change', async function() {
                     const serviceId = $(this).val();
                     const clinicId = clinicDropdown.val();
-                    
+
                     if (serviceId && !clinicId) {
                         // If service is selected but no clinic, fetch and update clinics
                         try {
                             clinicDropdown.prop('disabled', true);
                             const response = await fetch(`${apiEndpoint}?service_id=${serviceId}`);
                             if (!response.ok) throw new Error("Failed to fetch clinics");
-                            
+
                             const clinics = await response.json();
-                            
+
                             // Update clinic options
                             clinicDropdown.find('option:not([value=""])').remove();
                             clinics.forEach(clinic => {
                                 clinicDropdown.append(new Option(clinic.name, clinic.id));
                             });
-                            
+
                             clinicDropdown.prop('disabled', false);
                             clinicDropdown.trigger('change');
                         } catch (error) {
@@ -481,5 +481,17 @@
                 });
             }
         }
+
+        $(document).ready(function () {
+            $('#serviceDropdown').on('change', function () {
+                let selectedService = $(this).val();
+
+                if (selectedService) {
+                    $('#clinicDropdown').prop('disabled', false);
+                } else {
+                    $('#clinicDropdown').prop('disabled', true).val(null).trigger('change');
+                }
+            });
+        });
     </script>
 @endpush

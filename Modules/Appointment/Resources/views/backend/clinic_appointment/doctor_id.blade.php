@@ -1,5 +1,3 @@
-
-<a href="{{ route('backend.customers.patient_detail', optional($data->doctor)->id) }}" class="text-reset">
 <div class="d-flex gap-3 align-items-center">
   <img src="{{ optional($data->doctor)->profile_image ?? default_user_avatar() }}" alt="avatar" class="avatar avatar-40 rounded-pill">
   <div class="text-start">
@@ -7,4 +5,3 @@
     <span>{{ optional($data->doctor)->email ?? '--' }}</span>
   </div>
 </div>
-</a>

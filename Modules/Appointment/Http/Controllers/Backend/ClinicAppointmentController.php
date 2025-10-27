@@ -816,7 +816,7 @@ class ClinicAppointmentController extends Controller
 
 
 
-        return view('appointment::backend.clinic_appointment.appointment_detail', compact('appointment', 'module_title', 'dateformate', 'timeformate', 'timeZone'));
+        return view('appointment::backend.clinic_appointment.appointment_detail', compact('appointment','dateformate', 'timeformate', 'timeZone'));
     }
 
     public function bodychart_datatable(Request $request, $id)
@@ -824,7 +824,7 @@ class ClinicAppointmentController extends Controller
 
         $query = AppointmentPatientBodychart::query()->where('encounter_id', $id)->with('patient_encounter');
 
-        $query->orderBy('created_at', 'desc');
+        // $query->orderBy('created_at', 'desc');
         return Datatables::of($query)
             ->addColumn('check', function ($data) {
                 return '<input type="checkbox" class="form-check-input select-table-row"  id="datatable-row-' . $data->id . '"  name="datatable_ids[]" value="' . $data->id . '" onclick="dataTableRowCheck(' . $data->id . ')">';

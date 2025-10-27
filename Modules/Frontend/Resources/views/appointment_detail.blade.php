@@ -229,8 +229,8 @@
                                                         optional($appointment->appointmenttransaction)->discount_value;
                                                 }
                                                     $total_tax = 0;
-                                                    $sub_total = $payable_Amount + $appointment->appointmenttransaction->inclusive_tax_price;
-                                                    $inclusive_tax_data = json_decode($appointment->appointmenttransaction->inclusive_tax, true); // decode tax details
+                                                    $sub_total = $payable_Amount + (optional($appointment->appointmenttransaction)->inclusive_tax_price ?? 0);
+                                                    $inclusive_tax_data = json_decode(optional($appointment->appointmenttransaction)->inclusive_tax, true); // decode tax details
                                             @endphp
                                             @if (optional($appointment->appointmenttransaction)->discount_value > 0)
                                             <div class="d-flex align-items-center gap-2">
@@ -297,7 +297,7 @@
                                                 <h6 class="mb-0">
                                                     {{ Currency::format($appointment->service_amount) }}</h6>
                                             @endif
-                                            @if($appointment->appointmenttransaction->inclusive_tax_price != null && $appointment->patientEncounter == null)
+                                            @if(optional($appointment->appointmenttransaction)->inclusive_tax_price != null && $appointment->patientEncounter == null)
 
                                                     <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
                                                 @endif
@@ -574,7 +574,7 @@
                     }
 
                     if ($appointment->appointmenttransaction == null) {
-                        $tax = Modules\Tax\Models\Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('status', 1)->get();
+                        $tax = Modules\Tax\Models\Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('status', 1)->where('tax_type', 'exclusive')->get();
                     }
 
                 ?>
@@ -687,6 +687,11 @@
                                     <h6 class="mb-0 font-size-14">{{ Currency::format($sub_total) ?? '--' }}</h6>
                                 </div>
                             @endif
+                        @else
+                            <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between mb-2 pb-1">
+                                <p class="mb-0 font-size-14">{{ __('messages.total') }}</p>
+                                <h6 class="mb-0 font-size-14">{{ Currency::format($sub_total) ?? '--' }}</h6>
+                            </div>
                         @endif
 
                         @foreach ($tax as $t)
@@ -714,9 +719,9 @@
                         <div class="d-flex align-items-center gap-3 mt-3 flex-wrap justify-content-between mb-2 pb-1">
                             <p class="mb-0 font-size-14">{{ __('appointment.tax') }}</p>
                             <div class="d-flex align-items-center gap-2">
-
+                                @if($transaction !== null)
                                <i class="ph ph-info align-middle" data-bs-toggle="modal" data-bs-target="#taxDetailsModal" style="cursor: pointer;"></i>
-
+                                @endif
                                 <h6 class="mb-0 font-size-14 text-secondary">{{ Currency::format($total_tax) ?? '--' }}</h6>
                             </div>
                         </div>
@@ -1000,11 +1005,10 @@
                     <div class="encounter-box mt-5">
                         <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#prescription"
                             data-bs-toggle="collapse">
-                            <p class="mb-0 h6">{{ __('frontend.prescription') }}
-                            </p>
+                            <p class="mb-0 h6">{{ __('frontend.prescription') }}</p>
                             <i class="ph ph-caret-down"></i>
                         </a>
-                        <div id="prescription" class="collapse  encounter-inner-box rounded">
+                        <div id="prescription" class="collapse encounter-inner-box rounded">
                             @if($prescriptions->isNotEmpty())
                                 @foreach($prescriptions as $prescription)
                                     <h6>{{ $prescription->name }}</h6>
@@ -1035,13 +1039,13 @@
                     </div>
 
                     <div class="encounter-box mt-5">
-                        <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#prescription"
+                        <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#soap"
                             data-bs-toggle="collapse">
                             <p class="mb-0 h6">{{ __('frontend.soap') }}
                             </p>
                             <i class="ph ph-caret-down"></i>
                         </a>
-                        <div id="prescription" class="collapse  encounter-inner-box rounded">
+                        <div id="soap" class="collapse encounter-inner-box rounded">
                             @if($soap)
 
                                     <div class="border-top mb-3">

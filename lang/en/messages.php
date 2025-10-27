@@ -34,7 +34,7 @@ return [
     'you_have_:count_notifications' => 'You have :count notifications',
     ':count_unread' => ':count unread',
     'logout' => 'Logout',
-    'are_you_sure?' => 'Are you sure you want to delete :form :module',
+    'are_you_sure?' => 'Are you sure you want to delete :form :module ?',
     'save_form' => ':form has been save successfully',
     'create_form' => ':form has been created successfully',
     'reset_form' => ':form permission has been reset successfully',
@@ -581,5 +581,7 @@ return [
     'closed' => 'Closed',
     'lbl_rejected' => 'Rejected',
     'lbl_image_attchemnet' => 'Image Attachment',
+    'view_full_description' => 'View Full Description',
+    'full_description' => 'Full Description'
 
 ];

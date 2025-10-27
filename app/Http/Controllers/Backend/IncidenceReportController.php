@@ -147,7 +147,14 @@ class IncidenceReportController extends Controller
                     return $data->updated_at->isoFormat('llll');
                 }
             })
-            ->rawColumns(['status', 'check', 'action', 'image'])
+            ->editColumn('description', function ($data) {
+                $maxLength = 50; 
+                $fullDescription = e($data->description);
+                $shortDescription = Str::limit($fullDescription, $maxLength);
+
+                return '<span title="' . $fullDescription . '">' . $shortDescription . '</span>';
+            })
+            ->rawColumns(['status', 'check', 'action', 'image','description'])
             ->orderColumns(['id'], '-:column $1');
         return $datatable->toJson();
     }

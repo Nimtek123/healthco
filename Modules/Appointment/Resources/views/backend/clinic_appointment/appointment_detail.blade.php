@@ -154,17 +154,17 @@
                             @if($appointment->otherPatient)
                                 <span class="d-block mb-1">{{ __('appointment.booked_for') }}</span>
                                 <h6 class="m-0">
-                                    <span> <img 
-        
-                                        src={{ $appointment->otherPatient->profile_image}} 
-                                        class="img-fluid rounded-circle me-2" 
-                                        style="width: 40px; height: 40px;" 
+                                    <span> <img
+
+                                        src={{ $appointment->otherPatient->profile_image}}
+                                        class="img-fluid rounded-circle me-2"
+                                        style="width: 40px; height: 40px;"
                                       /></span>
                                     {{ $appointment->otherPatient->first_name }} {{ $appointment->otherPatient->last_name }}
                                 </h6>
                             @endif
                         </div>
-                        
+
                         @if ($appointment->media->isNotEmpty())
                             <div class="col-md-3">
                                 <span class="d-block mb-1">{{ __('appointment.lbl_medical_report') }}</span>
@@ -234,8 +234,8 @@
                                                 optional($appointment->appointmenttransaction)->discount_value ;
                                         }
                                                     $total_tax = 0;
-                                                    $sub_total = $payable_Amount + $appointment->appointmenttransaction->inclusive_tax_price;
-                                                    $inclusive_tax_data = json_decode($appointment->appointmenttransaction->inclusive_tax, true); // decode tax details
+                                                    $sub_total = $payable_Amount + (optional($appointment->appointmenttransaction)->inclusive_tax_price ?? 0);
+                                                    $inclusive_tax_data = json_decode(optional($appointment->appointmenttransaction)->inclusive_tax, true);
                                     @endphp
                                     @if (optional($appointment->appointmenttransaction)->discount_value > 0)
                                         <h5 class="mb-0 w-50 text-lg-end text-sm-start">
@@ -245,23 +245,23 @@
                                                 @else
                                                     (<span>{{ Currency::format(optional($appointment->appointmenttransaction)->discount_value) ?? '--' }}
                                                         </<span> off)
-                                                       
+
                                             @endif
-                                            
+
                                         </h5>
                                         <del>{{ Currency::format($appointment->service_price ) }}</del>
                                     @else
 
 
-                                    
+
                                         <h5 class="mb-0 w-50 text-lg-end text-sm-start">
                                             {{ Currency::format($appointment->service_amount ) }}
                                         </h5>
                                     @endif
-                                    @if($appointment->appointmenttransaction->inclusive_tax_price != null && $appointment->patientEncounter == null)
-                                                
+                                    @if(optional($appointment->appointmenttransaction)->inclusive_tax_price != null && $appointment->patientEncounter == null)
+
                                                     <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
-                                                @endif  
+                                                @endif
                                 </div>
                                 <!-- <div class="col-md-3 d-flex justify-content-end">
                                                                                                                                                                                                                                                                                                                                                                                                                             <h5 class="mb-0">{{ Currency::format($appointment->service_price) }}</h5>
@@ -302,14 +302,14 @@
                                                 {{ $billingItem->quantity }} = </span>
                                             {{ Currency::format($billingItem->total_amount * $billingItem->quantity) }} @if ($billingItem->discount_type === 'percentage')
                                                 (<span>{{ $billingItem->discount_value ?? '--' }}%</<span> off)
-                                                    
+
                                                 @else
                                                     (<span>{{ Currency::format($billingItem->discount_value) ?? '--' }}
                                                         </<span>  off)
-                                                       
+
                                             @endif
                                             @if($billingItem->inclusive_tax_amount > 0)
-                                                <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>         
+                                                <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
                                             @endif
                                         </h5>
                                         <del>{{ Currency::format($billingItem->service_amount * $billingItem->quantity ) }}</del>
@@ -320,7 +320,7 @@
                                                 {{ $billingItem->quantity }} = </span>
                                             {{ Currency::format($billingItem->total_amount * $billingItem->quantity) }}
                                             @if($billingItem->inclusive_tax_amount > 0)
-                                                <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>         
+                                                <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
                                             @endif
                                         </h5>
                                     @endif
@@ -369,7 +369,7 @@
                                                 <li class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
                                                     <span>{{ __('appointment.sub_total') }}</span>
                                                     <span class="text-primary">{{ Currency::format($item_subtotal) }}</span>
-                                                </li>   
+                                                </li>
                                             @endif
                                         </ul>
                                     @endif --}}
@@ -393,7 +393,7 @@
                                     // if (isset($item->inclusive_tax_amount) && $item->inclusive_tax_amount > 0) {
                                     //     $service_total_amount += $item->inclusive_tax_amount *  $quantity;
                                     // }
-                                          
+
                                     // if (!empty($item->discount_type)) {
                                     //     if ($item->discount_type === 'fixed') {
                                     //         $service_total_amount -= $item->discount_value * $quantity;
@@ -401,9 +401,9 @@
                                     //         $service_total_amount -= ($item->total_amount * $item->discount_value / 100);
                                     //     }
                                     // }
-                                    
+
                                     $service_total_amount += $item->total_amount;
-                                    
+
                             @endphp
                         @endforeach
                     @endif
@@ -441,7 +441,7 @@
                                 <li class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-2">
                                     <span>{{ __('appointment.sub_total') }}</span>
                                     <span class="text-primary">{{ Currency::format($sub_total) }}</span>
-                                </li> 
+                                </li>
                             @endif
                     @endif  --}}
                     <ul class="list-unstyled pt-4 mb-0">
@@ -474,7 +474,7 @@
                         }
 
                         if ($appointment->appointmenttransaction == null) {
-                            $tax = Modules\Tax\Models\Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('status', 1)->get();
+                            $tax = Modules\Tax\Models\Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('status', 1)->where('tax_type', 'exclusive')->get();
 
                         }
 

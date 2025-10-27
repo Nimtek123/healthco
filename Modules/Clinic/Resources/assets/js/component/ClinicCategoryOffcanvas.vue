@@ -118,6 +118,7 @@ import FormFooter from '@/vue/components/form-elements/FormFooter.vue'
 import InputField from '@/vue/components/form-elements/InputField.vue'
 import FormElement from '@/helpers/custom-field/FormElement.vue'
 import imageComponent from '@/vue/components/form-elements/imageComponent.vue'
+import { useI18n } from 'vue-i18n'
 
 // Function to trigger file input click programmatically
 const triggerFileInput = () => {
@@ -184,12 +185,12 @@ const multiSelectOption = ref({
 })
 const categories = ref([])
 const category_name = ref(null)
+const { t } = useI18n()
 
 const getCategories = () => {
   getRequest({ url: INDEX_LIST_URL }).then((res) => {
     const options = buildMultiSelectObject(res, { value: 'id', label: 'name' });
-    // Always prepend the 'None' option
-    categories.value = [{ value: null, label: $t('category.lbl_none') }, ...options];
+    categories.value = [{ value: null, label: t('category.lbl_none') }, ...options];
   });
 }
 
@@ -204,7 +205,7 @@ const updatecurrentId = (e) => {
   category_name.value = null
   if (props.isSubCategory) {
     getCategories()
-    parent_id.value = -1
+    parent_id.value = null
   }
 }
 

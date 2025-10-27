@@ -677,7 +677,7 @@ class AppointmentController extends Controller
             'cash' => 'CashPayment',
             'Wallet' => 'WalletPayment',
             'Stripe' => 'StripePayment',
-            'Razor' => 'RazorpayPayment',
+            'Razor Pay' => 'RazorpayPayment',
             'Paystack' => 'PaystackPayment',
             'PayPal' => 'PayPalPayment',
             'Flutterwave' => 'FlutterwavePayment',
@@ -1147,19 +1147,16 @@ class AppointmentController extends Controller
         $currency = GetcurrentCurrency();
         $formattedCurrency = strtoupper(strtolower($currency));
 
-
         $service_id = $request->input('service_id');
-
         $priceInPaise = $price * 100; // Razorpay expects price in paise (1 INR = 100 paise)
-
         // Additional custom data for metadata
         $customMetadata = [
-            'tax_percentage' => $request->input('tax_percentage', []),
-            'clinic_id' => $request->input('clinic_id', null),
-            'doctor_id' => $request->input('doctor_id', null),
-            'appointment_date' => $request->input('appointment_date', null),
-            'appointment_time' => $request->input('appointment_time', null),
-            'appointment_id' => $request->input('appointment_id', null),
+            'tax_percentage' => $paymentData['tax_percentage'],
+            'clinic_id' => $paymentData['clinic_id'],
+            'doctor_id' => $paymentData['doctor_id'],
+            'appointment_date' => $paymentData['appointment_date'],
+            'appointment_time' => $paymentData['appointment_time'],
+            'appointment_id' => $paymentData['id'],
             'payment_status' => $paymentData['payment_status'],
             'remaining_payment_amount' => $paymentData['remaining_payment_amount'],
             'advance_payment_status' => $paymentData['advance_payment_status'],
@@ -1167,12 +1164,8 @@ class AppointmentController extends Controller
             'advance_paid_amount' => $paymentData['advance_paid_amount'],
             'type' => $paymentData['type']
         ];
-        // dd($priceInPaise);
-
         try {
             $api = new \Razorpay\Api\Api($razorpayKey, $razorpaySecret);
-
-            // Create an order with Razorpay API
             $orderData = [
                 'receipt' => 'rcptid_' . time(),
                 'amount' => $priceInPaise,
@@ -1184,16 +1177,20 @@ class AppointmentController extends Controller
             ];
 
             $razorpayOrder = $api->order->create($orderData);
-            session(['razorpay_order_id' => $razorpayOrder['id']]);
-
-            return view('razorpay.payment', [
-                'order_id' => $razorpayOrder['id'],
-                'amount' => $priceInPaise,
-                'service_id' => $service_id,
-                'key' => $razorpayKey,
-                'currency' => $formattedCurrency,
-                'name' => 'Subscription Plan',
-                'description' => 'Payment for subscription plan',
+            // Store payment data in session for the payment page
+            session([
+                'razorpay_payment_data' => [
+                    'order_id' => $razorpayOrder['id'],
+                    'amount' => $priceInPaise,
+                    'service_id' => $service_id,
+                    'key' => $razorpayKey,
+                    'currency' => $formattedCurrency,
+                    'name' => $paymentData['service_name'] ?? '',
+                    'description' => 'Payment for service',
+                ]
+            ]);
+            return response()->json([
+                'redirect' => route('razorpay.payment.page', ['order_id' => $razorpayOrder['id']])
             ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -1536,6 +1533,7 @@ class AppointmentController extends Controller
         $vendor = $serviceDetails->vendor ?? null;
         $serviceData = $this->getServiceAmount($appointment->service_id, $appointment->doctor_id, $appointment->clinic_id);
         $tax = $data['tax_percentage'] ?? Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('tax_type', 'exclusive')->where('status', 1)->get();
+
         $transactionData = [
             'appointment_id' => $appointment->id,
             'transaction_type' => $data['transaction_type'] ?? 'cash',
@@ -1547,7 +1545,6 @@ class AppointmentController extends Controller
             'external_transaction_id' => $data['external_transaction_id'] ?? null,
             'tax_percentage' => json_encode($tax),
         ];
-
 
 
         if ($data['transaction_type'] == 'Wallet') {
@@ -1628,6 +1625,7 @@ class AppointmentController extends Controller
 
         // Fetch the full appointment with all relations
         $appointment_notification = Appointment::with(['user', 'doctor', 'clinicservice'])->findOrFail($data['id']);
+
         // dd($appointment_notification);
         // Now you have all the details you need
         $notification_data = [
@@ -1648,7 +1646,7 @@ class AppointmentController extends Controller
         ];
 
         $this->sendNotificationOnBookingUpdate('new_appointment', $notification_data);
-
+        // dd($data,$appointment,$serviceDetails,$vendor,$serviceData,$tax,$transactionData,$payment,$appointment_notification,$notification_data);
         $message = __('appointment.save_appointment');
         return response()->json(['message' => $message, 'data' => $payment, 'status' => true], 200);
     }
@@ -2011,7 +2009,6 @@ class AppointmentController extends Controller
     {
         $paymentId = $request->input('razorpay_payment_id');
         $razorpayOrderId = session('razorpay_order_id');
-        $plan_id = $request->input('plan_id');
 
         $currency = GetcurrentCurrency();
         $formattedCurrency = strtoupper(strtolower($currency));
@@ -2025,33 +2022,34 @@ class AppointmentController extends Controller
             // Fetch payment details
             $payment = $api->payment->fetch($paymentId);
 
-            // Check if the payment is captured
+            // Fetch order details to get notes/metadata
+            $order = $api->order->fetch($payment['order_id']);
+            $notes = $order['notes'];
             if ($payment['status'] == 'captured') {
                 $paymentData = [
                     'amountTotal' => $payment['amount'] / 100, // Convert paise to INR
                     'currency' =>  $formattedCurrency,
-                    'transaction_type' => 'razorpay', // Payment method
-                    'plan_id' => $plan_id,
+                    'transaction_type' => 'razorpay',
+                    'plan_id' => $notes['service_id'] ?? null,
                     'payment_id' => $payment['id'],
-                    'transaction_id' => $razorpayOrderId,
-                    'advance_payment_status' => $payment['notes']['advance_payment_status'] ?? 0,
-                    'advance_payment_amount' => $payment['notes']['advance_payment_amount'] ?? 0,
-                    'advance_paid_amount' => $payment['notes']['advance_paid_amount'] ?? 0,
-                    'remaining_payment_amount' => $payment['notes']['remaining_payment_amount'] ?? 0,
-                    'payment_status' => $payment['notes']['payment_status'] ?? 0,
-                    'clinic_id' => $payment['notes']['clinic_id'],
-                    'doctor_id' => $payment['notes']['doctor_id'],
-                    'appointment_date' => $payment['notes']['appointment_date'],
-                    'appointment_time' => $payment['notes']['appointment_time'],
-                    'appointment_id' => $payment['notes']['appointment_id'],
-                    'type' => $payment['notes']['type'],
+                    'transaction_id' => $order['id'],
+                    'advance_payment_status' => $notes['advance_payment_status'] ?? 0,
+                    'advance_payment_amount' => $notes['advance_payment_amount'] ?? 0,
+                    'advance_paid_amount' => $notes['advance_paid_amount'] ?? 0,
+                    'remaining_payment_amount' => $notes['remaining_payment_amount'] ?? 0,
+                    'payment_status' => $notes['payment_status'] ?? 0,
+                    'clinic_id' => $notes['clinic_id'] ?? null,
+                    'doctor_id' => $notes['doctor_id'] ?? null,
+                    'appointment_date' => $notes['appointment_date'] ?? null,
+                    'appointment_time' => $notes['appointment_time'] ?? null,
+                    'id' => $notes['appointment_id'] ?? null,
+                    'type' => $notes['type'] ?? null,
                 ];
 
-                // Save payment data and process the success
                 $this->savePayment($paymentData);
                 return $this->handlePaymentSuccess($paymentData);
             } else {
-                return redirect('/')->with('error', 'Payment failed: ' . $payment['error_description']);
+                return redirect('/')->with('error', 'Payment failed: ' . ($payment['error_description'] ?? 'Unknown error'));
             }
         } catch (\Exception $e) {
             return redirect('/')->with('error', 'Payment verification failed: ' . $e->getMessage());
@@ -2229,16 +2227,16 @@ class AppointmentController extends Controller
         ];
         $paymentDetails = [
             'message' => 'Great, Payment Successful!',
-            'doctorName' => $selectedDoctor->user->full_name,
-            'clinicName' => $selectedClinic->name,
-            'appointmentDate' => $paymentData['appointment_date'], // Format: '2024-01-01'
-            'appointmentTime' => $paymentData['appointment_time'], // Format: '17:30'
-            'formate_appointment_date' => DateFormate($paymentData['appointment_date']),
-            'formate_appointment_time' => Carbon::parse($paymentData['appointment_time'])->format(setting('time_format') ?? 'h:i A'),
-            'bookingId' => $paymentData['appointment_id'],
-            'paymentVia' => $paymentData['transaction_type'],
-            'totalAmount' => number_format($amountTotal, 2),
-            'currency' => $currency ? $currency->currency_symbol : 'USD', // Default to USD if no primary currency is found
+            'doctorName' => optional(optional($selectedDoctor)->user)->full_name,
+            'clinicName' => optional($selectedClinic)->name,
+            'appointmentDate' => $paymentData['appointment_date'] ?? '',
+            'appointmentTime' => $paymentData['appointment_time'] ?? '',
+            'formate_appointment_date' => isset($paymentData['appointment_date']) ? DateFormate($paymentData['appointment_date']) : '',
+            'formate_appointment_time' => isset($paymentData['appointment_time']) ? Carbon::parse($paymentData['appointment_time'])->format(setting('time_format') ?? 'h:i A') : '',
+            'bookingId' => $paymentData['appointment_id'] ?? $paymentData['id'] ??  '',
+            'paymentVia' => $paymentData['transaction_type'] ?? '',
+            'totalAmount' => isset($amountTotal) ? number_format($amountTotal, 2) : '',
+            'currency' => $currency ? $currency->currency_symbol : 'USD',
         ];
 
         // List of available payment methods
@@ -2556,5 +2554,14 @@ class AppointmentController extends Controller
         } else {
             return response()->json(['message' => 'Patient not found!'], 404);
         }
+    }
+
+    public function showRazorpayPaymentPage($order_id)
+    {
+        $data = session('razorpay_payment_data');
+        if (!$data || $data['order_id'] !== $order_id) {
+            abort(404, 'Invalid or expired payment session.');
+        }
+        return view('razorpay.payment', $data);
     }
 }

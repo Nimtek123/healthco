@@ -183,7 +183,7 @@
     </div>
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-5 mt-5">
         <div class="d-flex align-items-center flex-wrap gap-4">
-            @if ($appointment->status == 'pending' && $appointment->appointmenttransaction->transaction_type == 'cash' )
+            @if ($appointment->status == 'pending' && optional($appointment->appointmenttransaction)->transaction_type == 'cash' )
                 <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#cancel-appointment"
                     data-appointment-id="{{ $appointment->id }}" data-charge="0" >{{ __('frontend.cancel') }}
                 </button>

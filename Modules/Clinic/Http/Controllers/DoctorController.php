@@ -16,6 +16,7 @@ use Modules\Clinic\Models\Doctor;
 use Modules\Commission\Models\EmployeeCommission;
 use Modules\Clinic\Models\DoctorDocument;
 use Hash;
+use Currency;
 use Modules\Clinic\Models\DoctorServiceMapping;
 use Modules\Clinic\Models\Clinics;
 use Modules\Clinic\Models\DoctorClinicMapping;
@@ -1041,6 +1042,19 @@ class DoctorController extends Controller
         $data->total_sessions = $doctor_session->count();
         $data->experience = optional($data->doctor)->experience ? optional($data->doctor)->experience : 0;
 
+        $commission = optional($data->doctor)->doctorCommission()->with('mainCommission')->first();
+    if ($commission && $commission->mainCommission) {
+        $value = $commission->mainCommission->commission_value;
+        $type = $commission->mainCommission->commission_type; 
+        if ($type === 'percentage') {
+            $data->commission = $value . ' %';
+        } else {
+            $data->commission = Currency::format($value); 
+        }
+    } else {
+        $data->commission = '-';
+    }
+    
         $data->doctor_service = $data->doctor_service;
 
         $data->rating = $data->rating;

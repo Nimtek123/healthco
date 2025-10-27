@@ -114,6 +114,21 @@
   </div>
 </div>
 
+<!-- Modal for Description -->
+<div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-break" id="descriptionModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="descriptionModalBody" class="text-break" style="white-space: pre-line;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 
@@ -337,5 +352,15 @@
     {
         $("#exampleModal").modal('hide');
     }
+
+  $(document).on('click', '.view-description', function () {
+    const title = $(this).data('title');
+    const description = $(this).data('description');
+
+    $('#descriptionModalLabel').text(title);
+    $('#descriptionModalBody').text(description);
+    $('#descriptionModal').modal('show');
+});
+
 </script>
 @endpush

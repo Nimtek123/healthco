@@ -493,5 +493,9 @@ return [
     'lbl_receptionist' => 'Rezeptionist',
     'lbl_dont_have_account' => 'Sie haben kein Konto?',
     'type_reply' => 'Geben Sie hier Ihre Antwort ein...',
+    'view_full_description' => 'Vollständige Beschreibung anzeigen',
+    'full_description' => 'Vollständige Beschreibung',
+
+
 
 ];

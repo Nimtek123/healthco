@@ -457,4 +457,7 @@ return [
     'lbl_receptionist' => 'Réceptionniste',
     'lbl_dont_have_account' => 'Vous n’avez pas de compte ?',
     'type_reply' => 'Tapez votre réponse ici...',
+    'view_full_description' => 'Voir la description complète',
+    'full_description' => 'Description complète',
+
 ];

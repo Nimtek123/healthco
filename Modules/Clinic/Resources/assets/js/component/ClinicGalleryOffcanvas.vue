@@ -116,7 +116,12 @@ const formData=new FormData()
 IS_SUBMITED.value = true
   const files = uppy.value.getFiles(); // Accessing uppy's value before calling getFiles
   files.forEach((file) => {
-    featureImages.value.push({file: file.data, full_url: '', id: null})
+    featureImages.value.push({
+      file: file.data,
+      full_url: URL.createObjectURL(file.data),
+      id: null
+    })
+
 
   });
 

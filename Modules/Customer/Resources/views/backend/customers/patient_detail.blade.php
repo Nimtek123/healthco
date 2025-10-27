@@ -282,23 +282,23 @@
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="first_name" class="form-label">{{ __('customer.lbl_first_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <label for="first_name" class="form-label">{{ __('customer.lbl_first_name') }}</label><span class="required-star text-danger">*</span>
                             <input type="text" class="form-control" id="first_name" name="first_name"      placeholder="{{ __('clinic.lbl_first_name') }}">
                             <span class="error text-danger"></span>
 
                         </div>
                         <div class="mb-3">
-                            <label for="last_name" class="form-label">{{ __('customer.lbl_last_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <label for="last_name" class="form-label">{{ __('customer.lbl_last_name') }}</label><span class="required-star text-danger">*</span>
                             <input type="text" class="form-control" id="last_name" name="last_name"      placeholder="{{ __('clinic.lbl_last_name') }}">
                             <span class="error text-danger"></span>
                         </div>
                         <div class="mb-3">
-                            <label for="dob" class="form-label">{{ __('customer.lbl_date_of_birth') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <label for="dob" class="form-label">{{ __('customer.lbl_date_of_birth') }}</label><span class="required-star text-danger">*</span>
                             <input type="date" class="form-control" id="dob" name="dob"     placeholder="{{ __('customer.select_date_of_birth') }}">
                             <span class="error text-danger"></span>
                         </div>
                         <div class="mb-3">
-                            <label for="contactNumber" class="form-label">{{ __('customer.lbl_phone_number') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <label for="contactNumber" class="form-label">{{ __('customer.lbl_phone_number') }}</label><span class="required-star text-danger">*</span>
                             <input type="text" class="form-control" id="contactNumber" name="contactNumber"   placeholder="{{ __('employee.lbl_phone_number_placeholder') }}">
                             <span class="error text-danger"></span>
                         </div>
@@ -324,7 +324,7 @@
                         <div class="mb-3 gender-wrapper">
                             <label class="form-label">
                                 {{ __('customer.lbl_gender') }}
-                                <span class="required-star text-danger" style="display: none;">*</span>
+                                <span class="required-star text-danger">*</span>
                             </label>
                             <div class="d-flex gap-3">
                                 <div class="form-check">
@@ -359,7 +359,7 @@
                         <div class="mb-3">
                             <label class="form-label">
                                 {{ __('customer.relation') }}
-                                <span class="required-star text-danger" style="display: none;">*</span>
+                                <span class="required-star text-danger">*</span>
                             </label>
                             <select class="form-select" id="relation" name="relation" v-model="relation">
                                 <option value="">{{ __('messages.select_relation') }}</option>

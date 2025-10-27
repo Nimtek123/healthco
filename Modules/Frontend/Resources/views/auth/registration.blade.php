@@ -221,36 +221,38 @@
             });
 
             // Function to check if email exists
-            function checkEmailExists(email) {
-                fetch('/api/check-email', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify({ email: email })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    const emailInput = document.querySelector('input[name="email"]');
-                    const emailExistsError = document.getElementById('email_exists_error');
-                    
-                    if (data.status === 'error') {
-                        emailInput.classList.add('is-invalid');
-                        emailExistsError.style.display = 'block';
-                    } else {
-                        emailInput.classList.remove('is-invalid');
-                        emailExistsError.style.display = 'none';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking email:', error);
-                });
-            }
+           function checkEmailExists(email) {
+                const baseUrl = document.querySelector('meta[name="base-url"]')?.getAttribute('content');
+                fetch(`${baseUrl}/api/check-email`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ email: email })
+    })
+    .then(response => response.json())
+    .then(data => {
+        const emailInput = document.querySelector('input[name="email"]');
+        const emailExistsError = document.getElementById('email_exists_error');
+        
+        if (data.status === 'error') {
+            emailInput.classList.add('is-invalid');
+            emailExistsError.style.display = 'block';
+        } else {
+            emailInput.classList.remove('is-invalid');
+            emailExistsError.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Error checking email:', error);
+    });
+}
 
             // Function to check if contact number exists
             function checkContactExists(contact) {
-                fetch('/api/check-contact', {
+                const baseUrl = document.querySelector('meta[name="base-url"]')?.getAttribute('content') ;
+                fetch(`${baseUrl}/api/check-contact`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

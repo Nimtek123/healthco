@@ -458,5 +458,7 @@ return [
     'lbl_receptionist' => 'Ρεσεψιονίστ',
     'lbl_dont_have_account' => 'Δεν έχετε λογαριασμό;',
     'type_reply' => 'Πληκτρολογήστε την απάντησή σας εδώ...',
+    'view_full_description' => 'Προβολή πλήρους περιγραφής',
+    'full_description' => 'Πλήρης περιγραφή',
 
 ];

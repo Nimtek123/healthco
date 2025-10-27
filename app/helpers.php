@@ -145,11 +145,11 @@ function sendNotification($data)
 
                 unset($data['resend_user_data']);
             } elseif (isset($incidenceData) && $incidenceData != null) {
-                $data['title'] = $incidenceData['title'];
-                $data['description'] = $incidenceData['description'];
-                $data['phone'] = $incidenceData['phone'];
-                $data['email'] = $incidenceData['email'];
-                $data['user_name'] = $incidenceData['user_name'];
+                $data['title'] = isset($incidenceData['title']) ? $incidenceData['title'] : '';
+                $data['description'] = isset($incidenceData['description']) ? $incidenceData['description'] : '';
+                $data['phone'] = isset($incidenceData['phone']) ? $incidenceData['phone'] : '';
+                $data['email'] = isset($incidenceData['email']) ? $incidenceData['email'] : '';
+                $data['user_name'] = isset($incidenceData['user_name']) ? $incidenceData['user_name'] : '';
             }
 
             switch ($mailTo) {

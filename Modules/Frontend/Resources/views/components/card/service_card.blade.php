@@ -32,7 +32,7 @@
                 off
             </div>
         @else
-            <span class="text-secondary fw-bold">{{ Currency::format($service->payable_amount) }}</span>
+            <span class="text-secondary fw-bold">{{ Currency::format($service->charges) }}</span>
         @endif
 
         </div>

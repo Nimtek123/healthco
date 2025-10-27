@@ -155,23 +155,11 @@
           <div class="col-md-4">
             <label class="form-label m-0" for="category-status">{{ $t('clinic.lbl_lat') }}</label>
             <InputField :is-required="false" :label="$t('clinic.lbl_lat')" :placeholder="$t('clinic.lbl_lat')" v-model="latitude" :error-message="errors['latitude']" :error-messages="errorMessages['latitude']" :icon="'<i class=\'ph ph-globe\'></i>'"></InputField>
-            <span v-if="errorMessages['latitude']">
-              <ul class="text-danger">
-                <li v-for="err in errorMessages['latitude']" :key="err">{{ err }}</li>
-              </ul>
-            </span>
-            <span class="text-danger">{{ errors['latitude'] }}</span>
           </div>
 
           <div class="col-md-4">
             <label class="form-label m-0" for="category-status">{{ $t('clinic.lbl_long') }}</label>
             <InputField :is-required="false" :label="$t('clinic.lbl_long')" :placeholder="$t('clinic.lbl_long')" v-model="longitude" :error-message="errors['longitude']" :error-messages="errorMessages['longitude']" :icon="'<i class=\'ph ph-globe\'></i>'"></InputField>
-            <span v-if="errorMessages['longitude']">
-              <ul class="text-danger">
-                <li v-for="err in errorMessages['longitude']" :key="err">{{ err }}</li>
-              </ul>
-            </span>
-            <span class="text-danger">{{ errors['longitude'] }}</span>
           </div>
           <div v-for="field in customefield" :key="field.id">
             <FormElement v-model="custom_fields_data" :name="field.name" :label="field.label" :type="field.type" :required="field.required" :options="field.value" :field_id="field.id"></FormElement>
