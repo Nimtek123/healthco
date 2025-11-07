@@ -10014,9 +10014,9 @@ function buildProps(node, context, props = node.props, isComponent, isDynamicCom
       if (isEventHandler && value.type === 14) {
         value = value.arguments[0];
       }
-      if (value.type === 20 || (value.type === 4 || value.type === 8) && getConstantType(value, context) > 0) {
-        return;
-      }
+      // if (value.type === 20 || (value.type === 4 || value.type === 8) && getConstantType(value, context) > 0) {
+      //   return;
+      // }
       if (name === "ref") {
         hasRef = true;
       } else if (name === "class") {
