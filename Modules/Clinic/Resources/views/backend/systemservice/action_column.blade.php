@@ -1,7 +1,17 @@
 <div class="d-flex gap-3 align-items-center">
 
   @hasPermission('edit_system_service')
-      <button type="button" class="btn text-success p-0 fs-5" data-crud-id="{{$data->id}}" title="{{ __('messages.edit') }} " data-bs-toggle="tooltip"> <i class="ph ph-pencil-simple-line align-middle"></i></button>
+      <!-- <button type="button" class="btn text-success p-0 fs-5" data-crud-id="{{$data->id}}" title="{{ __('messages.edit') }} " data-bs-toggle="tooltip"> 
+        <i class="ph ph-pencil-simple-line align-middle"></i>
+      </button> -->
+      <button type="button"
+        class="btn text-success p-0 fs-5 edit-service-btn"
+        data-id="{{ $data->id }}"
+        title="{{ __('messages.edit') }}"
+        data-bs-toggle="tooltip">
+        <i class="ph ph-pencil-simple-line align-middle"></i>
+    </button>
+
   @endhasPermission
  
   @hasPermission('delete_system_service')

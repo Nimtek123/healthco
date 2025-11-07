@@ -3,38 +3,66 @@
     <input type="hidden" name="encounter_id" id="observation_encounter_id" value="{{ $data['id'] }}">
     <input type="hidden" name="user_id" id="observation_user_id" value="{{ $data['user_id'] }}">
 
-    <div class="card-footer pb-0">
-        <p class="mb-2 mb-0 fs-12 clinical_details_notes text-danger">
-            <b>{{ __('appointment.note_encounter_observation') }}</b>
-        </p>
-        @if ($data['status'] == 1)
-            <select id="observations" name="observation_id" class="form-control select2 observation "
-                placeholder="{{ __('appointment.select_observation') }}" data-filter="select">
-                <option value="">{{ __('appointment.select_observation') }}</option>
-                @foreach ($observation_list as $observation)
-                    <option value="{{ $observation->name }}">{{ $observation->name }}
-                    </option>
-                @endforeach
-            </select>
-        @endif
-    </div>
+    @if ($data['status'] == 0)
+        <div class="card-body">
+            @if (count($data['selectedObservationList']) > 0)
+                <ul class="list-inline m-0 p-0">
+                    @foreach ($data['selectedObservationList'] as $index => $observation)
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>{{ $index + 1 }}. {{ $observation['title'] }}</span>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="text-center py-4">
+                    <p class="text-danger mb-0">{{ __('appointment.no_observation_found') }}</p>
+                </div>
+            @endif
+        </div>
+    @else
+        <div class="card-footer pb-0">
+           
+                <p class="mb-2 fs-12 clinical_details_notes text-danger">
+                    <b>{{ __('appointment.note_encounter_observation') }}</b>
+                </p>
+          
+            @if ($data['status'] == 1)
+                <select id="observations" name="observation_id" class="select2 form-select observation "
+                    placeholder="{{ __('appointment.select_observation') }}" data-filter="select">
+                    <option value="">{{ __('appointment.select_observation') }}</option>
+                    @foreach ($observation_list as $observation)
+                        <option value="{{ $observation->name }}">{{ $observation->name }}
+                        </option>
+                    @endforeach
+                </select>
+            @endif
+        </div>
 
-    <div class="card-body medial-history-card medial-history-card-observation">
-        <ul class="list-inline m-0 p-0">
-            @foreach ($data['selectedObservationList'] as $index => $observation)
-                <li class="mb-3">
-                    <div class="d-flex align-items-start justify-content-between gap-1">
-                        <span>{{ $index + 1 }}. {{ $observation['title'] }}</span>
-                        @if ($data['status'] == 1)
-                            <button class="btn p-0 text-danger" onclick="removeobservation({{ $observation['id'] }})">
-                                <i class="ph ph-x-circle"></i>
-                            </button>
-                        @endif
-                    </div>
-                </li>
-            @endforeach
-        </ul>
-    </div>
+        <div class="card-body medial-history-card medial-history-card-observation">
+            @if (count($data['selectedObservationList']) > 0)
+                <ul class="list-inline m-0 p-0">
+                    @foreach ($data['selectedObservationList'] as $index => $observation)
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>{{ $index + 1 }}. {{ $observation['title'] }}</span>
+                                @if ($data['status'] == 1)
+                                    <button class="btn p-0 text-danger" onclick="removeobservation({{ $observation['id'] }})">
+                                        <i class="ph ph-x-circle"></i>
+                                    </button>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="text-center py-4">
+                    <p class="text-danger mb-0">{{ __('appointment.no_observation_found') }}</p>
+                </div>
+            @endif
+        </div>
+    @endif
 
 
 </div>
@@ -85,12 +113,24 @@
                             if (response && response.status) {
                                 updateObservationList(response.medical_histroy);
                                 updateDropdown(response.data);
+                                // Clear the selection after adding
+                                $('#observations').val('').trigger('change');
+                                
+                                // Show success message
+                                if (window.successSnackbar) {
+                                    window.successSnackbar('{{ __("appointment.observation_added_successfully") }}');
+                                }
                             } else {
-                                console.error('Failed to save observation.');
+                                if (window.errorSnackbar) {
+                                    window.errorSnackbar('{{ __("appointment.failed_to_save_observation") }}');
+                                }
                             }
                         },
-                        error: function(error) {
+                        error: function(xhr, status, error) {
                             console.error('AJAX Error:', error);
+                            if (window.errorSnackbar) {
+                                window.errorSnackbar('{{ __("appointment.error_try_again") }}');
+                            }
                         }
 
                     });
@@ -99,33 +139,46 @@
         });
 
         function updateObservationList(medicalHistory) {
-                var observationlistHtml = '';
+            var observationlistHtml = '';
+            if (medicalHistory && medicalHistory.length > 0) {
                 medicalHistory.forEach(function(observation, index) {
                     observationlistHtml += `
-                <li class="mb-3 pb-3 border-bottom">
-                    <div class="d-flex align-items-start justify-content-between gap-1">
-                        <span>${index + 1}. ${observation.title}</span>
-                        <button class="btn p-0 text-danger"
-                            onclick="removeobservation(${observation.id})">
-                            <i class="ph ph-x-circle"></i>
-                        </button>
-                    </div>
-                </li>`;
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>${index + 1}. ${observation.title}</span>
+                                <button class="btn p-0 text-danger"
+                                    onclick="removeobservation(${observation.id})">
+                                    <i class="ph ph-x-circle"></i>
+                                </button>
+                            </div>
+                        </li>`;
                 });
-                $('.medial-history-card-observation ul').html(observationlistHtml);
+                $('.medial-history-card-observation').html('<ul class="list-inline m-0 p-0">' + observationlistHtml + '</ul>');
+            } else {
+                $('.medial-history-card-observation').html(`
+                    <div class="text-center py-4">
+                        <p class="text-danger mb-0">{{ __('appointment.no_observation_found') }}</p>
+                    </div>
+                `);
             }
+        }
 
             function updateDropdown(data) {
-                var observationdropdownHtml = `<option value="">{{ __('appointment.select_problems') }}</option>`;
-                data.forEach(function(problem) {
-                    observationdropdownHtml += `<option value="${observation.name}">${observation.name}</option>`;
-                });
+                console.log('Updating dropdown with data:', data);
+                var observationdropdownHtml = `<option value="">{{ __('appointment.select_observation') }}</option>`;
+                
+                if (data && data.length > 0) {
+                    data.forEach(function(observation) {
+                        observationdropdownHtml += `<option value="${observation.name}">${observation.name}</option>`;
+                    });
+                }
+                
                 $('#observations').html(observationdropdownHtml);
 
                 // Reinitialize Select2
                 $('#observations').select2({
                     tags: true,
-                    placeholder: "{{ __('appointment.select_problems') }}",
+                    placeholder: "{{ __('appointment.select_observation') }}",
                     allowClear: true
                 });
             }
@@ -143,29 +196,24 @@
                     },
                     success: function(response) {
                         if (response && response.status) {
-                            // Update the problem list
-                            var observationlistHtml = '';
-                            response.medical_histroy.forEach(function(observation, index) {
-                                observationlistHtml += `
-                            <li class="mb-3">
-                                <div class="d-flex align-items-start justify-content-between gap-1">
-                                    <span>${index + 1}. ${observation.title}</span>
-                                    <button class="btn p-0 text-danger"
-                                        onclick="removeobservation(${observation.id})">
-                                        <i class="ph ph-x-circle"></i>
-                                    </button>
-                                </div>
-                            </li>`;
-                            });
-                            $('.medial-history-card-observation ul').html(observationlistHtml);
-
-                            console.log('History item removed successfully!');
+                            updateObservationList(response.medical_histroy);
+                            updateDropdown(response.data);
+                            
+                            // Show success message
+                            if (window.successSnackbar) {
+                                window.successSnackbar('{{ __("appointment.observation_removed_successfully") }}');
+                            }
                         } else {
-                            console.error('Failed to remove history item.');
+                            if (window.errorSnackbar) {
+                                window.errorSnackbar('{{ __("appointment.failed_to_remove_observation") }}');
+                            }
                         }
                     },
-                    error: function(error) {
+                    error: function(xhr, status, error) {
                         console.error('AJAX Error:', error);
+                        if (window.errorSnackbar) {
+                            window.errorSnackbar('{{ __("appointment.error_try_again") }}');
+                        }
                     }
                 });
             }

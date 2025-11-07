@@ -73,25 +73,14 @@ class TagsExport implements FromCollection, WithHeadings, WithEvents, WithCustom
         return 'A3'; // Data starts from row 3
     }
 
-    public function registerEvents(): array
+     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
-                $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($this->columns));
-
-                // Add "From Date" and "To Date" at the top
-                $sheet->setCellValue('A1', "From Date: {$this->dateRange[0]}");
-                $sheet->setCellValue('A2', "To Date: {$this->dateRange[1]}");
-
-                // Merge cells for a cleaner header
-                $sheet->mergeCells("A1:{$lastColumn}1");
-                $sheet->mergeCells("A2:{$lastColumn}2");
-
-                // Style the headers (optional)
-                $sheet->getStyle('A1:A2')->getFont()->setBold(true);
-                $sheet->getStyle('A1:A2')->getFont()->setSize(12);
-            },
+            AfterSheet::class => exportSheetHeader(
+                'Tags List',
+                $this->columns,
+                $this->dateRange
+            ),
         ];
     }
 }

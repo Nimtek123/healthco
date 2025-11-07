@@ -9,14 +9,14 @@
                 <div class="d-flex flex-wrap gap-3">
                     <x-backend.quick-action url="{{ route('backend.products.bulk_action') }}">
                         <div class="">
-                            <select name="action_type" class="form-control select2 col-12" id="quick-action-type"
+                            <select name="action_type" class="select2 form-select col-12" id="quick-action-type"
                                 style="width:100%">
                                 <option value="">{{ __('messages.no_action') }}</option>
                                 <option value="change-status">{{ __('messages.status') }}</option>
                             </select>
                         </div>
                         <div class="select-status d-none quick-action-field" id="change-status-action">
-                            <select name="status" class="form-control select2" id="status" style="width:100%">
+                            <select name="status" class="select2 form-select" id="status" style="width:100%">
                                 <option value="" selected>{{ __('messages.select_status') }}</option>
                                 <option value="1">{{ __('messages.active') }}</option>
                                 <option value="0">{{ __('messages.inactive') }}</option>
@@ -25,7 +25,7 @@
                     </x-backend.quick-action>
                     <!-- <div>
                       <button type="button" class="btn btn-primary" data-modal="export">
-                        <i class="ph ph-download-simple me-1"></i> Export
+                        <i class="ph ph-export me-1"></i> Export
                       </button>
                     </div> -->
                 </div>
@@ -40,7 +40,7 @@
                     </div>
                     <div>
                         <div class="datatable-filter" style="width: 100%; display: inline-block;">
-                            <select name="payment_status" id="payment_status" class="select2 form-control" data-filter="select">
+                            <select name="payment_status" id="payment_status" class="select2 form-select" data-filter="select">
                                 <option value="">Payment Status</option>
                                 <option value="paid">Paid</option>
                                 <option value="unpaid">Unpaid</option>
@@ -49,7 +49,7 @@
                     </div>
                     <div>
                         <div class="datatable-filter" style="width: 100%; display: inline-block;">
-                            <select name="delivery_status" id="delivery_status" class="select2 form-control" data-filter="select">
+                            <select name="delivery_status" id="delivery_status" class="select2 form-select" data-filter="select">
                                 <option value="">Delivery Status</option>
                                 <option value="order_placed">Order Placed</option>
                                 <option value="pending">Pending</option>
@@ -181,6 +181,13 @@
         ]
 
         document.addEventListener('DOMContentLoaded', (event) => {
+            // Initialize Select2
+            if (typeof $.fn.select2 !== 'undefined') {
+                $('.select2').select2({
+                    width: '100%'
+                });
+            }
+
             initDatatable({
                 url: '{{ route("backend.$module_name.index_data") }}',
                 finalColumns,

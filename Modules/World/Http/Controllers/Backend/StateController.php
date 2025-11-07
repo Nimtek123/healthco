@@ -45,7 +45,7 @@ class StateController extends Controller
         $filter = [
             'status' => $request->status,
         ];
-        $country = Country::get();
+        $country = Country::where('status', 1)->get();
         $module_action = 'List';
         $columns = CustomFieldGroup::columnJsonValues(new User());
 
@@ -79,7 +79,7 @@ class StateController extends Controller
         $term = trim($request->search);
         $country_id = $request->country_id;
 
-        $query = State::query();
+        $query = State::query()->where('status', 1);
 
         if (isset($country_id)) {
             $query->where('country_id', $country_id);

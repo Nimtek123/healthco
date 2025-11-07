@@ -70,11 +70,11 @@
                                         <div class="position-absolute top-0 end-0 m-2 ">
                                             <a href="{{ $previousUrl ?? '#' }}" class="text-muted" id="service-edit-button"
                                                 data-step="0">
-                                                <i class="ph ph-pencil-simple"></i>
+                                                <i class="ph ph-pencil-simple heading-color"></i>
                                             </a>
                                         </div>
                                         <div>
-                                            <p class="font-size-14 text-body mb-2">{{ __('frontend.service') }}</p>
+                                            <p class="font-size-14 heading-color mb-2">{{ __('frontend.service') }}</p>
                                             <h6 class="font-size-14 text-heading fw-semibold mb-0">
                                                 {{ $selectedService->name }}</h6>
                                         </div>
@@ -96,11 +96,11 @@
                                                 <div class="position-absolute top-0 end-0 m-2" id="clinic-edit-button"
                                                     data-step="{{ $clinicTab['index'] }}">
                                                     <a href="#" class="text-muted">
-                                                        <i class="ph ph-pencil-simple"></i>
+                                                        <i class="ph ph-pencil-simple heading-color"></i>
                                                     </a>
                                                 </div>
                                                 <div>
-                                                    <p class="font-size-14 text-body mb-2">{{ __('frontend.clinic') }}</p>
+                                                    <p class="font-size-14 heading-color mb-2">{{ __('frontend.clinic') }}</p>
                                                     <h6 class="font-size-14 text-heading fw-semibold mb-0">
                                                         {{ $selectedClinic->name }}</h6>
                                                 </div>
@@ -187,13 +187,13 @@
 
                                 <!-- Choose Date and Time Section -->
                                 <div class="mb-50 mt-5">
-                                    <h6 class="mb-2">{{ __('frontend.choose_date_time') }}
+                                    <h6 class="mb-2">{{ __('frontend.choose_date') }}
                                     </h6>
                                     <div class="form-group position-relative">
                                         <div class="input-group">
 
                                             <input type="text" id="appointment_date" class="form-control"
-                                                name="appointment_date" placeholder="Select appointment date">
+                                                name="appointment_date" placeholder="Select appointment date" value="{{ date('Y-m-d') }}">
                                             <span class="input-group-text" id="calendar-icon">
                                                 <i class="ph ph-calendar"></i>
                                                 <!-- Replace with your preferred icon library -->
@@ -234,7 +234,7 @@
                                 <div class="mb-50">
                                     <h6 class ="font-size-18 fw-semibold">{{ __('frontend.medical_history') }}
                                     </h6>
-                                    <textarea class="form-control" name="medical_history" placeholder="{{ __('frontend.enter_medical_history') }}"></textarea>
+                                    <textarea class="form-control" id="appointment_extra_info" name="appointment_extra_info" placeholder="{{ __('frontend.enter_medical_history') }}"></textarea>
                                 </div>
 
                                 <!-- Upload Medical Report Section -->
@@ -350,11 +350,7 @@
                         <!-- Content for Step 2 (e.g. Select Clinic) -->
                         </div>
 
-                        <div id="clinic-shimmer-loader" class="d-flex gap-3 flex-wrap p-4 d-none ">
-                           @for ($i = 0; $i < 4; $i++)
-                               @include('frontend::components.card.shimmer_clinic_card')
-                           @endfor
-                       </div>
+                     
 
 
                         <div id="step-content-2" class="step-content">
@@ -376,47 +372,6 @@
         </div>
     </div>
 
-    <!-- Tax Details Modal -->
-<div class="modal" id="taxDetailsModal">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content section-bg position-relative rounded">
-            <div class="modal-body modal-body-inner">
-                <div class="close-modal-btn" data-bs-dismiss="modal">
-                    <i class="ph ph-x align-middle"></i>
-                </div>
-                <h5 class="mb-3" id="taxDetailsModalLabel">{{ __('frontend.tax_detail') }}</h5>
-                </strong></p>
-                <ul id="taxBreakdownList" class="p-0 mb-3 list-inline">
-
-                    <!-- Dynamic tax breakdown will be injected here -->
-                </ul>
-                <p class="mb-0 mt-3 d-flex flex-wrap justify-content-between gap-3"><strong>{{ __('frontend.total_tax') }}
-                </strong> <span id="totalTaxAmount" class="fw-bold text-secondary">$0.00</span></p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="modal" id="inclusivetaxDetailsModal">
-    <div class="modal-dialog modal-dialog-centered modal-md">
-        <div class="modal-content section-bg position-relative rounded">
-            <div class="modal-body modal-body-inner">
-                <div class="close-modal-btn" data-bs-dismiss="modal">
-                    <i class="ph ph-x align-middle"></i>
-                </div>
-                <h5 class="mb-3" id="taxDetailsModalLabel">{{ __('service.inclusive_tax') }}</h5>
-                </strong></p>
-
-                <ul id="taxBreakdownListinclusive" class="p-0 mb-3 list-inline">
-
-                    <!-- Dynamic tax breakdown will be injected here -->
-                </ul>
-                <p class="mb-0 mt-3 d-flex flex-wrap justify-content-between gap-3"><strong>{{ __('frontend.total_tax') }}
-                </strong> <span id="totalTaxAmountinclusive" class="fw-bold text-secondary">$0.00</span></p>
-            </div>
-        </div>
-    </div>
-</div>
     @if (!empty($paymentDetails))
         <!-- Payment Success Modal -->
         <div class="modal fade" id="paymentSuccessModal" tabindex="-1" aria-labelledby="paymentSuccessModalLabel"
@@ -435,7 +390,7 @@
                     </div>
 
                     <!-- Modal Body -->
-                    <div class="modal-body text-dark">
+                    <div class="modal-body heading-color">
                         <p>
                             Your appointment with <strong>Dr. {{ $paymentDetails['doctorName'] }}</strong> at
                             <strong>{{ $paymentDetails['clinicName'] }}</strong> has been confirmed on
@@ -444,10 +399,10 @@
                         </p>
                         <div class="mt-3 pt-3 border-top text-start">
                             <p><strong>Booking ID:</strong> <span
-                                    class="text-dark">#{{ $paymentDetails['bookingId'] }}</span></p>
+                                    class="heading-color">#{{ $paymentDetails['bookingId'] }}</span></p>
                             <p><strong>Payment via:</strong> <span
-                                    class="text-dark">{{ $paymentDetails['paymentVia'] }}</span></p>
-                            <p><strong>Total Payment:</strong> <span class="text-dark">{{ $paymentDetails['currency'] }}
+                                    class="heading-color">{{ $paymentDetails['paymentVia'] }}</span></p>
+                            <p><strong>Total Payment:</strong> <span class="heading-color">{{ $paymentDetails['currency'] }}
                                     {{ $paymentDetails['totalAmount'] }}</span></p>
                         </div>
                     </div>
@@ -564,7 +519,7 @@
 
                                     <div class="col-md-12">
                                         <div class="d-flex align-items-center justify-content-center p-3">
-                                            <img id="miniLogoViewer"  src={{ $data['profile_image'] ?? asset('img/logo/mini_logo.webp')  }} class="img-fluid avatar-130 rounded-pill" alt="mini_logo" />
+                                            <img id="miniLogoViewer"  src={{ $data['profile_image'] ?? asset('img/avatar/avatar.webp')  }} class="img-fluid avatar-130 rounded-pill" alt="mini_logo" />
                                         </div>
 
                                         <div class="d-flex align-items-center gap-3 justify-content-center mt-5">
@@ -791,6 +746,7 @@
             slotTimeList: '{{ route('slot_time_list') }}',
             saveAppointment: '{{ route('saveAppointment') }}',
             appointmentList: '{{ route('appointment-list') }}',
+            appointmentDetails: '{{ route('appointment-details', '') }}',
             otherPatient:'{{ route("other-patients.store") }}',
             otherPatientList:'{{ route("other-patients.list") }}?patient_id={{ auth()->id() }}'
 
@@ -838,7 +794,8 @@
         dateFormat: "Y-m-d",  // Display date in YYYY-MM-DD format
         placeholder: "Select appointment date",
         clickOpens: false,     // Prevent date picker from opening when input is clicked
-        minDate: "today"       // Disable past dates
+        minDate: "today",      // Disable past dates
+        defaultDate: "today"   // Set today as default date
     });
 
     // Show the date picker when the calendar icon is clicked

@@ -16,7 +16,7 @@
         @endif
     @endhasPermission
     @hasPermission('delete_request_service')
-        <a href="{{route("backend.$module_name.destroy", $data->id)}}" id="delete-{{$module_name}}-{{$data->id}}" class="btn text-danger p-0 fs-4" data-type="ajax" data-method="DELETE" data-token="{{csrf_token()}}" data-bs-toggle="tooltip" title="Reject" data-confirm="{{ __('messages.are_you_sure?') }}"> <i class="ph ph-x align-middle"></i></a>
+        <a href="{{route("backend.$module_name.destroy", $data->id)}}" id="delete-{{$module_name}}-{{$data->id}}" class="btn text-danger p-0 fs-4" data-type="ajax" data-method="DELETE" data-token="{{csrf_token()}}" data-bs-toggle="tooltip" title="Reject" data-confirm="{{ __('messages.are_you_sure?', ['form' => $data->name ?? __('Unknown'), 'module' => __('service.request_title')]) }}"> <i class="ph ph-x align-middle"></i></a>
     @endhasPermission
 @else
     --

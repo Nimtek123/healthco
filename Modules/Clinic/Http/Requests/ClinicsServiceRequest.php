@@ -14,37 +14,43 @@ class ClinicsServiceRequest extends FormRequest
     public function rules(): array
     {
         $id = request()->id;
+
+        $rules = [
+            'duration_min'      => 'required|integer',
+            'category_id'       => 'required|integer',
+            'charges'           => 'required|numeric',
+            'status'            => 'sometimes|boolean',
+        ];
+
+        // If multiVendor is enabled, require system_service_id
+        if (multiVendor()) {
+            $rules['system_service_id'] = 'required|integer|exists:system_service,id';
+        }
+
+        // Add advance payment validation: if enabled, value must be > 0
+        // The field names may be: advance_payment_enabled (checkbox), advance_payment_value (number/percent)
+        // Only validate if advance_payment_enabled is present and truthy
+        if (
+            ($this->has('advance_payment_enabled') && $this->input('advance_payment_enabled')) ||
+            ($this->has('advance_payment_value') && $this->input('advance_payment_value') > 0)
+        ) {
+            $rules['advance_payment_value'] = [
+                'required',
+                'numeric',
+                'gt:0'
+            ];
+        }
+
         switch (strtolower($this->getMethod())) {
             case 'post':
-                return [
-                    'name' => 'unique:clinics_services,name,'.$id,
-                    // 'system_service_id' => 'required|integer',
-                    'duration_min' => 'required|integer',
-                    'category_id' => 'required|integer',
-                    // 'doctors_ids' => ['required'],
-                    'charges' => 'required',
-                    'status' => 'boolean',
-                ];
-                break;
             case 'put':
             case 'patch':
-                return [
-                    // 'system_service_id' => 'required|integer',
-                    'name' => 'unique:clinics_services,name,'.$id,
-                    'duration_min' => 'required|integer',
-                    'category_id' => 'required|integer',
-                    'charges' => 'required',
-                    'status' => 'boolean',
-                ];
-                break;
+                return $rules;
         }
 
         return [];
     }
-
-    /**
-     * Determine if the user is authorized to make this request.
-     */
+     
     public function authorize(): bool
     {
         return true;

@@ -12,7 +12,7 @@
   </div> -->
 
   <div class="mb-3">
-    <div class="input-group">
+    <div class="form-group">
       <textarea v-if="type == 'textarea'" class="form-control" :rows="textareaRows" @input="updateModelValue" :value="modelValue" :readonly="isReadOnly">{{ modelValue }}</textarea>    
       <input v-else-if="type == 'number'" :type="type" class="form-control" :id="label" :value="modelValue" @input="updateModelValue" :placeholder="placeholder" :step="step" :min="min" :max="max" :readonly="isReadOnly"/>
       <input v-else :type="type" class="form-control" :id="label" :value="modelValue" @input="updateModelValue" :placeholder="placeholder" :readonly="isReadOnly" data-last-char="*"/>

@@ -40,4 +40,6 @@ return [
     'lbl_dribbble_link' => 'Dribbble Link',
     'other_details' => 'Other details',
     'lbl_phone_number_placeholder'=>'Enter a phone number',
+    'lbl_date_of_birth' => 'Date of Birth',
+    'lbl_pincode' => 'Pincode',
 ];

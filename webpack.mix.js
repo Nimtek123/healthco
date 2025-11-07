@@ -98,15 +98,12 @@ const Fs = require('fs')
 for (const key in Modules) {
   if (Object.hasOwnProperty.call(Modules, key)) {
     if (Fs.existsSync(`${__dirname}/Modules/${key}/Resources/assets/js/app.js`)) {
-      mix.js(`${__dirname}/Modules/${key}/Resources/assets/js/app.js`, `modules/${key.toLocaleLowerCase()}/script.js`).vue().sourceMaps()
+      mix.js(`${__dirname}/Modules/${key}/Resources/assets/js/app.js`, `modules/${key.toLocaleLowerCase()}/script.js`).vue()
     }
     if (Fs.existsSync(`${__dirname}/Modules/${key}//Resources/assets/sass/app.scss`)) {
-      mix.sass(`${__dirname}/Modules/${key}//Resources/assets/sass/app.scss`, `modules/${key.toLocaleLowerCase()}/style.css`).sourceMaps()
+      mix.sass(`${__dirname}/Modules/${key}//Resources/assets/sass/app.scss`, `modules/${key.toLocaleLowerCase()}/style.css`)
     }
   }
 }
 
-// !For Production Build Added To Version on File for cache
-if (mix.inProduction()) {
-  mix.version()
-}
+// Simple builds only; no versioning or hashed filenames

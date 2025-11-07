@@ -244,6 +244,11 @@
       window.currencyFormat = currencyFormat
       window.defaultCurrencySymbol = @json(Currency::defaultSymbol())
 
+      // Force full page reload on language change
+      $(document).on('click', 'a[href*="language/"]', function (e) {
+          e.preventDefault();
+          window.location.href = $(this).attr('href');
+      });
     </script>
 
 </body>

@@ -70,4 +70,21 @@ return [
     'request_title' => 'Demande de service',
     'request_service_status' => 'Statut de la demande de service mis à jour',
     'lbl_request_status' => 'Statut de la demande de service',
+    'inclusive_tax' => 'Taxe inclusive',
+    'inclusive_taxes' => 'Taxes incluses',
+    'inclusive_tax_breakdown' => 'Détail de la taxe inclusive',
+    'no_inclusive_taxes_applied' => 'Aucune taxe inclusive appliquée',
+    'total_inclusive_tax' => 'Total des taxes incluses',
+    'with_inclusive_tax' => 'Avec taxe inclusive',
+    'view_inclusive_taxes' => 'Voir les taxes incluses',
+    'request_service' => 'Demande de service',
+    
+    // Additional Service Form Messages
+    'file_selected' => 'fichier sélectionné',
+    'preview' => 'Aperçu',
+    'unknown' => 'Inconnu',
+    'something_went_wrong' => 'Quelque chose s\'est mal passé!',
+    'advance_payment_amount_must_be_greater_than_zero' => 'Le montant de l\'avance doit être supérieur à zéro *',
+    'description_must_not_exceed_250_characters' => 'La description ne doit pas dépasser 250 caractères',
+    'select_vendor_first' => 'Sélectionnez d\'abord le vendeur',
 ];

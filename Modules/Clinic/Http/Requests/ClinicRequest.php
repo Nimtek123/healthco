@@ -3,6 +3,7 @@
 namespace Modules\Clinic\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ClinicRequest extends FormRequest
 {
@@ -11,10 +12,24 @@ class ClinicRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = request()->id;
+        // Only use ID for validation if it's a valid integer (update mode)
+        $id = request()->id && is_numeric(request()->id) ? request()->id : null;
+        
         return [
-             'name' => 'required|unique:clinic,name,'.$id,
-             'email' => 'required|string|unique:clinic,email',
+             'name' => [
+                'required',
+                Rule::unique('clinic', 'name')
+                    ->ignore($id)
+                    ->whereNull('deleted_at')
+             ],
+             'email' => [
+                'required',
+                'string',
+                Rule::unique('clinic', 'email')
+                    ->ignore($id)
+                    ->whereNull('deleted_at')
+             ],
+             'speciality' => 'required|exists:system_service_category,id',
             // 'address' => 'required|string',
             // 'pincode' => 'required',
             // 'contact_number' => 'required|string',

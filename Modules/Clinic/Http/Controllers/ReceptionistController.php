@@ -7,11 +7,17 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Str;
 use Modules\CustomField\Models\CustomField;
 use Modules\CustomField\Models\CustomFieldGroup;
 use Carbon\Carbon;
+use Modules\Clinic\Models\Clinics;
+use Modules\World\Models\Country;
+use Modules\World\Models\State;
+use Modules\World\Models\City;
 use Hash;
 use Modules\Clinic\Models\Receptionist;
 
@@ -51,6 +57,17 @@ class ReceptionistController extends Controller
         $columns = CustomFieldGroup::columnJsonValues(new User());
         $customefield = CustomField::exportCustomFields(new User());
 
+        $vendors = [];
+        $clinicCenters = [];
+        $countries = [];
+        if (config('app.multi_vendor_enabled', false) && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin'))) {
+            $vendors = User::role('vendor')->where('status', 1)->where('is_banned', 0)->get(['id', 'name']);
+        }
+        
+        $clinicCenters = Clinics::where('status', 1)->get(['id', 'name']);
+        // dd($clinicCenters);
+        $countries = Country::where('status', 1)->get(['id', 'name']);
+
         $export_import = true;
         $export_columns = [
             [
@@ -79,7 +96,7 @@ class ReceptionistController extends Controller
             ],
         ];
         $export_url = route('backend.receptionist.export');
-        return view('clinic::backend.receptionist.index', compact('module_action', 'module_title', 'columns', 'customefield', 'export_import', 'export_columns', 'export_url'));
+        return view('clinic::backend.receptionist.index', compact('module_action', 'module_title', 'columns', 'customefield', 'export_import', 'export_columns', 'export_url', 'vendors', 'clinicCenters', 'countries'));
     }
 
 
@@ -251,47 +268,84 @@ class ReceptionistController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->except('profile_image');
-        $data = $request->all();
+        // dd($request->all());
+        try {
+            $data = $request->except(['profile_image', '_token', '_method']);
 
-        // $data['mobile'] = str_replace(' ', '', $data['mobile']);
+            // $data['mobile'] = str_replace(' ', '', $data['mobile']);
 
-        if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
-            $request->vendor_id = $request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id;
 
-        } else {
-            $request->vendor_id = auth()->user()->id;
+            // Determine vendor context for mapping (users table may not have vendor_id column)
+            $vendorId = auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')
+                ? ($request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id)
+                : auth()->user()->id;
 
+            $data['email_verified_at'] = Carbon::now();
+            $data['user_type'] = 'receptionist';
+            $data['status'] = $request->has('status') ? 1 : 1;
+            $data['password'] = Hash::make($data['password']);
+
+            // Determine vendor ID
+            $vendorId = auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')
+                ? ($request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id)
+                : auth()->user()->id;
+
+            // ✅ Create User
+            $user = User::create($data);
+            if (function_exists('multiVendor') && multiVendor()) {
+                $clinic = Clinics::where('id', $request->clinic_id)
+                    ->when(auth()->user()->hasRole('vendor'), function ($q) use ($vendorId) {
+                        $q->where('vendor_id', $vendorId);
+                    })
+                    ->first();
+
+                if (!$clinic) {
+                    throw new \Exception(__('clinic.invalid_clinic_selection'));
+                }
+            }
+
+            $roles = ['receptionist'];
+            $user->syncRoles(['receptionist']);
+
+            $receptionist = Receptionist::create([
+                'receptionist_id' => $user->id,
+                'clinic_id' => $request->clinic_id,
+                'vendor_id' => $vendorId,
+            ]);
+
+
+            if ($request->custom_fields_data) {
+                $user->updateCustomFieldData(json_decode($request->custom_fields_data));
+            }
+            if ($request->hasFile('profile_image')) {
+                storeMediaFile($data, $request->file('profile_image'), 'profile_image');
+            }
+
+
+            $message = __('messages.create_form', ['form' => __('receptionist.singular_title')]);
+
+            if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
+                return response()->json([
+                    'message' => $message,
+                    'status' => true,
+                    'data' => [
+                        'user_id' => $user->id,
+                        'receptionist_id' => $receptionist->id ?? null,
+                        'mapping' => $receptionist,
+                    ],
+                ], 200);
+            }
+
+            return redirect()->route('backend.receptionist.index')->with('success', $message);
+        } catch (\Exception $e) {
+            Log::error('Receptionist store error: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson() || $request->expectsJson()) {
+                return response()->json(['message' => 'Error creating receptionist: ' . $e->getMessage(), 'status' => false], 500);
+            }
+
+            return redirect()->back()->with('error', 'Error creating receptionist: ' . $e->getMessage());
         }
-        $data['email_verified_at'] = Carbon::now();
-        $data['user_type'] = 'receptionist';
-        $data['password'] = Hash::make($data['password']);
-        $data = User::create($data);
-
-        $roles = ['receptionist'];
-
-        $data->syncRoles($roles);
-
-        $receptionist = [
-            'receptionist_id' => $data->id,
-            'clinic_id' => $request->clinic_id,
-            'vendor_id' => $request->vendor_id,
-        ];
-
-        Receptionist::create($receptionist);
-
-
-        if ($request->custom_fields_data) {
-            $data->updateCustomFieldData(json_decode($request->custom_fields_data));
-        }
-        if ($request->has('profile_image') && !empty($request->profile_image)) {
-
-            storeMediaFile($data, $request->file('profile_image'), 'profile_image');
-        }
-
-        $message = __('messages.create_form', ['form' => __('receptionist.singular_title')]);
-
-        return response()->json(['message' => $message, 'status' => true], 200);
     }
 
     /**
@@ -330,37 +384,48 @@ class ReceptionistController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $data = User::role(['receptionist'])->findOrFail($id);
+        try {
+            $data = User::role(['receptionist'])->findOrFail($id);
+            $existing = Receptionist::where('clinic_id', $request->clinic_id)->first();
+           
+            $request_data = $request->except(['profile_image', 'password', '_token', '_method']);
 
-        $request_data = $request->except('profile_image');
+            // if (isset($request_data['mobile'])) {
+            //     $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']);
+            // }
 
-        $request_data = $request->except('password');
-        $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']);
+            if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
+                $request->vendor_id = $request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id;
+            } else {
+                // Preserve existing vendor for non-admin users
+                $request->vendor_id = optional($data->receptionist)->vendor_id ?: auth()->user()->id;
+            }
 
-        if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
-            $request->vendor_id = $request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id;
+            $data->update($request_data);
+            $receptionist = Receptionist::firstOrNew(['receptionist_id' => $data->id]);
+            $receptionist->fill([
+                'receptionist_id' => $data->id,
+                'clinic_id' => $request->clinic_id,
+                'vendor_id' => $request->vendor_id,
+            ]);
+            $receptionist->save();
+
+            if ($request->hasFile('profile_image')) {
+                storeMediaFile($data, $request->file('profile_image'), 'profile_image');
+            }
+
+            // Only clear media collection if explicitly requested (when user wants to remove image)
+            if ($request->has('remove_image') && $request->remove_image == '1') {
+                $data->clearMediaCollection('profile_image');
+            }
+
+            $message = __('messages.update_form', ['form' => __('receptionist.singular_title')]);
+
+            return response()->json(['message' => $message, 'status' => true], 200);
+        } catch (\Exception $e) {
+            \Log::error('Receptionist update error: ' . $e->getMessage());
+            return response()->json(['message' => 'Error updating receptionist: ' . $e->getMessage(), 'status' => false], 500);
         }
-
-        $data->update($request_data);
-        $receptionist = Receptionist::firstOrNew(['receptionist_id' => $data->id]);
-        $receptionist->fill([
-            'receptionist_id' => $data->id,
-            'clinic_id' => $request->clinic_id,
-            'vendor_id' => $request->vendor_id,
-        ]);
-        $receptionist->save();
-
-        if ($request->hasFile('profile_image')) {
-            storeMediaFile($data, $request->file('profile_image'), 'profile_image');
-        }
-
-        if ($request->profile_image == null) {
-            $data->clearMediaCollection('profile_image');
-        }
-
-        $message = __('messages.update_form', ['form' => __('receptionist.singular_title')]);
-
-        return response()->json(['message' => $message, 'status' => true], 200);
     }
 
     /**
@@ -387,22 +452,92 @@ class ReceptionistController extends Controller
 
         return response()->json(['status' => true, 'message' => __('receptionist.receptionist_verify')]);
     }
+    // public function change_password(Request $request)
+    // {
+
+    //     $data = $request->all();
+
+    //     $receptionist_id = $data['receptionist_id'];
+
+    //     $data = User::role(['receptionist'])->findOrFail($receptionist_id);
+        
+
+    //     $request_data = $request->only('password');
+    //     $request_data['password'] = Hash::make($request_data['password']);
+
+    //     $data->update($request_data);
+
+    //     $message = __('receptionist.password_update');
+
+    //     return response()->json(['message' => $message, 'status' => true], 200);
+    // }
     public function change_password(Request $request)
-    {
+{
+    $data = $request->all();
 
-        $data = $request->all();
+    $receptionist_id = $data['receptionist_id'];
 
-        $receptionist_id = $data['receptionist_id'];
+    $user = User::role(['receptionist'])->findOrFail($receptionist_id);
 
-        $data = User::role(['receptionist'])->findOrFail($receptionist_id);
-
-        $request_data = $request->only('password');
-        $request_data['password'] = Hash::make($request_data['password']);
-
-        $data->update($request_data);
-
-        $message = __('receptionist.password_update');
-
-        return response()->json(['message' => $message, 'status' => true], 200);
+    // ✅ Check old password
+    if (!isset($data['old_password']) || !Hash::check($data['old_password'], $user->password)) {
+        return response()->json([
+            'status' => false,
+            'message' => __('receptionist.old_password_incorrect'),
+            'all_message' => ['old_password' => [__('receptionist.old_password_incorrect')]]
+        ], 422);
     }
+
+    // ✅ Prevent same as old password
+    if (Hash::check($data['password'], $user->password)) {
+        return response()->json([
+            'status' => false,
+            'message' => __('receptionist.new_password_same_as_old'),
+            'all_message' => ['password' => [__('receptionist.new_password_same_as_old')]]
+        ], 422);
+    }
+
+    // ✅ Update password
+    $request_data = $request->only('password');
+    $request_data['password'] = Hash::make($request_data['password']);
+
+    $user->update($request_data);
+
+    $message = __('receptionist.password_update');
+
+    return response()->json(['message' => $message, 'status' => true], 200);
+}
+
+    public function getStates(Request $request)
+    {
+        $countryId = $request->get('country_id');
+        $states = State::where('country_id', $countryId)
+            ->where('status', 1)
+            ->get(['id', 'name']);
+        
+        return response()->json($states);
+    }
+
+    /**
+     * Get cities by state
+     */
+    public function getCities(Request $request)
+    {
+        $stateId = $request->get('state_id');
+        $cities = City::where('state_id', $stateId)
+            ->where('status', 1)
+            ->get(['id', 'name']);
+        
+        return response()->json($cities);
+    }
+    public function getClinicCenters(Request $request)
+    {
+        $vendorId = $request->get('vendor_id');
+        $clinics = Clinics::where('vendor_id', $vendorId)
+            ->where('status', 1)
+            ->get(['id', 'name']);
+        
+        return response()->json($clinics);
+    }
+
 }

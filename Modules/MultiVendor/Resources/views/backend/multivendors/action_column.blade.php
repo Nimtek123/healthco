@@ -5,18 +5,25 @@
 @endhasPermission
 
 @hasPermission('edit_vendor_list')
-        <button type="button" class="btn text-success p-0 fs-5" data-crud-id="{{$data->id}}" title="{{ __('messages.edit') }} " data-bs-toggle="tooltip"> <i class="ph ph-pencil-simple-line"></i></button>
+        <button type="button"
+    class="btn text-success p-0 fs-5 edit-vendor-btn"
+    data-id="{{ $data->id }}"
+    title="{{ __('messages.edit') }}"
+    data-bs-toggle="tooltip">
+    <i class="ph ph-pencil-simple-line"></i>
+</button>
     @endhasPermission
     @hasPermission('delete_vendor_list')
          <a href="{{ route("backend.$module_name.destroy", $data->id) }}"
    id="delete-{{ $module_name }}-{{ $data->id }}"
+   onclick="editClinic({{ $data->id }})"
    class="btn text-danger p-0 fs-5"
    data-type="ajax"
    data-method="DELETE"
    data-token="{{ csrf_token() }}"
    data-bs-toggle="tooltip"
    title="{{ __('messages.delete') }}"
-   data-confirm="{{ __('messages.are_you_sure?', ['form' => $data->first_name ?? '', 'module' => __('clinic.clinic_admin')]) }}">
+   data-confirm="{{ __('messages.are_you_sure?', ['form' => $data->fullname ?? '', 'module' => __('clinic.clinic_admin')]) }}">
    <i class="ph ph-trash"></i>
 </a>
     @endhasPermission

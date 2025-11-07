@@ -63,7 +63,12 @@ class SearchController extends Controller
                 break;
 
             case 'clinic_admin':
-                $items = User::role('vendor')->select('id', \DB::raw("CONCAT(first_name,' ',last_name) AS text"));
+                $items = User::where(function ($query) {
+            $query->role('vendor')
+                  ->orWhereHas('roles', function ($q) {
+                      $q->where('name', 'admin');
+                  });
+            })->select('id', \DB::raw("CONCAT(first_name,' ',last_name) AS text"));
 
                 if ($keyword != '') {
                     $items->where(\DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', '%' . $keyword . '%');
@@ -74,9 +79,9 @@ class SearchController extends Controller
 
             case 'country':
 
-                $items = Country::select('id', 'name as text');
-
-
+                $items = Country::where('status', 1)->select('id', 'name as text');
+                
+                
                 if ($keyword != '') {
 
                     $items->where('name', 'LIKE', '%' . $keyword . '%');
@@ -87,11 +92,11 @@ class SearchController extends Controller
 
             case 'state':
 
-                $items = State::select('id', 'name as text');
-
+                $items = State::where('status', 1)->select('id', 'name as text');
+                
                 if ($sub_type != null) {
 
-                    $items = State::where('country_id', $sub_type)->select('id', 'name as text');
+                    $items = State::where('country_id', $sub_type)->where('status', 1)->select('id', 'name as text');
                 }
 
                 if ($keyword != '') {
@@ -104,11 +109,11 @@ class SearchController extends Controller
 
             case 'city':
 
-                $items = City::select('id', 'name as text');
-
+                $items = City::where('status', 1)->select('id', 'name as text');
+                
                 if ($sub_type != null) {
-
-                    $items = City::where('state_id', $sub_type)->select('id', 'name as text');
+                    
+                    $items = City::where('state_id', $sub_type)->where('status', 1)->select('id', 'name as text');
                 }
 
                 if ($keyword != '') {

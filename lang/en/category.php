@@ -37,6 +37,7 @@ return [
     'clinic_category_list' => 'Clinic Category List',
     'lbl_featured'=>'Set As Featured',
     'parent_category'=>'Parent Category',
+    'lbl_category' => 'Select Category',
 
 
 ];

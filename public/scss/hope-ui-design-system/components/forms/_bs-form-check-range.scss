@@ -3,7 +3,9 @@
         cursor: pointer;
     }
 }
-.offcanvas, .modal {
+
+.offcanvas,
+.modal {
     label {
         &.form-label {
             font-size: 0.875rem;
@@ -14,12 +16,14 @@
             padding-right: 5px;
         }
     }
+
     .form-control {
         padding: 0.875rem 1rem;
         height: 45px;
         font-family: var(--#{$prefix}font-monospace);
         color: var(--bs-body-color);
         border: 1px solid var(--bs-border-color);
+
         &::placeholder {
             font-size: 12px;
             font-weight: 400;
@@ -27,12 +31,14 @@
             font-family: var(--#{$prefix}font-monospace);
             color: var(--bs-body-color);
         }
+
         &:focus {
             border-color: var(--bs-primary);
         }
     }
+
     .input-group {
-        > .form-control {
+        >.form-control {
             border-radius: 6px;
             border-color: var(--bs-border-color);
             border-right: none;
@@ -41,6 +47,7 @@
             height: 45px;
             font-family: var(--#{$prefix}font-monospace);
             color: var(--bs-body-color);
+
             &::placeholder {
                 font-size: 12px;
                 font-weight: 400;
@@ -48,8 +55,10 @@
                 color: var(--bs-body-color);
                 font-family: var(--#{$prefix}font-monospace);
             }
+
             &:focus {
                 border-color: var(--bs-primary);
+
                 + {
                     .input-group-text {
                         border-color: var(--bs-primary);
@@ -57,28 +66,34 @@
                 }
             }
         }
+
         .input-group-text {
             border-left: none;
             border-color: var(--bs-border-color);
             color: var(--bs-body-color);
         }
     }
+
     textarea {
         &.form-control {
-          min-height: 98px;
-          border: 1px solid var(--bs-border-color);
+            min-height: 98px;
+            border: 1px solid var(--bs-border-color);
         }
+
         &:focus {
             border-color: var(--bs-primary);
         }
     }
+
     .vue-tel-input {
         border-radius: 6px;
         border-color: var(--bs-border-color);
         height: 45px;
+
         .vti__dropdown {
             padding: 0;
         }
+
         .vti__input {
             &::placeholder {
                 font-size: 12px;
@@ -88,11 +103,13 @@
                 color: var(--bs-body-color);
             }
         }
+
         &:focus-within {
             box-shadow: none;
             border-color: var(--bs-primary);
         }
     }
+
     .multiselect {
         border: none;
         font-size: 12px;
@@ -101,22 +118,27 @@
         font-family: var(--#{$prefix}font-monospace);
         color: var(--bs-body-color);
         border: 1px solid var(--bs-border-color);
+
         .multiselect-wrapper {
             min-height: 45px;
             border: none;
+
             input {
                 &::aria-placeholder {
                     color: var(--bs-body-color);
                 }
             }
         }
+
         &.is-active {
             border-color: var(--bs-primary);
         }
     }
+
     .offcanvas-footer {
         border-color: var(--bs-border-color) !important;
     }
+
     .create-service-image {
         .custom-file-upload {
             .uppy-Root {
@@ -126,15 +148,19 @@
             }
         }
     }
+
     .custom-file-upload {
         .uppy-Root {
             color: var(--bs-heading-color);
+
             .uppy-Dashboard {
                 width: auto;
                 height: 14rem;
+
                 .uppy-Dashboard-inner {
                     background: var(--bs-gray-900);
                     border-color: var(--bs-border-color);
+
                     .uppy-Dashboard-AddFiles-title {
                         height: 100%;
                         display: flex;
@@ -142,6 +168,7 @@
                         justify-content: center;
                         font-size: 1rem;
                         color: var(--bs-heading-color);
+
                         .uppy-Dashboard-browse {
                             color: var(--bs-primary);
                         }
@@ -150,6 +177,7 @@
             }
         }
     }
+
     .avb-slot {
         label {
             background: var(--bs-gray-900);
@@ -158,10 +186,12 @@
             border-radius: 3px;
             margin-bottom: 0;
             cursor: pointer;
+
             &:hover {
                 background: var(--bs-primary);
                 color: var(--bs-white);
             }
+
             &.selected_slot {
                 background: var(--bs-primary);
                 color: var(--bs-white);
@@ -169,27 +199,28 @@
         }
     }
 
-    .select2-container{
-        .select2-selection--single{
+    .select2-container {
+        .select2-selection--single {
             height: auto;
             min-height: 45px;
-            .select2-selection__rendered{
+
+            .select2-selection__rendered {
                 padding: .875rem $form-select-indicator-padding .875rem $form-select-padding-x;
             }
         }
     }
 
-    .select2-container--default{
+    .select2-container--default {
         .select2-selection--multiple {
             padding: .875rem $form-select-indicator-padding .875rem $form-select-padding-x;
         }
     }
 }
 
-.select2-container{
-  &.select2-container--open {
-    z-index: 9999;
-  }
+.select2-container {
+    &.select2-container--open {
+        z-index: 9999;
+    }
 }
 
 .multiselect-dropdown {
@@ -205,14 +236,15 @@
 .red-asterisk {
     position: absolute;
     color: red;
-    margin-left: 3px; /* Adjust this value to position the asterisk */
+    margin-left: 3px;
+    /* Adjust this value to position the asterisk */
 }
 
 .form-control {
     position: relative;
 }
 
-.vue-tel-input{
+.vue-tel-input {
     .vti__input {
         background-color: var(--bs-gray-900);
         border-radius: 0 6px 6px 0;

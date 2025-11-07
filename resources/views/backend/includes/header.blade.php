@@ -62,26 +62,26 @@ class="nav navbar navbar-expand-xl navbar-light iq-navbar header-hover-menu left
                             id="font-size-sm" checked>
                         <label for="font-size-sm" class="btn btn-border border-0 btn-icon btn-sm"
                             data-bs-toggle="tooltip" title="Font size 14px" data-bs-placement="bottom">
-                            <span class="mb-0 h6" style="color: inherit !important;">A</span>
+                            <span class="mb-0 h6">A</span>
                         </label>
                         <input type="radio" class="btn-check" name="theme_font_size" value="theme-fs-md"
                             id="font-size-md">
                         <label for="font-size-md" class="btn btn-border border-0 btn-icon" data-bs-toggle="tooltip"
                             title="Font size 16px" data-bs-placement="bottom">
-                            <span class="mb-0 h4" style="color: inherit !important;">A</span>
+                            <span class="mb-0 h4">A</span>
                         </label>
                         <input type="radio" class="btn-check" name="theme_font_size" value="theme-fs-lg"
                             id="font-size-lg">
                         <label for="font-size-lg" class="btn btn-border border-0 btn-icon" data-bs-toggle="tooltip"
                             title="Font size 18px" data-bs-placement="bottom">
-                            <span class="mb-0 h2" style="color: inherit !important;">A</span>
+                            <span class="mb-0 h2">A</span>
                         </label>
                     </div>
                 </li> -->
                 <li class="nav-item theme-scheme-dropdown dropdown iq-dropdown">
                     <a href="javascript:void(0)" class="nav-link d-flex align-items-center change-mode"
                         data-change-mode="{{ (auth()->user()->user_setting['theme_scheme'] ?? 'light') == 'dark' ? 'light' : 'dark' }}"
-                        id="mode-drop" style="color: inherit !important;">
+                        id="mode-drop">
                         <i class="ph ph-sun mode-icons light-mode"></i>
                         <i class="ph ph-moon mode-icons dark-mode"></i>
                     </a>
@@ -107,7 +107,7 @@ class="nav navbar navbar-expand-xl navbar-light iq-navbar header-hover-menu left
                 <li class="nav-item dropdown">
                     <a class="nav-link d-flex align-items-center" data-bs-toggle="dropdown" href="#"
                         role="button" aria-haspopup="true" aria-expanded="false"
-                        style="color: inherit !important;">
+                    >
                         <i class="ph ph-globe me-1"></i>{{ strtoupper(App::getLocale()) }}
                     </a>
                     <div class="dropdown-menu dropdown-menu-end">
@@ -129,7 +129,7 @@ class="nav navbar navbar-expand-xl navbar-light iq-navbar header-hover-menu left
                                 alt="{{ auth()->user()->name ?? default_user_name() }}" loading="lazy">
                         </div>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-end" onclick="event.stopPropagation();">
                         <div class="dropdown-header bg-primary-subtle py-2 rounded">
                             <div class="d-flex gap-2">
                                 <img class="avatar avatar-40 img-fluid rounded-pill"
@@ -142,12 +142,12 @@ class="nav navbar navbar-expand-xl navbar-light iq-navbar header-hover-menu left
                             </div>
                         </div>
                         <li>
-                            <a class="dropdown-item d-flex justify-content-between align-items-center"
+                            <a id="link-my-profile" class="dropdown-item d-flex justify-content-between align-items-center"
                                 href="{{ route('backend.my-profile') }}">{{ __('messages.myprofile') }}</a>
                         </li>
                         @role('admin')
                             <li>
-                                <a class="dropdown-item d-flex justify-content-between align-items-center"
+                                <a id="link-settings" class="dropdown-item d-flex justify-content-between align-items-center"
                                     href="{{ route('backend.settings') }}">
                                     @lang('settings.title') <i class="fa-solid fa-gear"></i>
                                 </a>

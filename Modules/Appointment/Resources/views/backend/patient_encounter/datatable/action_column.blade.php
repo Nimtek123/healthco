@@ -9,7 +9,7 @@
 @if(setting('view_patient_soap') == 1)
     <a href="{{route("backend.patient-record", ['id' => $data->id])}}" data-type="ajax"  class='btn text-info p-0 fs-5'  data-bs-toggle="tooltip" title="{{ __('clinic.appointment_patient_records') }}"><i class="ph ph-notepad align-middle"></i></a>
 @endif
-    <a href="{{route("backend.appointments.destroy", $data->id)}}" id="delete-{{$module_name}}-{{$data->id}}" class="btn text-danger p-0 fs-5" data-type="ajax" data-method="DELETE" data-token="{{csrf_token()}}" data-bs-toggle="tooltip" title="{{__('Delete')}}" data-confirm="{{ __('messages.are_you_sure?', ['form' => ($data->user->full_name ?? default_user_name()), 'module' => __('appointment.patient_encounter')]) }}"><i class="ph ph-trash align-middle"></i></a>
+    <a href="{{route("backend.appointments.destroy", $data->id)}}" id="delete-{{$module_name}}-{{$data->id}}" class="btn text-danger p-0 fs-5" data-type="ajax" data-method="DELETE" data-token="{{csrf_token()}}" data-bs-toggle="tooltip" title="{{__('messages.delete')}}" data-confirm="{{ __('messages.are_you_sure?', ['form' => ($data->user->full_name ?? default_user_name()), 'module' => __('appointment.patient_encounter')]) }}"><i class="ph ph-trash align-middle"></i></a>
 
 
 @if($customform)

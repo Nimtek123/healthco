@@ -44,11 +44,13 @@
     </div>
 
     <!-- Buttons -->
+    @if ($data['status'] != 0)
     <div class="d-grid d-md-flex gap-3 p-3 justify-content-end">
         <button id="submit-button" class="btn btn-secondary" type="submit">
             {{ __('messages.save') }}
         </button>
     </div>
+    @endif
 </form>
 
 @push('after-scripts')

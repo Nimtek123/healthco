@@ -49,13 +49,14 @@ class ClinicsCategoryController extends Controller
         ];
         $module_name = $this->module_name;
         $type = $request->type;
-        $parentcategory = ClinicsCategory::whereNotNull('parent_id')->get();
+        $categoryId = $request->get('parent_id'); 
+        $parentcategory = ClinicsCategory::whereNull('parent_id')->get();
         $data = RequestService::where('id', $request->id)->first();
         // if ($data !== null) {
         //     $data->is_status = 'accept';
         //     $data->save();
         // }
-        $vendor = User::role(['vendor'])->get();
+        $vendor = User::role(['vendor'])->where('status', 1)->where('is_banned', 0)->get();
         $columns = CustomFieldGroup::columnJsonValues(new ClinicsCategory());
         $customefield = CustomField::exportCustomFields(new ClinicsCategory());
         $export_import = true;
@@ -89,7 +90,7 @@ class ClinicsCategoryController extends Controller
             ];
             sendNotificationOnBookingUpdate('accept_request_service', $notification_data);
         }
-        return view('clinic::backend.categories.index_datatable', compact('module_action', 'parentcategory', 'module_name', 'filter', 'data', 'vendor', 'columns', 'customefield', 'export_import', 'export_columns', 'export_url', 'type'));
+        return view('clinic::backend.categories.index_datatable', compact('module_action', 'parentcategory', 'module_name', 'filter', 'data', 'vendor', 'columns', 'customefield', 'export_import', 'export_columns', 'export_url', 'type','categoryId'));
 
         // return view('clinic::backend.categories.index_datatable', compact('module_name', 'filter', 'module_action', 'columns', 'customefield'));
     }
@@ -398,28 +399,35 @@ class ClinicsCategoryController extends Controller
      */
     public function store(ClinicsCategoryRequest $request)
     {
-        $data = $request->except('file_url');
-        $data['slug'] = strtolower(Str::slug($request->name, '-'));
-        $query = ClinicsCategory::create($data);
-        $RequestService = RequestService::where('name', $query->name)->first();
-        if ($RequestService !== null) {
-            $RequestService->is_status = 'accept';
-            $RequestService->save();
-        }
-        if ($request->custom_fields_data) {
-            $query->updateCustomFieldData(json_decode($request->custom_fields_data));
-        }
+        try {
+            $data = $request->except('file_url');
+            $data['slug'] = strtolower(Str::slug($request->name, '-'));
+            $query = ClinicsCategory::create($data);
+            $RequestService = RequestService::where('name', $query->name)->first();
+            if ($RequestService !== null) {
+                $RequestService->is_status = 'accept';
+                $RequestService->save();
+            }
+            if ($request->custom_fields_data) {
+                $query->updateCustomFieldData(json_decode($request->custom_fields_data));
+            }
 
-        if ($request->hasFile('file_url')) {
-            storeMediaFile($query, $request->file('file_url'));
-        }
+            if ($request->hasFile('file_url')) {
+                storeMediaFile($query, $request->file('file_url'));
+            }
 
-        $message = __('messages.create_form', ['form' => __('category.singular_title')]);
+            $message = __('messages.create_form', ['form' => __('category.singular_title')]);
 
-        if ($request->is('api/*')) {
-            return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
-        } else {
-            return response()->json(['message' => $message, 'status' => true], 200);
+            return response()->json([
+                'status' => true,
+                'message' => $message,
+                'data' => $query
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error creating category: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -456,41 +464,53 @@ class ClinicsCategoryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(ClinicsCategoryRequest $request, $id)
     {
-        $query = ClinicsCategory::findOrFail($id);
+        try {
+            $query = ClinicsCategory::findOrFail($id);
+            
+            // Log the update operation for debugging
+            \Log::info('Updating category', [
+                'id' => $id,
+                'original_name' => $query->name,
+                'new_name' => $request->name,
+                'request_data' => $request->except('file_url')
+            ]);
 
-        $data = $request->except('file_url');
+            $data = $request->except('file_url');
+            
+            // Regenerate slug if name has changed
+            if ($request->has('name') && $query->name !== $request->name) {
+                $data['slug'] = strtolower(Str::slug($request->name, '-'));
+            }
 
-        $query->update($data);
+            $query->update($data);
 
+            if ($request->custom_fields_data) {
+                $query->updateCustomFieldData(json_decode($request->custom_fields_data));
+            }
 
-        if ($request->custom_fields_data) {
-            $query->updateCustomFieldData(json_decode($request->custom_fields_data));
-        }
+            if ($request->hasFile('file_url')) {
+                storeMediaFile($query, $request->file('file_url'));
+            }
 
-        if ($request->hasFile('file_url')) {
-            storeMediaFile($query, $request->file('file_url'));
-        }
-
-        if ($request->is('api/*')) {
-            if ($request->file_url && $request->file_url == null) {
+            // Remove image if requested
+            if ($request->input('remove_image') == '1') {
                 $query->clearMediaCollection('file_url');
             }
-        }
-        else{
-            if ($request->file_url == null) {
-                $query->clearMediaCollection('file_url');
-            }
-        }
 
+            $message = __('messages.update_form', ['form' => __('category.singular_title')]);
 
-        $message = __('messages.update_form', ['form' => __('category.singular_title')]);
-
-        if ($request->is('api/*')) {
-            return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
-        } else {
-            return response()->json(['message' => $message, 'status' => true], 200);
+            return response()->json([
+                'status' => true,
+                'message' => $message,
+                'data' => $query
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error updating category: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -523,5 +543,47 @@ class ClinicsCategoryController extends Controller
         $customefield = CustomField::exportCustomFields(new ClinicsCategory());
         $type = $request->type;
         return view('clinic::backend.categories.index_datatable', compact('module_action', 'filter', 'customefield', 'columns', 'parentcategory', 'data', 'type'));
+    }
+
+    /**
+     * Get parent categories for AJAX requests
+     */
+    public function parentCategories()
+    {
+        try {
+            $parentCategories = ClinicsCategory::whereNull('parent_id')
+                ->select('id', 'name')
+                ->get();
+
+            return response()->json([
+                'status' => true,
+                'data' => $parentCategories
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching parent categories: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get custom fields for AJAX requests
+     */
+    public function customFields()
+    {
+        try {
+            $customFields = CustomField::exportCustomFields(new ClinicsCategory());
+
+            return response()->json([
+                'status' => true,
+                'data' => $customFields
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Error fetching custom fields: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

@@ -111,20 +111,21 @@
                                 <div class="d-flex justify-content-between align-items-center mt-2 mb-3" >
                                     <h6 class="m-0"> {{ booking.service_name }}</h6>
 
-                                    <h6 class="m-0">{{ formatCurrencyVue(booking.service_price) }}</h6>
+                                    <h6 class="m-0">{{ formatCurrencyVue(booking.price) }}</h6>
                                     
                                 </div>
 
-                                <div class="d-flex justify-content-between align-items-center mt-2 mb-3" >
-                                    <span v-if="booking.discount_type && booking.discount_value !== null">
-    <span v-if="booking.discount_type == 'percentage'">
-        ({{ booking.discount_value ?? 0 }} %)
-    </span>
-    <span v-else>
-        ({{ formatCurrencyVue(serviceItem?.discount_value ?? 0) }})
-    </span>
-</span>
-
+                                <div class="d-flex justify-content-between align-items-center mt-2 mb-3" v-if="booking.discount_type && booking.discount_value !== null && booking.discount_amount > 0">
+                                    <h6 class="m-0">
+                                        Discount 
+                                        <span v-if="booking.discount_type == 'percentage'">
+                                            ({{ booking.discount_value ?? 0 }}%)
+                                        </span>
+                                        <span v-else>
+                                            ({{ formatCurrencyVue(booking.discount_value ?? 0) }})
+                                        </span>
+                                    </h6>
+                                    <h6 class="m-0 text-danger">- {{ formatCurrencyVue(booking.discount_amount) }}</h6>
                                 </div>
 
                                 <div class="d-flex justify-content-between align-items-center mt-2 mb-3" >
@@ -137,15 +138,18 @@
                             </div>
                         
                             <h6 class="text-primary text-uppercase fw-bold mb-3">Taxes</h6> 
-                            <template v-if="booking.tax">
+                            <template v-if="booking.tax_data && booking.tax_data.length">
                                 <div class="d-flex align-items-center justify-content-between mb-1" v-for="(tax, index) in booking.tax_data" :key="index">
-                                    <template v-if="tax.tax_type == 'percent'">
-                                        <h6>{{ tax.title }} ({{  tax.tax_value+'%' }}) : </h6>
-                                        <h6>+  {{formatCurrencyVue( tax.amount) }}</h6>
-                                    </template>
-                                    <template v-else>
-                                        <p>{{ tax.title }} ( {{ currency_symbol }} {{  tax.tax_value}} ) : </p>
-                                        <h6>+ {{ formatCurrencyVue(tax.amount) }}</h6>
+                                    <!-- Hide VAT tax for quick bookings -->
+                                    <template v-if="!tax.title.toLowerCase().includes('vat')">
+                                        <template v-if="tax.type === 'percent'">
+                                            <h6>{{ tax.title }} ({{ tax.value + '%' }}) :</h6>
+                                            <h6>+ {{ Number(tax.amount).toFixed(2) }}</h6>
+                                        </template>
+                                        <template v-else>
+                                            <p>{{ tax.title }} ( {{ tax.value }} ) :</p>
+                                            <h6>+ {{ Number(tax.amount).toFixed(2) }}</h6>
+                                        </template>
                                     </template>
                                 </div>
                             </template>

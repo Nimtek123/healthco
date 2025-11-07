@@ -141,6 +141,12 @@
 
     <script>
       {!! setting('custom_js_block') !!}
+
+      // Force full page reload on language change
+      $(document).on('click', 'a[href*="language/"]', function (e) {
+          e.preventDefault();
+          window.location.href = $(this).attr('href');
+      });
     </script>
 
 </body>

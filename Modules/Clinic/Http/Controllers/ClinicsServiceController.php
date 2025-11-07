@@ -126,51 +126,58 @@ class ClinicsServiceController extends Controller
     }
     public function index_list(Request $request)
     {
-
         $category_id = $request->category_id;
-
+        
         $data = ClinicsService::SetRole(auth()->user())->with('category', 'sub_category', 'doctor_service', 'ClinicServiceMapping', 'systemservice');
-
+        
         if (isset($category_id)) {
             $data->where('category_id', $category_id);
         }
-
-
+        
+        
         if ($request->has('clinicId') && $request->clinicId) {
             $clinic_id = $request->clinicId;
             $data->whereHas('ClinicServiceMapping', function ($query) use ($clinic_id) {
                 $query->where('clinic_id', $clinic_id);
             });
         }
-
+        
         if ($request->has('doctorId') && $request->doctorId) {
             $doctor_id = $request->doctorId;
             $data->whereHas('doctor_service', function ($query) use ($doctor_id) {
                 $query->where('doctor_id', $doctor_id);
             });
         }
-
+        
+        // Support snake_case doctor_id parameter (from appointment form)
+        if ($request->has('doctor_id') && $request->doctor_id) {
+            $doctor_id = $request->doctor_id;
+            $data->whereHas('doctor_service', function ($query) use ($doctor_id) {
+                $query->where('doctor_id', $doctor_id);
+            });
+        }
+        
         if ($request->has('clinic_id')) {
             $clinicId = explode(",", $request->clinic_id);
             $data->whereHas('ClinicServiceMapping', function ($query) use ($clinicId) {
                 $query->whereIn('clinic_id', $clinicId);
             });
         }
-
+        
         if ($request->filled('encounter_id') && $request->encounter_id != null) {
-
+            
             $encounterDetails = PatientEncounter::where('id', $request->encounter_id)->with('appointment')->first();
-
+            
             if ($encounterDetails) {
                 $doctor_id = $encounterDetails->doctor_id;
                 $clinic_id = $encounterDetails->clinic_id;
                 $service_id = $request->service_id ?? null;
-
+                
                 // Fetch all services associated with the doctor and clinic
                 $services = DoctorServiceMapping::where('doctor_id', $doctor_id)
-                    ->where('clinic_id', $clinic_id)
-                    ->pluck('service_id');
-
+                ->where('clinic_id', $clinic_id)
+                ->pluck('service_id');
+                
                 if ($services->isNotEmpty()) {
                     $data->whereIn('id', $services);
                     if ($service_id != null) {
@@ -178,10 +185,11 @@ class ClinicsServiceController extends Controller
                     }
                 }
             }
-
+            
         }
-
+        
         $query_data = $data->get();
+        // dd($query_data);
 
         $data = [];
 
@@ -204,45 +212,120 @@ class ClinicsServiceController extends Controller
     {
         $service_charge = 0;
         $discount_amount = 0;
-
+        $inclusive_tax_data = [];
+        $inclusive_tax_amount = 0;
+        $is_inclusive_tax = false;
+        
         if ($request->has(key: 'service_id') && $request->has('doctor_id')) {
             $serviceId = $request->service_id;
             $doctorId = $request->doctor_id;
-
+            
             $data = ClinicsService::where('id', $serviceId)
-                ->with([
-                    'doctor_service' => function ($query) use ($doctorId) {
-                        $query->where('doctor_id', $doctorId);
-                    }
+            ->with([
+                'doctor_service' => function ($query) use ($doctorId) {  
+                    $query->where('doctor_id', $doctorId);
+                }
                 ])
                 ->first();
-
-            if ($data && $data->doctor_service->isNotEmpty()) {
-                $doctorService = $data->doctor_service->first();
-                $service_charge = $doctorService->charges;
-
-                if ($data->discount == 1) {
-
+                
+                if ($data && $data->doctor_service->isNotEmpty()) {
+                    $doctorService = $data->doctor_service->first();
+                    $service_charge = $doctorService->charges;
+                    
+                    // First, check if inclusive tax is enabled and calculate it on base price
+                    if ($data->is_inclusive_tax == 1 && $data->inclusive_tax) {
+                        $is_inclusive_tax = true;
+                        $inclusive_tax_json = json_decode($data->inclusive_tax, true);
+                        
+                        if ($inclusive_tax_json) {
+                            foreach ($inclusive_tax_json as $tax) {
+                                $tax_amount = 0;
+                                if ($tax['type'] == 'percent') {
+                                    $tax_amount = $service_charge * $tax['value'] / 100;
+                                } elseif ($tax['type'] == 'fixed') {
+                                    $tax_amount = $tax['value'];
+                                }
+                                
+                                $inclusive_tax_amount += $tax_amount;
+                                $inclusive_tax_data[] = [
+                                    'title' => $tax['title'] ?? 'Tax',
+                                    'type' => $tax['type'],
+                                    'value' => $tax['value'],
+                                    'amount' => round($tax_amount, 2)
+                                ];
+                            }
+                        }
+                        
+                        // Add inclusive tax to service charge (base + inclusive tax)
+                        $service_charge = $service_charge + $inclusive_tax_amount;
+                    }
+                    
+                    // Now apply discount on the price that includes inclusive tax
                     if ($data->discount == 1) {
-
                         $discount_amount = ($data->discount_type == 'percentage')
-                            ? $service_charge * $data->discount_value / 100
-                            : $data->discount_value;
-
+                        ? $service_charge * $data->discount_value / 100
+                        : $data->discount_value;
+                        
                         $service_charge = $service_charge - $discount_amount;
+                    } else {
+                        $discount_amount = 0;
+                    }
+                }else{
+                    $service_charge = $data->charges ?? 0;
+                    if ($data->is_inclusive_tax == 1 && $data->inclusive_tax) {
+                        $is_inclusive_tax = true;
+                        $inclusive_tax_json = json_decode($data->inclusive_tax, true);
+                        
+                        if ($inclusive_tax_json) {
+                            foreach ($inclusive_tax_json as $tax) {
+                                $tax_amount = 0;
+                                if ($tax['type'] == 'percent') {
+                                    $tax_amount = $service_charge * $tax['value'] / 100;
+                                } elseif ($tax['type'] == 'fixed') {
+                                    $tax_amount = $tax['value'];
+                                }
+                                
+                                $inclusive_tax_amount += $tax_amount;
+                                $inclusive_tax_data[] = [
+                                    'title' => $tax['title'] ?? 'Tax',
+                                    'type' => $tax['type'],
+                                    'value' => $tax['value'],
+                                    'amount' => round($tax_amount, 2)
+                                ];
+                            }
+                        }
+                        
+                        // Add inclusive tax to service charge (base + inclusive tax)
+                        $service_charge = $service_charge + $inclusive_tax_amount;
+                    }
+                    
+                    // Now apply discount on the price that includes inclusive tax
+                    if ($data->discount == 1) {
+                        $discount_amount = ($data->discount_type == 'percentage')
+                        ? $service_charge * $data->discount_value / 100
+                        : $data->discount_value;
+                        
+                        $service_charge = $service_charge - $discount_amount;
+                    } else {
+                        $discount_amount = 0;
                     }
                 }
-            }
         }
-
-        $data=[
+        
+        $response_data = [
             'service_charge' => $service_charge,
-            'inclusive_tax_data' => json_decode($data->inclusive_tax,true) ?? [],
+            'inclusive_tax_data' => $inclusive_tax_data,
+            'inclusive_tax_amount' => $inclusive_tax_amount,
+            'is_inclusive_tax' => $is_inclusive_tax,
             'discount' => $discount_amount ?? 0,
-            'base_price' => isset($doctorService) ? $doctorService->charges : 0
+            'discount_amount' => $discount_amount ?? 0,
+            'base_price' => isset($doctorService) ? $doctorService->charges : $data->charges ?? 0,
+            'tax_type' => isset($data) ? $data->tax_type ?? 'exclusive' : 'exclusive',
+            'discount_type' => isset($data) ? $data->discount_type : null,
+            'discount_value' => isset($data) ? $data->discount_value : null
         ];
 
-        return response()->json($data);
+        return response()->json($response_data);
     }
 
     /* category wise service list */
@@ -295,12 +378,13 @@ class ClinicsServiceController extends Controller
 
     public function index_data(Datatables $datatable, Request $request)
     {
+         
         $userId = auth()->id();
         $user = auth()->user();
         $module_name = $this->module_name;
 
         $query = ClinicsService::SetRole($user)
-            ->with('category', 'sub_category', 'doctor_service', 'ClinicServiceMapping', 'systemservice')
+            ->with('category', 'sub_category', 'doctor_service', 'ClinicServiceMapping', 'systemservice', 'vendor')
             ->withCount(['doctor_service']);
 
         if ($user->hasRole('doctor')) {
@@ -410,6 +494,12 @@ class ClinicsServiceController extends Controller
                     $q->where('name', 'LIKE', '%' . $keyword . '%');
                 });
             })
+            ->filterColumn('vendor_id', function ($query, $keyword) {
+                $query->whereHas('vendor', function ($q) use ($keyword) {
+                    $q->where('first_name', 'LIKE', '%' . $keyword . '%')
+                      ->orWhere('last_name', 'LIKE', '%' . $keyword . '%');
+                });
+            })
             ->editColumn('doctor', function ($data) use ($user) {
                 if ($user->hasRole('doctor')) {
                     $data->doctor_service_count = $data->doctor_service->where('doctor_id', $user->id)->count();
@@ -450,16 +540,121 @@ class ClinicsServiceController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+    // public function store(ClinicsServiceRequest $request)
+    // {
+    // //  dd($request->all());
+    //     $data = $request->except('file_url');
+    //     $clinicid = $request->clinic_id;
+    //     if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
+    //         $data['vendor_id'] = $request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id;
+    //     } elseif (auth()->user()->hasRole('receptionist')) {
+    //         $vendor_id = Receptionist::where('receptionist_id', auth()->user()->id)
+    //             ->whereHas('clinics', function ($query) use ($clinicid) {
+    //                 $query->where('clinic_id', $clinicid);
+    //             })
+    //             ->pluck('vendor_id')
+    //             ->first();
+    //         $data['vendor_id'] = $vendor_id;
+    //     } else {
+    //         $data['vendor_id'] = auth()->user()->id;
+    //     }
+    //     if ($request->has('system_service_id') && $request->system_service_id != null) {
+    //         $systemService = SystemService::where('id', $data['system_service_id'])->first();
+    //         $data['name'] = $systemService->name;
+    //     }
+
+    //      if($data['discount']==0){
+
+    //          $data['discount_value']=0;
+    //          $data['discount_type']=null;
+    //          $data['service_discount_price'] = $data['charges'];
+    //      }else{
+    //         $data['discount_price'] = $data['discount_type'] == 'percentage' ? $data['charges'] * $data['discount_value'] / 100 : $data['discount_value'];
+    //         $data['service_discount_price'] = $data['charges'] - $data['discount_price'];
+    //      }
+    //     $inclusive_tax_price = $this->inclusiveTaxPrice($data);
+
+    //     $data['inclusive_tax'] =  $inclusive_tax_price['inclusive_tax'];
+    //     $data['inclusive_tax_price'] = $inclusive_tax_price['inclusive_tax_price'];
+
+
+    //     $query = ClinicsService::create($data);
+
+    //     if ($request->has('clinic_id') && $request->clinic_id != null) {
+
+    //         $clinic_ids = explode(',', $request->clinic_id);
+
+    //         foreach ($clinic_ids as $value) {
+
+    //             $service_mapping_data = [
+
+    //                 'service_id' => $query['id'],
+    //                 'clinic_id' => $value,
+
+    //             ];
+
+    //             ClinicServiceMapping::create($service_mapping_data);
+    //         }
+    //     }
+    //     if ($request->has('doctor_id') && $request->doctor_id != null && $request->has('clinic_id') && $request->clinic_id != null) {
+
+    //         $inclusive_tax_price = $this->inclusiveTaxPrice($query);
+    //         $query['inclusive_tax_price'] = $inclusive_tax_price['inclusive_tax_price'];
+
+    //         $service_mapping = [
+    //             'service_id' => $query['id'],
+    //             'clinic_id' => $request->clinic_id,
+    //             'doctor_id' => $request->doctor_id,
+    //             'charges' => $query['charges'] ?? 0,
+    //             'inclusive_tax_price' => $query['inclusive_tax_price'] ?? 0,
+    //         ];
+
+    //         DoctorServiceMapping::updateOrCreate(
+    //             [
+    //                 'service_id' => $query['id'],
+    //                 'clinic_id' => $request->clinic_id,
+    //                 'doctor_id' => $request->doctor_id
+    //             ],
+    //             $service_mapping
+    //         );
+
+    //     }
+    //     if ($request->custom_fields_data) {
+    //         $query->updateCustomFieldData(json_decode($request->custom_fields_data));
+    //     }
+
+    //     if ($request->hasFile('file_url')) {
+    //         storeMediaFile($query, $request->file('file_url'));
+    //     }
+
+    //     $message = __('messages.create_form', ['form' => __('service.singular_title')]);
+
+    //     if ($request->is('api/*')) {
+    //         return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
+    //     } else {
+    //         return response()->json(['message' => $message, 'status' => true], 200);
+    //     }
+    // }
     public function store(ClinicsServiceRequest $request)
     {
+        // dd($request->all());
         $data = $request->except('file_url');
-        $clinicid = $request->clinic_id;
+
+        // Normalize type/service_type
+        if (isset($data['service_type']) && empty($data['type'])) {
+            $data['type'] = $data['service_type'];
+        }
+        if (isset($data['type']) && empty($data['service_type'])) {
+            $data['service_type'] = $data['type'];
+        }
+        $clinicIds = $request->clinic_id; // already array (because clinic_id[] in form)
+
         if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
             $data['vendor_id'] = $request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id;
         } elseif (auth()->user()->hasRole('receptionist')) {
             $vendor_id = Receptionist::where('receptionist_id', auth()->user()->id)
-                ->whereHas('clinics', function ($query) use ($clinicid) {
-                    $query->where('clinic_id', $clinicid);
+                ->whereHas('clinics', function ($query) use ($clinicIds) {
+                    $query->whereIn('clinic_id', (array) $clinicIds); // ✅ use array
                 })
                 ->pluck('vendor_id')
                 ->first();
@@ -467,69 +662,68 @@ class ClinicsServiceController extends Controller
         } else {
             $data['vendor_id'] = auth()->user()->id;
         }
-        if ($request->has('system_service_id') && $request->system_service_id != null) {
-            $systemService = SystemService::where('id', $data['system_service_id'])->first();
-            $data['name'] = $systemService->name;
+
+        if ($request->filled('system_service_id')) {
+            $systemService = SystemService::find($data['system_service_id']);
+            if ($systemService) {
+                $data['name'] = $systemService->name;
+            }
         }
-
-         if($data['discount']==0){
-
-             $data['discount_value']=0;
-             $data['discount_type']=null;
-             $data['service_discount_price'] = $data['charges'];
-         }else{
-            $data['discount_price'] = $data['discount_type'] == 'percentage' ? $data['charges'] * $data['discount_value'] / 100 : $data['discount_value'];
-            $data['service_discount_price'] = $data['charges'] - $data['discount_price'];
-         }
         $inclusive_tax_price = $this->inclusiveTaxPrice($data);
-
-        $data['inclusive_tax'] =  $inclusive_tax_price['inclusive_tax'];
+        $data['inclusive_tax'] = $inclusive_tax_price['inclusive_tax'];
         $data['inclusive_tax_price'] = $inclusive_tax_price['inclusive_tax_price'];
 
+        // ✅ Handle discount safely
+        if (!isset($data['discount']) || $data['discount'] == 0) {
+            $data['discount'] = 0;
+            $data['discount_value'] = 0;
+            $data['discount_type'] = null;
+            $data['service_discount_price'] = $data['charges'] + $data['inclusive_tax_price'];
+        } else {
+            $data['discount_price'] = $data['discount_type'] == 'percentage'
+                ? $data['charges'] * $data['discount_value'] / 100
+                : $data['discount_value'];
+
+            $data['service_discount_price'] = ($data['charges'] + $data['inclusive_tax_price']) - $data['discount_price'];
+        }
+
+        // Tax calculation
+        
 
         $query = ClinicsService::create($data);
 
-        if ($request->has('clinic_id') && $request->clinic_id != null) {
-
-            $clinic_ids = explode(',', $request->clinic_id);
-
-            foreach ($clinic_ids as $value) {
-
-                $service_mapping_data = [
-
-                    'service_id' => $query['id'],
-                    'clinic_id' => $value,
-
-                ];
-
-                ClinicServiceMapping::create($service_mapping_data);
+        // ✅ Save service → clinic mappings (for both in_clinic and online types)
+        if ($request->has('clinic_id') && is_array($clinicIds)) {
+            foreach ($clinicIds as $value) {
+                ClinicServiceMapping::create([
+                    'service_id' => $query->id,
+                    'clinic_id'  => $value,
+                ]);
             }
         }
-        if ($request->has('doctor_id') && $request->doctor_id != null && $request->has('clinic_id') && $request->clinic_id != null) {
 
-            $inclusive_tax_price = $this->inclusiveTaxPrice($query);
-            $query['inclusive_tax_price'] = $inclusive_tax_price['inclusive_tax_price'];
+        // ✅ Save doctor → service mappings for each clinic
+        if (($query->type ?? 'in_clinic') === 'in_clinic' && $request->filled('doctor_id') && is_array($clinicIds)) {
+            foreach ($clinicIds as $value) {
+                $inclusive_tax_price = $this->inclusiveTaxPrice($query);
+                $query['inclusive_tax_price'] = $inclusive_tax_price['inclusive_tax_price'];
 
-            $service_mapping = [
-                'service_id' => $query['id'],
-                'clinic_id' => $request->clinic_id,
-                'doctor_id' => $request->doctor_id,
-                'charges' => $query['charges'] ?? 0,
-                'inclusive_tax_price' => $query['inclusive_tax_price'] ?? 0,
-            ];
-
-            DoctorServiceMapping::updateOrCreate(
-                [
-                    'service_id' => $query['id'],
-                    'clinic_id' => $request->clinic_id,
-                    'doctor_id' => $request->doctor_id
-                ],
-                $service_mapping
-            );
-
+                DoctorServiceMapping::updateOrCreate(
+                    [
+                        'service_id' => $query->id,
+                        'clinic_id'  => $value,
+                        'doctor_id'  => $request->doctor_id,
+                    ],
+                    [
+                        'charges'            => $query->charges ?? 0,
+                        'inclusive_tax_price'=> $query->inclusive_tax_price ?? 0,
+                    ]
+                );
+            }
         }
-        if ($request->custom_fields_data) {
-            $query->updateCustomFieldData(json_decode($request->custom_fields_data));
+
+        if ($request->filled('custom_fields_data')) {
+            $query->updateCustomFieldData(json_decode($request->custom_fields_data, true));
         }
 
         if ($request->hasFile('file_url')) {
@@ -538,12 +732,9 @@ class ClinicsServiceController extends Controller
 
         $message = __('messages.create_form', ['form' => __('service.singular_title')]);
 
-        if ($request->is('api/*')) {
-            return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
-        } else {
-            return response()->json(['message' => $message, 'status' => true], 200);
-        }
+        return response()->json(['message' => $message, 'status' => true], 200);
     }
+
 
     /**
      * Show the specified resource.
@@ -563,18 +754,20 @@ class ClinicsServiceController extends Controller
     public function edit($id)
     {
         $data = ClinicsService::with('ClinicServiceMapping')->findOrFail($id);
-
         if (!is_null($data)) {
             $custom_field_data = $data->withCustomFields();
             $data['custom_field_data'] = collect($custom_field_data->custom_fields_data)
-                ->filter(function ($value) {
-                    return $value !== null;
-                })
-                ->toArray();
+            ->filter(function ($value) {
+                return $value !== null;
+            })
+            ->toArray();
         }
+        // dd($data );
 
+        $data['clinic_admin_id'] = $data->vendor_id ?? null;
         $data['clinic_id'] = $data->ClinicServiceMapping->pluck('clinic_id') ?? [];
         $data['file_url'] = $data->file_url;
+//  dd($data['clinic_id']);
 
         return response()->json(['data' => $data, 'status' => true]);
     }
@@ -582,62 +775,142 @@ class ClinicsServiceController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(ClinicsServiceRequest $request, $id)
     {
+        // Debug: Log the incoming request data
+        \Log::info('Service Update Request', [
+            'id' => $id,
+            'request_data' => $request->except('file_url'),
+            'clinic_id' => $request->clinic_id,
+            'vendor_id' => $request->vendor_id,
+            'system_service_id' => $request->system_service_id,
+            'file_url' => $request->file_url,
+            'has_file' => $request->hasFile('file_url')
+        ]);
+     
         $data = ClinicsService::findOrFail($id);
         $request_data = $request->except('file_url');
+
+        // Normalize type/service_type
+        if (isset($request_data['service_type']) && empty($request_data['type'])) {
+            $request_data['type'] = $request_data['service_type'];
+        }
+        if (isset($request_data['type']) && empty($request_data['service_type'])) {
+            $request_data['service_type'] = $request_data['type'];
+        }
+
         if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
             $request_data['vendor_id'] = $request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id;
         }
 
-        if($request_data['discount']==0){
+        // Handle system service update (like in store method)
+        if ($request->filled('system_service_id')) {
+            $systemService = SystemService::find($request_data['system_service_id']);
+            if ($systemService) {
+                $request_data['name'] = $systemService->name;
+                \Log::info('System Service Updated', [
+                    'old_name' => $data->name,
+                    'new_name' => $systemService->name,
+                    'system_service_id' => $request_data['system_service_id']
+                ]);
+            }
+        }
 
-            $request_data['discount_value']=0;
-            $request_data['discount_type']=null;
-            $request_data['service_discount_price'] = $request_data['charges'];
-        }else{
-            $request_data['discount_price'] = $request_data['discount_type'] == 'percentage' ? $request_data['charges'] * $request_data['discount_value'] / 100 : $request_data['discount_value'];
-            $request_data['service_discount_price'] = $request_data['charges'] - $request_data['discount_price'];
-         }
         $inclusive_tax_price = $this->inclusiveTaxPrice($request_data);
-
+// dd($inclusive_tax_price);
         $request_data['inclusive_tax'] = $inclusive_tax_price['inclusive_tax'];
         $request_data['inclusive_tax_price'] = $inclusive_tax_price['inclusive_tax_price'];
 
-        $data->update($request_data);
+        // Safely get discount and related fields, defaulting to 0 or null if not set
+        $discount = isset($request_data['discount']) ? $request_data['discount'] : 0;
+        $charges = isset($request_data['charges']) ? $request_data['charges'] : 0;
+        $discount_value = isset($request_data['discount_value']) ? $request_data['discount_value'] : 0;
+        $discount_type = isset($request_data['discount_type']) ? $request_data['discount_type'] : null;
 
-        if ($request->has('clinic_id') && $request->clinic_id != null) {
-            $clinic_ids = explode(',', $request->clinic_id);
-            $clinic_ids = array_map('intval', $clinic_ids);
-            ClinicServiceMapping::where('service_id', $data['id'])
-                ->whereIn('clinic_id', $clinic_ids)
-                ->forceDelete();
-            foreach ($clinic_ids as $value) {
-                $service_mapping_data = [
-                    'service_id' => $data['id'],
-                    'clinic_id' => $value,
-                ];
-
-                ClinicServiceMapping::create($service_mapping_data);
-            }
+        if ($discount == 0) {
+            $request_data['discount_value'] = 0;
+            $request_data['discount_type'] = null;
+            $request_data['service_discount_price'] = $charges + $inclusive_tax_price['inclusive_tax_price'];
+        } else {
+            $request_data['discount_price'] = ($discount_type == 'percentage')
+                ? $charges * $discount_value / 100
+                : $discount_value;
+            $request_data['service_discount_price'] = ($charges + $inclusive_tax_price['inclusive_tax_price']) - (isset($request_data['discount_price']) ? $request_data['discount_price'] : 0);
         }
+
+        
+// dd($request_data);
+        $data->update($request_data);
+        
+        // Debug: Log the updated data
+        \Log::info('Service Updated', [
+            'id' => $data->id,
+            'updated_data' => $data->fresh()->toArray()
+        ]);
+
+        // Save clinic mappings for both in_clinic and online types
+        if ($request->has('clinic_id') && $request->clinic_id != null) {
+            // Handle array or comma-separated string
+            $clinic_ids = is_array($request->clinic_id)
+                ? $request->clinic_id
+                : explode(',', $request->clinic_id);
+
+            $clinic_ids = array_filter(array_map('intval', $clinic_ids)); // Remove empty values
+
+            \Log::info('Clinic Mapping Update', [
+                'service_id' => $data->id,
+                'clinic_ids_received' => $request->clinic_id,
+                'clinic_ids_processed' => $clinic_ids,
+                'type' => $data->type
+            ]);
+
+            // Only update mappings if we have clinic_ids to save
+            if (!empty($clinic_ids)) {
+                // Remove ALL existing mappings for this service first
+                ClinicServiceMapping::where('service_id', $data->id)->delete();
+
+                // Create new mappings
+                foreach ($clinic_ids as $value) {
+                    ClinicServiceMapping::create([
+                        'service_id' => $data->id,
+                        'clinic_id'  => $value,
+                    ]);
+                }
+                
+                \Log::info('Clinic Mappings Saved', [
+                    'service_id' => $data->id,
+                    'count' => count($clinic_ids)
+                ]);
+            } else {
+                \Log::warning('No clinic IDs to save, existing mappings preserved', [
+                    'service_id' => $data->id
+                ]);
+            }
+        } else {
+            \Log::warning('clinic_id not provided in request', [
+                'service_id' => $data->id,
+                'has_clinic_id' => $request->has('clinic_id'),
+                'clinic_id_value' => $request->clinic_id
+            ]);
+        }
+
         if ($request->custom_fields_data) {
             $data->updateCustomFieldData(json_decode($request->custom_fields_data));
         }
 
-        if ($request->hasFile('file_url') && $request->file_url != null) {
-
+        // Handle file upload and removal
+        if ($request->hasFile('file_url')) {
+            // New file uploaded - store it
             storeMediaFile($data, $request->file('file_url'), 'file_url');
-        }
-
-        if ($request->is('api/*')) {
-            if ($request->file_url && $request->file_url == null) {
-                $data->clearMediaCollection('file_url');
-            }
-        } else {
-            if ($request->file_url == null) {
-                $data->clearMediaCollection('file_url');
-            }
+            \Log::info('New Image Uploaded', ['service_id' => $data->id]);
+        } elseif ($request->boolean('remove_image') || ($request->has('file_url') && ($request->file_url === null || $request->file_url === 'null' || $request->file_url === ''))) {
+            // Image was removed - clear the media collection
+            $data->clearMediaCollection('file_url');
+            \Log::info('Image Removed', ['service_id' => $data->id, 'remove_image_flag' => $request->boolean('remove_image'), 'file_url_value' => $request->file_url]);
+        } elseif ($request->has('file_url') && $request->file_url != null && $request->file_url !== 'null' && !$request->hasFile('file_url')) {
+            // Existing image URL sent as string - keep existing image (do nothing)
+            // This means the user didn't change the image
+            \Log::info('Image Preserved', ['service_id' => $data->id, 'image_url' => $request->file_url]);
         }
 
         $message = __('messages.update_form', ['form' => __('service.singular_title')]);
@@ -779,9 +1052,7 @@ class ClinicsServiceController extends Controller
 
     public function ServiceDetails(Request $request)
     {
-
         $serviceDetails = [];
-
 
         if ($request->filled('service_id') && $request->service_id != null && $request->filled('encounter_id') && $request->encounter_id != null) {
 
@@ -790,8 +1061,6 @@ class ClinicsServiceController extends Controller
             $doctor_id = $encounterDetails->doctor_id;
             $clinic_id = $encounterDetails->clinic_id;
 
-
-
             $serviceDetails = ClinicsService::where('id', $request->service_id)
                 ->with([
                     'doctor_service' => function ($query) use ($doctor_id, $clinic_id) {
@@ -799,27 +1068,53 @@ class ClinicsServiceController extends Controller
                             ->where('clinic_id', $clinic_id)->first();
                     }
                 ])->first();
-                $doctorService = $serviceDetails->doctor_service->first(); // because it's a relationship (hasMany or morphMany)
 
-                if ($doctorService) {
-                    $baseCharge = $doctorService->charges;
-                    $discountType = $serviceDetails->discount_type;
-                    $discountValue = $serviceDetails->discount_value;
+            $doctorService = $serviceDetails && $serviceDetails->doctor_service ? $serviceDetails->doctor_service->first() : null; // because it's a relationship (hasMany or morphMany)
 
-                    if ($discountType == 'percentage') {
-                        $finalCharge = $baseCharge - ($baseCharge * $discountValue / 100);
-                    } elseif ($discountType == 'fixed') {
-                        $finalCharge = $baseCharge - $discountValue;
-                    } else {
-                        $finalCharge = $baseCharge;
-                    }
+            // FIXED CALCULATION FLOW: Add inclusive tax BEFORE applying discount
+            // OLD FLOW (COMMENTED): Discount → Inclusive Tax
+            // NEW FLOW: Base Charge → Inclusive Tax → Discount
+            // This matches AppointmentTrait and BillingRecordTrait
+            
+            // Initialize variables to avoid undefined variable errors
+            $finalCharge = 0;
+            $final_inclusive_amount = 0;
 
-                    // Optional: ensure final charge is not negative
-                    $finalCharge = max($finalCharge, 0);
+            if ($doctorService) {
+                $baseCharge = $doctorService->charges;
+                $discountType = $serviceDetails->discount_type;
+                $discountValue = $serviceDetails->discount_value;
 
-                    $final_inclusive_amount_array = $this->calculate_inclusive_tax($finalCharge,$serviceDetails->inclusive_tax);
-                    $final_inclusive_amount = $final_inclusive_amount_array['total_inclusive_tax'];
+                // OLD CODE (COMMENTED): Discount was applied first, then inclusive tax
+                // if ($discountType == 'percentage') {
+                //     $finalCharge = $baseCharge - ($baseCharge * $discountValue / 100);
+                // } elseif ($discountType == 'fixed') {
+                //     $finalCharge = $baseCharge - $discountValue;
+                // } else {
+                //     $finalCharge = $baseCharge;
+                // }
+                // $final_inclusive_amount_array = $this->calculate_inclusive_tax($finalCharge, $serviceDetails->inclusive_tax);
+                // $final_inclusive_amount = $final_inclusive_amount_array['total_inclusive_tax'];
+
+                // NEW CODE: Step 1 - Calculate inclusive tax on BASE charge FIRST
+                $final_inclusive_amount_array = $this->calculate_inclusive_tax($baseCharge, $serviceDetails->inclusive_tax);
+                $final_inclusive_amount = $final_inclusive_amount_array['total_inclusive_tax'];
+                
+                // Step 2 - Add inclusive tax to base charge
+                $chargeWithInclusiveTax = $baseCharge + $final_inclusive_amount;
+                
+                // Step 3 - Apply discount on (base + inclusive tax)
+                if ($discountType == 'percentage') {
+                    $finalCharge = $chargeWithInclusiveTax - ($chargeWithInclusiveTax * $discountValue / 100);
+                } elseif ($discountType == 'fixed') {
+                    $finalCharge = $chargeWithInclusiveTax - $discountValue;
+                } else {
+                    $finalCharge = $chargeWithInclusiveTax;
                 }
+
+                // Optional: ensure final charge is not negative
+                $finalCharge = max($finalCharge, 0);
+            }
 
             $servicePricedata = [];
             if ($encounterDetails->appointment == null) {
@@ -846,7 +1141,7 @@ class ClinicsServiceController extends Controller
                 $totalTax = $serviceTax + $gstAmount;
                 $servicePricedata = [
                     'service_price' => optional($encounterDetails->appointment)->service_price,
-                    'doctor_charge_with_discount'=>$finalCharge,
+                    'doctor_charge_with_discount' => $finalCharge,
                     'service_amount' => optional($encounterDetails->appointment)->service_amount,
                     'total_amount' => optional($encounterDetails->appointment)->total_amount,
                     'duration' => optional($encounterDetails->appointment)->duration ?? 0,
@@ -860,32 +1155,30 @@ class ClinicsServiceController extends Controller
                 $service_amount = optional($encounterDetails->appointment)->service_amount;
                 $tax_data = [];
                 $taxes = json_decode(optional(optional($encounterDetails->appointment)->appointmenttransaction)->tax_percentage);
-                foreach ($taxes as $tax) {
-                    $amount = 0;
-                    if ($tax->type == 'percent') {
-                        $amount = ($tax->value / 100) * $service_amount;
-                    } else {
-                        $amount = $tax->value ?? 0;
+                if (is_array($taxes) || is_object($taxes)) {
+                    foreach ($taxes as $tax) {
+                        $amount = 0;
+                        if ($tax->type == 'percent') {
+                            $amount = ($tax->value / 100) * $service_amount;
+                        } else {
+                            $amount = $tax->value ?? 0;
+                        }
+                        $tax_data[] = [
+                            'title' => $tax->title,
+                            'value' => $tax->value,
+                            'type' => $tax->type,
+                            'amount' => (float) number_format($amount, 2),
+                            'tax_type' => $tax->tax_scope ?? $tax->tax_type,
+                        ];
                     }
-                    $tax_data[] = [
-                        'title' => $tax->title,
-                        'value' => $tax->value,
-                        'type' => $tax->type,
-                        'amount' => (float) number_format($amount, 2),
-                        'tax_type' => $tax->tax_scope ?? $tax->tax_type,
-                    ];
                 }
                 $serviceDetails['tax_data'] = $tax_data;
             }
 
-
             $serviceDetails['service_price_data'] = $servicePricedata;
-
         }
 
-
         return response()->json(['status' => true, 'data' => $serviceDetails]);
-
     }
     public function discountPrice(Request $request)
     {
@@ -919,5 +1212,42 @@ class ClinicsServiceController extends Controller
             'discount_amount' => $discountAmount,
         ]);
     }
+
+    public function initData()
+    {
+        try {
+            // Fetch Categories
+            $categories = ClinicsCategory::select('id', 'name')
+                ->whereNull('parent_id')
+                ->orderBy('name')
+                ->get();
+
+            // Fetch System Services
+            $systemServices = SystemService::select('id', 'name')
+                ->orderBy('name')
+                ->get();
+
+            // Fetch Clinic Admins
+            $clinicAdmins = user::select('id', \DB::raw("CONCAT(first_name, ' ', last_name) as name"))
+            ->where('user_type', 'vendor')
+            ->orderBy('first_name')
+            ->get();
+ 
+            return response()->json([
+                'categories' => $categories,
+                'systemServices' => $systemServices,
+                'clinicAdmins' => $clinicAdmins,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to load service form data',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+     
 
 }

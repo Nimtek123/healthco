@@ -9,8 +9,21 @@ return [
     'lbl_last_name' => 'اسم العائلة',
     'lbl_Email' => 'البريد الإلكتروني',
     'lbl_phone_number' => 'رقم الهاتف',
+    'lbl_old_password' => 'كلمة المرور القديمة',
+    'lbl_password' => 'كلمة المرور الجديدة',
+    'lbl_confirm_password' => 'تأكيد كلمة المرور الجديدة',
     'lbl_password' => 'كلمة المرور',
+    'lbl_old_password' => 'كلمة المرور القديمة',
     'lbl_confirm_password' => 'تأكيد كلمة المرور',
+
+    'lbl_old_password' => 'كلمة المرور القديمة',
+    'lbl_password' => 'كلمة المرور الجديدة',
+    'lbl_confirm_password' => 'تأكيد كلمة المرور الجديدة',
+
+    'lbl_password' => 'كلمة المرور',
+    'lbl_old_password' => 'كلمة المرور القديمة',
+    'lbl_confirm_password' => 'تأكيد كلمة المرور',
+
     'lbl_gender' => 'الجنس',
     'lbl_show_in_calender' => 'إظهار في التقويم',
     'lbl_is_manager' => 'مدير',
@@ -51,5 +64,18 @@ return [
     'change_password' => 'تغيير كلمة المرور',
     'lbl_phone_number_placeholder' => 'أدخل رقم الهاتف',
     'date_of_birth' => 'اختر تاريخ الميلاد',
+    'placeholder_oldpassword' => 'أدخل كلمة المرور القديمة',
+    'placeholder_newpassword' => 'أدخل كلمة المرور الجديدة',
+    'placeholder_confirmpassword' => 'أدخل تأكيد كلمة المرور الجديدة',
+    
+    // Validation Messages
+    'old_password_required' => 'كلمة المرور القديمة مطلوبة',
+    'new_password_required' => 'كلمة المرور الجديدة مطلوبة',
+    'confirm_password_required' => 'تأكيد كلمة المرور الجديدة مطلوب',
+    'password_min_length' => 'يجب أن تكون كلمة المرور 8 أحرف على الأقل',
+    'password_max_length' => 'يجب ألا تتجاوز كلمة المرور 14 حرفاً',
+    'password_complexity' => 'يجب أن تحتوي كلمة المرور على حرف كبير وحرف صغير ورقم ورمز خاص',
+    'password_not_same' => 'كلمة المرور الجديدة لا يمكن أن تكون نفس كلمة المرور القديمة',
+    'passwords_must_match' => 'يجب أن تتطابق كلمات المرور',
 
 ];

@@ -9,7 +9,7 @@
                 <div class="d-flex flex-wrap gap-3">
                     <x-backend.quick-action url="{{ route('backend.units.bulk_action') }}">
                         <div class="">
-                            <select name="action_type" class="form-control select2 col-12" id="quick-action-type"
+                            <select name="action_type" class="select2 form-select col-12" id="quick-action-type"
                                 style="width:100%">
                                 <option value="">{{ __('messages.no_action') }}</option>
                                 <option value="change-status">{{ __('messages.status') }}</option>
@@ -17,7 +17,7 @@
                             </select>
                         </div>
                         <div class="select-status d-none quick-action-field" id="change-status-action">
-                            <select name="status" class="form-control select2" id="status" style="width:100%">
+                            <select name="status" class="select2 form-select" id="status" style="width:100%">
                                 <option value="" selected>{{ __('messages.select_status') }}</option>
                                 <option value="1">{{ __('messages.active') }}</option>
                                 <option value="0">{{ __('messages.inactive') }}</option>
@@ -26,7 +26,7 @@
                     </x-backend.quick-action>
                     <div>
                         <button type="button" class="btn btn-Primary" data-modal="export">
-                        <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+                        <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
                         </button>
           {{--          <button type="button" class="btn btn-secondary" data-modal="import">--}}
           {{--            <i class="fa-solid fa-upload"></i> Import--}}
@@ -37,7 +37,7 @@
 
                     <div>
                         <div class="datatable-filter">
-                            <select name="column_status" id="column_status" class="select2 form-control"
+                            <select name="column_status" id="column_status" class="select2 form-select"
                                 data-filter="select" style="width: 100%">
                                 <option value="">{{__('messages.all')}}</option>
                                 <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>

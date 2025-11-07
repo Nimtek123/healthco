@@ -637,7 +637,7 @@ const title_color_data = ref({
     { label: 'Secondary', value: 'text-secondary' },
     { label: 'Warning', value: 'text-warning' },
     { label: 'Danger', value: 'text-danger' },
-    { label: 'Dark', value: 'text-dark' }
+    { label: 'Dark', value: 'heading-color' }
   ],
   closeOnSelect: true
 })

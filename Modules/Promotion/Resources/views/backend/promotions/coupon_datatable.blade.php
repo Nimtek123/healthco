@@ -9,7 +9,7 @@
                 <div class="d-flex flex-wrap gap-3">
                     <div>
                       <button type="button" class="btn btn-primary" data-modal="export">
-                      <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+                      <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
                       </button>
                     </div>
                 </div>

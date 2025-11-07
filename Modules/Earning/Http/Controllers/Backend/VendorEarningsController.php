@@ -63,6 +63,7 @@ class VendorEarningsController extends Controller
 
     public function index_data(DataTables $datatable)
     {
+        // dd('test');
         $module_name = $this->module_name;
 
         $query = User::select('users.*')

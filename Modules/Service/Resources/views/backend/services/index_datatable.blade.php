@@ -18,7 +18,7 @@
                             auth()->user()->can('delete_service'))
                         <x-backend.quick-action url="{{ route('backend.services.bulk_action') }}">
                             <div class="">
-                                <select name="action_type" class="form-control select2 col-12" id="quick-action-type"
+                                <select name="action_type" class="select2 form-select col-12" id="quick-action-type"
                                     style="width:100%">
                                     <option value="">{{ __('messages.no_action') }}</option>
                                     @can('edit_service')
@@ -30,7 +30,7 @@
                                 </select>
                             </div>
                             <div class="select-status d-none quick-action-field" id="change-status-action">
-                                <select name="status" class="form-control select2" id="status" style="width:100%">
+                                <select name="status" class="select2 form-select" id="status" style="width:100%">
                                     <option value="1" selected>{{ __('messages.active') }}</option>
                                     <option value="0">{{ __('messages.inactive') }}</option>
                                 </select>
@@ -39,7 +39,7 @@
                     @endif
                     <div>
                         <button type="button" class="btn btn-primary" data-modal="export">
-                        <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+                        <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
                         </button>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
 
                     <div>
                         <div class="datatable-filter">
-                            <select name="column_status" id="column_status" class="select2 form-control"
+                            <select name="column_status" id="column_status" class="select2 form-select"
                                 data-filter="select" style="width: 100%">
                                 <option value="">{{ __('messages.all') }}</option>
                                 <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>
@@ -82,6 +82,7 @@
             edit-title="{{ __('messages.edit') }} {{ __($module_title) }}"
             :customefield="{{ json_encode($customefield) }}">
         </service-form-offcanvas>
+        
         <assign-employee-form-offcanvas></assign-employee-form-offcanvas>
         <assign-service-provider-form-offcanvas></assign-service-provider-form-offcanvas>
         <gallery-form-offcanvas></gallery-form-offcanvas>
@@ -92,7 +93,7 @@
         </x-slot>
         <div class="form-group datatable-filter">
             <label class="form-label" for="column_category">{{ __('service.lbl_category') }}</label>
-            <select name="column_category" id="column_category" class="form-control select2" data-filter="select">
+            <select name="column_category" id="column_category" class="select2 form-select" data-filter="select">
                 <option value="">All Categories</option>
                 @foreach ($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -101,7 +102,7 @@
         </div>
         <div class="form-group datatable-filter">
             <label class="form-label" for="column_subcategory">{{ __('service.lbl_sub_category') }}</label>
-            <select name="column_subcategory" id="column_subcategory" class="form-control select2" data-filter="select">
+            <select name="column_subcategory" id="column_subcategory" class="select2 form-select" data-filter="select">
                 <option value="">All Sub-Categories</option>
                 @foreach ($subcategories as $subcategory)
                     <option value="{{ $subcategory->id }}">{{ $subcategory->name }}</option>

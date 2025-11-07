@@ -9,7 +9,7 @@
             @if(auth()->user()->can('delete_encounter') )
             <x-backend.quick-action url="{{ route('backend.observation.bulk_action') }}">
                 <div class="">
-                    <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
+                    <select name="action_type" class="select2 form-select col-12" id="quick-action-type" style="width:100%">
                         <option value="">{{ __('messages.no_action') }}</option>
                         @can('delete_encounter')
                         <option value="delete">{{ __('messages.delete') }}</option>
@@ -20,7 +20,7 @@
             @endif
             <div>
                 <button type="button" class="btn btn-primary" data-modal="export">
-                <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+                <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
                 </button>
                 {{-- <button type="button" class="btn btn-secondary" data-modal="import">--}}
                 {{-- <i class="fa-solid fa-upload"></i> Import--}}
@@ -33,7 +33,7 @@
                 <span class="input-group-text" id="addon-wrapping"><i class="fa-solid fa-magnifying-glass"></i></span>
                 <input type="text" class="form-control dt-search" placeholder="{{ __('messages.search') }}..." aria-label="Search" aria-describedby="addon-wrapping">
             </div>
-            <button class="btn btn-secondary d-flex align-items-center gap-1 btn-group" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample" id="filter-btn"><i class="ph ph-funnel"></i>{{__('messages.advance_filter')}}</button>
+            <!-- <button class="btn btn-secondary d-flex align-items-center gap-1 btn-group" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample" id="filter-btn"><i class="ph ph-funnel"></i>{{__('messages.advance_filter')}}</button> -->
 
              
            {{-- @hasPermission('add_encounter')
@@ -60,7 +60,7 @@
     </x-slot>
     <div class="form-group datatable-filter">
         <label class="form-label" for="template_name">{{ __('appointment.lbl_name') }}</label>
-        <select name="template_name" id="template_name" class="form-control select2" data-filter="select">
+        <select name="template_name" id="template_name" class="select2 form-select" data-filter="select">
             <option value="">{{ __('appointment.lbl_name') }}</option>
         </select>
     </div>

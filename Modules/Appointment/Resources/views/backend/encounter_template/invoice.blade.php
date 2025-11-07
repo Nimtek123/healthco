@@ -240,6 +240,7 @@
                     <td>{{ $data->other_details ?? '--' }}</td>
                 </tr>
             </table>
+            @if($data->signature !== null)
             <div class="d-flex gap-15">
                 <h5 class="m-0">{{ __('appointment.lbl_doctor_sign') }} : </h5>
                 <div>
@@ -247,7 +248,7 @@
                 </div>
 
             </div>
-
+            @endif
         </div>
     </div>
 </body>

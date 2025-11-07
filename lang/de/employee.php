@@ -9,6 +9,7 @@ return [
     'lbl_phone_number' => 'Telefonnummer',
     'lbl_password' => 'Passwort',
     'lbl_confirm_password' => 'Passwort bestätigen',
+    'lbl_old_password' => 'Altes Passwort',
     'lbl_gender' => 'Geschlecht',
     'lbl_show_in_calender' => 'Im Kalender anzeigen',
     'lbl_is_manager' => 'Ist Manager',
@@ -49,5 +50,24 @@ return [
     'change_password' => 'Passwort ändern',
     'lbl_phone_number_placeholder' => 'Geben Sie eine Telefonnummer ein',
     'date_of_birth' => 'Wählen Sie das Geburtsdatum',
-
+    
+    // Missing labels
+    'lbl_old_password' => 'Altes Passwort',
+    'lbl_password' => 'Neues Passwort',
+    'lbl_confirm_password' => 'Neues Passwort bestätigen',
+    
+    // Placeholder text
+    'placeholder_oldpassword' => 'Altes Passwort eingeben',
+    'placeholder_newpassword' => 'Neues Passwort eingeben',
+    'placeholder_confirmpassword' => 'Neues Passwort bestätigen',
+    
+    // Validation Messages
+    'old_password_required' => 'Altes Passwort ist erforderlich',
+    'new_password_required' => 'Neues Passwort ist erforderlich',
+    'confirm_password_required' => 'Passwort-Bestätigung ist erforderlich',
+    'password_min_length' => 'Passwort muss mindestens 8 Zeichen lang sein',
+    'password_max_length' => 'Passwort darf nicht mehr als 14 Zeichen haben',
+    'password_complexity' => 'Passwort muss mindestens einen Großbuchstaben, einen Kleinbuchstaben, eine Zahl und ein Sonderzeichen enthalten',
+    'password_not_same' => 'Neues Passwort kann nicht dasselbe wie das alte Passwort sein',
+    'passwords_must_match' => 'Passwörter müssen übereinstimmen',
 ];

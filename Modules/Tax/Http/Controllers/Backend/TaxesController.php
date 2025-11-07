@@ -108,6 +108,8 @@ class TaxesController extends Controller
             ];
         });
 
+        // dd($data);
+
         return response()->json($data);
     }
 

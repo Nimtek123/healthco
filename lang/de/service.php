@@ -70,4 +70,21 @@ return [
     'request_title' => 'Dienstleistungsanfrage',
     'request_service_status' => 'Status der Dienstleistungsanfrage aktualisiert',
     'lbl_request_status' => 'Status des Serviceantrags',
+    'inclusive_tax' => 'Inklusive Steuer',
+    'inclusive_taxes' => 'Inklusive Steuern',
+    'inclusive_tax_breakdown' => 'Aufschlüsselung der inklusiven Steuer',
+    'no_inclusive_taxes_applied' => 'Keine inklusiven Steuern angewendet',
+    'total_inclusive_tax' => 'Gesamte inklusive Steuer',
+    'with_inclusive_tax' => 'Mit inklusiver Steuer',
+    'view_inclusive_taxes' => 'Inklusive Steuern anzeigen',
+    'request_service' => 'Dienstleistungsanfrage',
+    
+    // Additional Service Form Messages
+    'file_selected' => 'Datei ausgewählt',
+    'preview' => 'Vorschau',
+    'unknown' => 'Unbekannt',
+    'something_went_wrong' => 'Etwas ist schief gelaufen!',
+    'advance_payment_amount_must_be_greater_than_zero' => 'Der Anzahlungsbetrag muss größer als Null sein *',
+    'description_must_not_exceed_250_characters' => 'Die Beschreibung darf 250 Zeichen nicht überschreiten',
+    'select_vendor_first' => 'Wählen Sie zuerst den Anbieter aus',
 ];

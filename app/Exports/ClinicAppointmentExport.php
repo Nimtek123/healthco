@@ -9,9 +9,12 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Modules\Appointment\Models\Appointment;
 use App\Models\Setting;
+use Modules\Currency\Models\Currency;
+use App\Exports\Traits\CurrencyFormatting;
 
 class ClinicAppointmentExport implements FromCollection, WithHeadings, WithCustomStartCell, WithEvents
 {
+    use CurrencyFormatting;
     public array $columns;
     public array $dateRange;
     public $exportDoctorId;
@@ -21,6 +24,38 @@ class ClinicAppointmentExport implements FromCollection, WithHeadings, WithCusto
         $this->columns = $columns;
         $this->dateRange = $dateRange;
         $this->exportDoctorId = $exportDoctorId;
+    }
+
+    /**
+     * Get the default currency for formatting amounts
+     */
+    private function getDefaultCurrency()
+    {
+        return Currency::getAllCurrency()->where('is_primary', 1)->first();
+    }
+
+    /**
+     * Format amount with currency symbol
+     */
+    private function formatAmount($amount)
+    {
+        $currency = $this->getDefaultCurrency();
+        if (!$currency || !$amount) {
+            return $amount;
+        }
+
+        $noOfDecimal = $currency->no_of_decimal;
+        $decimalSeparator = $currency->decimal_separator;
+        $thousandSeparator = $currency->thousand_separator;
+        $currencyPosition = $currency->currency_position;
+        $currencySymbol = $currency->currency_symbol;
+
+        // If amount is a whole number, don't show decimals
+        if (floor($amount) == $amount) {
+            $noOfDecimal = 0;
+        }
+
+        return formatCurrency($amount, $noOfDecimal, $decimalSeparator, $thousandSeparator, $currencyPosition, $currencySymbol);
     }
 
     /**
@@ -47,7 +82,7 @@ class ClinicAppointmentExport implements FromCollection, WithHeadings, WithCusto
     public function collection()
     {
         $query = Appointment::SetRole(auth()->user())
-            ->with('payment', 'commissionsdata', 'patientEncounter', 'cliniccenter')
+            ->with('payment', 'commissionsdata', 'patientEncounter', 'cliniccenter', 'appointmenttransaction')
             ->whereRaw(
                 'CAST(CONCAT(appointment_date, " ", appointment_time) AS DATETIME) >= ?',
                 [$this->dateRange[0]]
@@ -87,6 +122,38 @@ class ClinicAppointmentExport implements FromCollection, WithHeadings, WithCusto
                         $selectedData[$column] = $date . ' ' . $time;
                         break;
 
+                    case 'payment_status':
+                        if ($row->appointmenttransaction) {
+                            if ($row->appointmenttransaction->payment_status == 1) {
+                                $selectedData[$column] = 'Paid';
+                            } elseif ($row->appointmenttransaction->advance_payment_status == 1) {
+                                $selectedData[$column] = 'Advance Paid';
+                            } else {
+                                $selectedData[$column] = 'Pending';
+                            }
+                        } else {
+                            $selectedData[$column] = 'Pending';
+                        }
+                        break;
+
+                    case 'service_amount':
+                    case 'total_amount':
+                    case 'advance_paid_amount':
+                    case 'amount':
+                        $selectedData[$column] = $this->formatAmountWithCurrencyNoDecimals($row[$column]);
+                        break;
+
+                    case 'status':
+                        $statusMap = [
+                            'pending' => 'Pending',
+                            'confirmed' => 'Confirmed',
+                            'check_in' => 'Check In',
+                            'checkout' => 'Completed',
+                            'cancelled' => 'Cancelled',
+                        ];
+                        $selectedData[$column] = $statusMap[$row[$column]] ?? ucfirst($row[$column]);
+                        break;
+
                     default:
                         $selectedData[$column] = $row[$column];
                         break;
@@ -103,22 +170,11 @@ class ClinicAppointmentExport implements FromCollection, WithHeadings, WithCusto
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
-                $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($this->columns));
-
-                // Add "From Date" and "To Date" at the top
-                $sheet->setCellValue('A1', "From Date: {$this->dateRange[0]}");
-                $sheet->setCellValue('A2', "To Date: {$this->dateRange[1]}");
-
-                // Merge cells for a cleaner header
-                $sheet->mergeCells("A1:{$lastColumn}1");
-                $sheet->mergeCells("A2:{$lastColumn}2");
-
-                // Style the headers (optional)
-                $sheet->getStyle('A1:A2')->getFont()->setBold(true);
-                $sheet->getStyle('A1:A2')->getFont()->setSize(12);
-            },
+            AfterSheet::class => exportSheetHeader(
+                'Clinic Appointment List',
+                $this->columns,
+                $this->dateRange
+            ),
         ];
     }
 }

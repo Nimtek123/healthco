@@ -33,12 +33,18 @@ class LoginRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+   public function rules()
     {
-        return [
+        $rules = [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
+
+        if ($this->input('action_type') === 'register') {
+            $rules['terms']      = ['accepted']; 
+        }
+
+        return $rules;
     }
 
     /**

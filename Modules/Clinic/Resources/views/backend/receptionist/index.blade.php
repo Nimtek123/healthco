@@ -15,7 +15,7 @@
       @if(auth()->user()->can('edit_clinic_receptionist_list') || auth()->user()->can('delete_clinic_receptionist_list'))
       <x-backend.quick-action url='{{route("backend.$module_name.bulk_action")}}'>
         <div class="">
-          <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
+          <select name="action_type" class="select2 form-select col-12" id="quick-action-type" style="width:100%">
             <option value="">{{ __('messages.no_action') }}</option>
             @can('edit_clinic_receptionist_list')
             <option value="change-status">{{ __('messages.status') }}</option>
@@ -26,7 +26,7 @@
           </select>
         </div>
         <div class="select-status d-none quick-action-field" id="change-status-action">
-          <select name="status" class="form-control select2" id="status" style="width:100%">
+          <select name="status" class="select2 form-select" id="status" style="width:100%">
               <option value="" selected>{{ __('messages.select_status') }}</option>
             <option value="1">{{ __('messages.active') }}</option>
             <option value="0">{{ __('messages.inactive') }}</option>
@@ -36,7 +36,7 @@
       @endif
       <div>
         <button type="button" class="btn btn-primary" data-modal="export">
-        <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+        <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
         </button>
 
       </div>
@@ -57,7 +57,7 @@
   </table>
 </div>
 <div data-render="app">
-  <receptionist-offcanvas default-image="{{user_avatar()}}" create-title="{{ __('messages.create') }} {{ __('messages.new') }} {{ __('receptionist.singular_title') }}"
+  <receptionist-offcanvas default-image="{{default_file_url()}}" create-title="{{ __('messages.create') }} {{ __('messages.new') }} {{ __('receptionist.singular_title') }}"
     edit-title="{{ __('messages.edit') }} {{ __('receptionist.singular_title') }}" :customefield="{{ json_encode($customefield) }}">
   </receptionist-offcanvas>
   <receptionist-change-password create-title="{{ __('messages.change_password') }}"></receptionist-change-password>
@@ -154,6 +154,13 @@
     ]
 
     document.addEventListener('DOMContentLoaded', (event) => {
+      // Initialize Select2
+      if (typeof $.fn.select2 !== 'undefined') {
+        $('.select2').select2({
+          width: '100%'
+        });
+      }
+
       initDatatable({
         url: '{{ route("backend.$module_name.index_data") }}',
         finalColumns,

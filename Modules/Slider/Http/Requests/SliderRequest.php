@@ -4,45 +4,29 @@ namespace Modules\Slider\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class sliderRequest extends FormRequest
+class SliderRequest extends FormRequest
 {
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules()
     {
-        switch (strtolower($this->getMethod())) {
-            case 'post':
-                return [
-                    'name' => 'required|string|max:255',
-                    'link' => 'nullable|string',
-                    'type' => 'required|string',
-                ];
-                break;
-            case 'put':
-            case 'patch':
-                return [
-                    'name' => 'required|string|max:255',
-                    'link' => 'nullable|string',
-                    'type' => 'required|string',
-                ];
-                break;
-
-            default:
-                // code...
-                break;
-        }
+        return [
+            // 'name' => 'required|string|max:255',
+            // 'type' => 'required|integer', // since it's coming from <select> IDs
+        ];
     }
 
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
     public function authorize()
     {
         return true;
+    }
+
+    public function messages()
+    {
+        return [
+            // 'name.required' => 'The name field is required.',
+            // 'name.string'   => 'The name must be a string.',
+            // 'name.max'      => 'The name may not be greater than 255 characters.',
+            // 'type.required' => 'The type field is required.',
+            // 'type.integer'  => 'The type must be a valid selection.',
+        ];
     }
 }

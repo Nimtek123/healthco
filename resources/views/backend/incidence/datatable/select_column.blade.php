@@ -1,6 +1,6 @@
 @if($data->incident_type != '')
 
-<select name="branch_for" class="select2 change-select" data-token="{{csrf_token()}}" data-url="{{route('backend.incidence.updateStatus', ['id' => $data->id, 'action_type' => 'update-status'])}}" style="width: 100%;">
+<select name="branch_for" class="change-select select2" data-token="{{csrf_token()}}" data-url="{{route('backend.incidence.updateStatus', ['id' => $data->id, 'action_type' => 'update-status'])}}" style="width: 100%;">
   @foreach ($appointment_status as $key => $value )
     <option value="{{$value}}" {{$data->incident_type == $value ? 'selected' : ''}} >{{$key}}</option>
   @endforeach

@@ -9,12 +9,16 @@ import 'select2'
 ;(function (jQuery) {
   'use strict'
 
-  if (typeof $.fn.select2 !== typeof undefined) {
-    $('.select2').select2()
-    $('.select2-tag').select2({
-      tags: true
-    })
-  }
+if (typeof $.fn.select2 !== 'undefined') {
+  $('.select2').select2({
+    width: '100%'
+  });
+
+  $('.select2-tag').select2({
+    tags: true,
+    width: '100%'
+  });
+}
 
   const isRTL = document.documentElement.getAttribute('dir') === 'rtl';
 

@@ -10,12 +10,11 @@
 			}
 		}
 	}
-	.form-control {
-		background: var(--bs-body-bg);
-		padding: 0.78rem 1rem;
+	.form-control, .form-select {
+		background-color: var(--bs-body-bg);
 	}
   &.bg-body {
-    .form-control {
+    .form-control, .form-select {
       background-color: var(--bs-gray-900);
     }
   }

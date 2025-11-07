@@ -70,4 +70,21 @@ return [
     'request_title' => 'طلب الخدمة',
     'request_service_status' => 'تم تحديث حالة طلب الخدمة',
     'lbl_request_status' => 'حالة طلب الخدمة',
+    'inclusive_tax' => 'ضريبة شاملة',
+    'inclusive_taxes' => 'الضرائب الشاملة',
+    'inclusive_tax_breakdown' => 'تفصيل الضريبة الشاملة',
+    'no_inclusive_taxes_applied' => 'لم يتم تطبيق ضرائب شاملة',
+    'total_inclusive_tax' => 'إجمالي الضريبة الشاملة',
+    'with_inclusive_tax' => 'مع الضريبة الشاملة',
+    'view_inclusive_taxes' => 'عرض الضرائب الشاملة',
+    'request_service' => 'طلب الخدمة',
+    
+    // Additional Service Form Messages
+    'file_selected' => 'ملف محدد',
+    'preview' => 'معاينة',
+    'unknown' => 'غير معروف',
+    'something_went_wrong' => 'حدث خطأ ما!',
+    'advance_payment_amount_must_be_greater_than_zero' => 'يجب أن يكون مبلغ الدفعة المقدمة أكبر من الصفر *',
+    'description_must_not_exceed_250_characters' => 'يجب ألا يتجاوز الوصف 250 حرفًا',
+    'select_vendor_first' => 'حدد البائع أولاً',
 ];

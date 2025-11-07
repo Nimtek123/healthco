@@ -4,38 +4,65 @@
     <input type="hidden" name="user_id" id="problem_user_id" value="{{ $data['user_id'] }}">
 
 
-    <div class="card-footer pb-0">
-        <p class="mb-2 fs-12 clinical_details_notes text-danger">
-            <b>{{ __('appointment.note_encounter_problem') }}</b>
-        </p>
-        @if ($data['status'] == 1)
-            <select id="problem" name="problem_id" class="form-control select2"
-                placeholder="{{ __('appointment.select_problems') }}" data-filter="select">
-                <option value="">{{ __('appointment.select_problems') }}</option>
-                @foreach ($problem_list as $problem)
-                    <option value="{{ $problem->name }}">{{ $problem->name }}</option>
-                @endforeach
-            </select>
-        @endif
-    </div>
+    @if ($data['status'] == 0)
+        <div class="card-body">
+            @if (count($data['selectedProblemList']) > 0)
+                <ul class="list-inline m-0 p-0">
+                    @foreach ($data['selectedProblemList'] as $index => $problem)
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>{{ $index + 1 }}. {{ $problem['title'] }}</span>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="text-center py-4">
+                    <p class="text-danger mb-0">{{ __('appointment.no_problem_found') }}</p>
+                </div>
+            @endif
+        </div>
+    @else
+        <div class="card-footer pb-0">
+         
+                <p class="mb-2 fs-12 clinical_details_notes text-danger">
+                    <b>{{ __('appointment.note_encounter_problem') }}</b>
+                </p>
+        
+            @if ($data['status'] == 1)
+                <select id="problem" name="problem_id" class="select2 form-select"
+                    placeholder="{{ __('appointment.select_problems') }}" data-filter="select">
+                    <option value="">{{ __('appointment.select_problems') }}</option>
+                    @foreach ($problem_list as $problem)
+                        <option value="{{ $problem->name }}">{{ $problem->name }}</option>
+                    @endforeach
+                </select>
+            @endif
+        </div>
 
-    <div class="card-body medial-history-card medial-history-card-problem">
-        <ul class="list-inline m-0 p-0">
-            @foreach ($data['selectedProblemList'] as $index => $problem)
-                <li class="mb-3">
-                    <div class="d-flex align-items-start justify-content-between gap-1">
-                        <span>{{ $index + 1 }}. {{ $problem['title'] }}</span>
-                        @if ($data['status'] == 1)
-                            <button class="btn p-0 text-danger" onclick="removeProblemData({{ $problem['id'] }})">
-                                <i class="ph ph-x-circle"></i>
-                            </button>
-                        @endif
-                    </div>
-                </li>
-            @endforeach
-
-        </ul>
-    </div>
+        <div class="card-body medial-history-card medial-history-card-problem">
+            @if (count($data['selectedProblemList']) > 0)
+                <ul class="list-inline m-0 p-0">
+                    @foreach ($data['selectedProblemList'] as $index => $problem)
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>{{ $index + 1 }}. {{ $problem['title'] }}</span>
+                                @if ($data['status'] == 1)
+                                    <button class="btn p-0 text-danger" onclick="removeProblemData({{ $problem['id'] }})">
+                                        <i class="ph ph-x-circle"></i>
+                                    </button>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="text-center py-4">
+                    <p class="text-danger mb-0">{{ __('appointment.no_problem_found') }}</p>
+                </div>
+            @endif
+        </div>
+    @endif
 </div>
 
 @push('after-scripts')
@@ -47,82 +74,22 @@
             });
 
             $('#problem').on('select2:open', function () {
-        var problemInputField = $('.select2-container--open .select2-search__field');
+                var problemInputField = $('.select2-container--open .select2-search__field');
 
-        problemInputField.off('keydown'); // Remove previous listeners
-        problemInputField.on('keydown', function (event) {
-            if (event.key === "Enter") {
-                var newOption = $(this).val();
-                if (newOption) {
-                    var newOptionElement = new Option(newOption, newOption, true, true);
-                    $('#problem').append(newOptionElement).trigger('change');
-                    $('#problem').select2('close');
-                }
-            }
-        });
-    });
-        });
-
-
-        function removeProblemData(problemId) {
-            if (problemId) {
-                $.ajax({
-                    url: '{{ url('/app/encounter/remove-histroy-data') }}',
-                    method: 'GET',
-                    data: {
-                        id: problemId,
-                        type: 'encounter_problem'
-                    },
-                    success: function(response) {
-                        if (response && response.status) {
-                            updateProblemList(response.medical_histroy);
-                        } else {
-                            console.error('Failed to remove problem.');
+                problemInputField.off('keydown'); // Remove previous listeners
+                problemInputField.on('keydown', function (event) {
+                    if (event.key === "Enter") {
+                        var newOption = $(this).val();
+                        if (newOption) {
+                            var newOptionElement = new Option(newOption, newOption, true, true);
+                            $('#problem').append(newOptionElement).trigger('change');
+                            $('#problem').select2('close');
                         }
-                    },
-                    error: function(error) {
-                        console.error('AJAX Error:', error);
                     }
                 });
-            }
-        }
-
-        function updateProblemList(medicalHistory) {
-            var listHtml = '';
-            medicalHistory.forEach(function(problem, index) {
-                listHtml += `
-                    <li class="mb-3 pb-3 border-bottom">
-                        <div class="d-flex align-items-start justify-content-between gap-1">
-                            <span>${index + 1}. ${problem.title}</span>
-                            <button class="btn p-0 text-danger"
-                                onclick="removeProblemData(${problem.id})">
-                                <i class="ph ph-x-circle"></i>
-                            </button>
-                        </div>
-                    </li>`;
             });
-            $('.medial-history-card-problem ul').html(listHtml);
-        }
-
-        function updateDropdown(data) {
-            var dropdownHtml = `<option value="">{{ __('appointment.select_problems') }}</option>`;
-            data.forEach(function(problem) {
-                dropdownHtml += `<option value="${problem.name}">${problem.name}</option>`;
-            });
-            $('#problem').html(dropdownHtml);
-
-            // Reinitialize Select2
-            $('#problem').select2({
-                tags: true,
-                placeholder: "{{ __('appointment.select_problems') }}",
-                allowClear: true
-            });
-        }
-
-        $(document).ready(function() {
 
             $('#problem').on('change', function() {
-
                 var problemName = $(this).val();
                 var encounterId = $('#problem_encounter_id').val();
                 var userId = $('#problem_user_id').val();
@@ -142,20 +109,109 @@
                             if (response && response.status) {
                                 updateProblemList(response.medical_histroy);
                                 updateDropdown(response.data);
-
-
+                                // Clear the selection after adding
+                                $('#problem').val('').trigger('change');
+                                
+                                // Show success message
+                                if (window.successSnackbar) {
+                                    window.successSnackbar('{{ __("appointment.problem_added_successfully") }}');
+                                }
                             } else {
-                                console.error('Failed to save problem.');
+                                if (window.errorSnackbar) {
+                                    window.errorSnackbar('{{ __("appointment.failed_to_save_problem") }}');
+                                }
                             }
                         },
-                        error: function(error) {
+                        error: function(xhr, status, error) {
                             console.error('AJAX Error:', error);
+                            if (window.errorSnackbar) {
+                                window.errorSnackbar('{{ __("appointment.error_try_again") }}');
+                            }
                         }
                     });
                 }
             });
-
-
         });
+
+
+        function removeProblemData(problemId) {
+            if (problemId) {
+                $.ajax({
+                    url: '{{ url('/app/encounter/remove-histroy-data') }}',
+                    method: 'GET',
+                    data: {
+                        id: problemId,
+                        type: 'encounter_problem'
+                    },
+                    success: function(response) {
+                        if (response && response.status) {
+                            updateProblemList(response.medical_histroy);
+                            updateDropdown(response.data);
+                            
+                            // Show success message
+                            if (window.successSnackbar) {
+                                window.successSnackbar('{{ __("appointment.problem_removed_successfully") }}');
+                            }
+                        } else {
+                            if (window.errorSnackbar) {
+                                window.errorSnackbar('{{ __("appointment.failed_to_remove_problem") }}');
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', error);
+                        if (window.errorSnackbar) {
+                            window.errorSnackbar('{{ __("appointment.error_try_again") }}');
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateProblemList(medicalHistory) {
+            var listHtml = '';
+            if (medicalHistory && medicalHistory.length > 0) {
+                medicalHistory.forEach(function(problem, index) {
+                    listHtml += `
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>${index + 1}. ${problem.title}</span>
+                                <button class="btn p-0 text-danger"
+                                    onclick="removeProblemData(${problem.id})">
+                                    <i class="ph ph-x-circle"></i>
+                                </button>
+                            </div>
+                        </li>`;
+                });
+                $('.medial-history-card-problem').html('<ul class="list-inline m-0 p-0">' + listHtml + '</ul>');
+            } else {
+                $('.medial-history-card-problem').html(`
+                    <div class="text-center py-4">
+                        <p class="text-danger mb-0">{{ __('appointment.no_problem_found') }}</p>
+                    </div>
+                `);
+            }
+        }
+
+        function updateDropdown(data) {
+            console.log('Updating dropdown with data:', data);
+            var dropdownHtml = `<option value="">{{ __('appointment.select_problems') }}</option>`;
+            
+            if (data && data.length > 0) {
+                data.forEach(function(problem) {
+                    dropdownHtml += `<option value="${problem.name}">${problem.name}</option>`;
+                });
+            }
+            
+            $('#problem').html(dropdownHtml);
+
+            // Reinitialize Select2
+            $('#problem').select2({
+                tags: true,
+                placeholder: "{{ __('appointment.select_problems') }}",
+                allowClear: true
+            });
+        }
+
     </script>
 @endpush

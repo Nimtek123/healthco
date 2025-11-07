@@ -1,14 +1,14 @@
 <template>
   <CardTitle :title="$t('setting_sidebar.lbl_system_category')" icon="">
     <form id="quick-action-form" :class="{'form-disabled': !selectedItems.length}" class="d-flex gap-3 align-items-center">
-      <select v-model="actionType" class="form-control select2" style="width: 100%;" >
+      <select v-model="actionType" class="select2 form-select" style="width: 100%;" >
         <option value="">no_action</option>
         <option value="change-status">status</option>
         <option value="delete">delete</option>
       </select>
       
       <div v-if="selectedItems.length > 0 && actionType === 'change-status'" class="select-status" style="width: 100%;">
-        <select v-model="status" class="form-control select2" style="width: 100%;">
+        <select v-model="status" class="select2 form-select" style="width: 100%;">
           <option value="1">active</option>
           <option value="0">inactive</option>
         </select>

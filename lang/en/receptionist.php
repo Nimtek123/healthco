@@ -27,5 +27,25 @@ return [
     'lbl_password' => 'Password',
     'select_vendors' => 'Select Clinic Admin',
     'select_clinic_centre' => 'Select Clinic Centre',
-    'postal_code'=> 'Postal Code'
+    'postal_code'=> 'Postal Code',
+    'select_vendor_placeholder' => 'Select Vendor',
+    'select_clinic_center_placeholder' => 'Select Clinic Center',
+    'old_password_incorrect' => 'Old password is incorrect',
+    
+    // Placeholder text
+    'placeholder_first_name' => 'Enter First Name',
+    'placeholder_last_name' => 'Enter Last Name',
+    'placeholder_email' => 'Enter Email',
+    'placeholder_phone_number' => 'Enter Phone Number',
+    'placeholder_password' => 'Enter Password',
+    'placeholder_confirm_password' => 'Enter Confirm Password',
+    'placeholder_date_of_birth' => 'Select Date Of Birth',
+    'placeholder_address' => 'Enter Address',
+    'placeholder_postal_code' => 'Enter Postal Code',
+    'placeholder_select_vendor' => 'Select Vendor',
+    'placeholder_select_clinic_center' => 'Select Clinic Center',
+    'placeholder_select_country' => 'Select Country',
+    'placeholder_select_state' => 'Select State',
+    'placeholder_select_city' => 'Select City',
+    'placeholder_select_gender' => 'Select Gender',
 ];

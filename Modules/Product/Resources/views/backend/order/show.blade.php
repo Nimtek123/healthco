@@ -66,7 +66,7 @@
                         </div>
                         <div class="col-auto col-lg-4 mb-4">
                             <div class="input-group">
-                                <select name="delivery_status" class="form-control select2" name="delivery_status"
+                                <select name="delivery_status" class="select2 form-select" name="delivery_status"
                                     data-ajax--url="{{ route('backend.get_search_data', ['type' => 'constant', 'sub_type' => 'ORDER_STATUS']) }}"
                                     data-ajax--cache="true">
                                     <option value="" disabled>Delivery Status</option>

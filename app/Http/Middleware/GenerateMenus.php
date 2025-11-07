@@ -684,14 +684,16 @@ class GenerateMenus
             ]);
 
             // --- FRONTEND SETTING ---
-            $this->mainRoute($menu, [
-                'icon' => 'ph ph-layout',
-                'title' =>  __('sidebar.frontend_setting'),
-                'route' => 'frontend_setting.index',
-                'active' => ['app/frontend_setting'],
-                'permission' => 'view_customer',
-                'order' => 0,
-            ]);
+            if (!auth()->user()->hasRole('doctor') && !auth()->user()->hasRole('vendor') && !auth()->user()->hasRole('receptionist')) {
+                $this->mainRoute($menu, [
+                    'icon' => 'ph ph-layout',
+                    'title' =>  __('sidebar.frontend_setting'),
+                    'route' => 'frontend_setting.index',
+                    'active' => ['app/frontend_setting'],
+                    'permission' => 'view_customer',
+                    'order' => 0,
+                ]);
+            }
 
             // --- LOG/BACKUPS ---
             $location11 = $this->parentMenu($menu, [

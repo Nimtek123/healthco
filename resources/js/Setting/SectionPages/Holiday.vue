@@ -83,6 +83,9 @@ const { value: clinic_id } = useField('clinic_id')
 const dateconfig = {
   minDate: 'today',
   dateFormat: 'Y-m-d',
+  // Ensure calendar nav buttons render correctly across themes
+  prevArrow: '&larr;',
+  nextArrow: '&rarr;'
 }
 const timeconfig = {
   noCalendar: true,

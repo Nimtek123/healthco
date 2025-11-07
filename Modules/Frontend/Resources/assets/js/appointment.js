@@ -33,13 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   })
 
-  const today = new Date().toISOString().split('T')[0];
-    document.querySelector('input[name="dob"]').setAttribute('max', today);
+  const maxDate = new Date().toISOString().split('T')[0];
+  document.querySelector('input[name="dob"]').setAttribute('max', maxDate);
 
-    // Allow only numbers in contact number
-    document.querySelector('input[name="contactNumber"]').addEventListener('input', function () {
-        this.value = this.value.replace(/[^0-9]/g, '');
-    });
+  // Allow only numbers in contact number
+  document.querySelector('input[name="contactNumber"]').addEventListener('input', function () {
+    this.value = this.value.replace(/[^0-9]/g, '');
+  });
 
   if (paymentDetails) {
     console.log(paymentDetails);
@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <p class="px-3 mx-5">Your appointment with <strong>Dr. ${paymentDetails.doctorName}</strong> at
         <strong>${paymentDetails.clinicName}</strong> has been confirmed on
         <strong>${paymentDetails.formate_appointment_time}</strong> at
-        <strong>${ paymentDetails.formate_appointment_date}</strong>.</p>
+        <strong>${paymentDetails.formate_appointment_date}</strong>.</p>
         <div>
           <p><strong>Booking ID:</strong> #${paymentDetails.bookingId}</p>
           <p><strong>Payment via:</strong> ${capitalizeFirstLetter(paymentDetails.paymentVia)}</p>
@@ -65,7 +65,15 @@ document.addEventListener('DOMContentLoaded', () => {
       allowOutsideClick: false
     }).then((result) => {
       if (result.isConfirmed) {
-        window.location.href = `${routes.appointmentList}` // Replace with the correct route
+        // Redirect to appointment detail page using the booking ID
+        if (paymentDetails.bookingId && paymentDetails.bookingId !== 'N/A') {
+          const redirectUrl = `${routes.appointmentDetails}/${paymentDetails.bookingId}`;
+          console.log('Redirecting to appointment details:', redirectUrl);
+          window.location.href = redirectUrl;
+        } else {
+          console.error('Invalid booking ID:', paymentDetails.bookingId);
+          window.location.href = routes.appointmentList;
+        }
       }
     })
   }
@@ -77,12 +85,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const isSufficient = await handlePaymentMethodChange(state.totalAmount)
         if (!isSufficient) {
           this.checked = false // Prevent checking the checkbox
-          const cashPaymentMethod = document.querySelector('#method-cash')
+          state.selectedPaymentMethod = null
 
-          if (cashPaymentMethod) {
-            cashPaymentMethod.checked = true // Check the cash method checkbox
+          // Update the selected payment method display
+          const selectedPaymentMethodDisplay = document.getElementById('selected-payment-method');
+          if (selectedPaymentMethodDisplay) {
+            selectedPaymentMethodDisplay.textContent = 'Select Payment Method';
           }
-          state.selectedPaymentMethod = 'cash'
+
           Snackbar.show({
             text: 'Insufficient balance. Please add funds in wallet',
             pos: 'bottom-left',
@@ -103,9 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
   setCurrentStep()
   initializeNextButton()
   initializePrevButton()
+  // Set today's date as default
+  const today = new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('appointment_date');
+  if (dateInput) {
+    dateInput.value = today;
+    state.selectedDate = today;
+  }
+
   flatpickr('.date-picker', {
     dateFormat: 'Y-m-d',
-    minDate: 'today'
+    minDate: 'today',
+    defaultDate: 'today'
   })
 
 
@@ -117,33 +136,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // Toggle other patients section
-  bookForOthers.addEventListener('change', function() {
-      otherPatientsSection.classList.toggle('d-none', !this.checked);
-      if (this.checked) {
-          loadOtherPatients();
-      }
+  bookForOthers.addEventListener('change', function () {
+    otherPatientsSection.classList.toggle('d-none', !this.checked);
+    if (this.checked) {
+      loadOtherPatients();
+    }
   });
 
 
   function loadOtherPatients() {
     fetch(routes.otherPatientList, {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        credentials: 'same-origin'
+      method: 'GET',
+      headers: {
+        'X-CSRF-TOKEN': csrfToken,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      credentials: 'same-origin'
     })
-    .then(response => response.json())
-    .then(data => {
+      .then(response => response.json())
+      .then(data => {
         const container = document.querySelector('.other-patients-list');
         if (!data || data.length === 0) {
-            container.innerHTML = `
+          container.innerHTML = `
                 <div class="text-center p-4">
                     <p class="mb-0 text-muted">No Other Patient Found</p>
                 </div>`;
-            return;
+          return;
         }
 
         container.innerHTML = data.map(patient => `
@@ -160,105 +179,102 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         `).join('');
-    })
-    .catch(error => {
-        console.error('Error loading patients:', error);
-        toastr.error('{{ __("frontend.error_loading_patients") }}');
-    });
-}
-
-savePatientBtn.addEventListener('click', function (event) {
-  event.preventDefault(); // Prevent the default form submission
-
-  document.querySelectorAll('.text-danger').forEach(function (element) {
-      element.textContent = ''; // Clear old errors
-  });
-
-  const formData = new FormData(addPatientForm);
-  let hasError = false;
-
-  const firstName = formData.get('first_name');
-  const lastName = formData.get('last_name');
-  const contactNumber = formData.get('contactNumber');
-  const dob = formData.get('dob');
-  const gender = formData.get('gender');
-  const relation = formData.get('relation');
-
-  if (!firstName) {
-      showError('first_name', window.patientFormMessages.first_name_required);
-      hasError = true;
-  }
-  if (!lastName) {
-      showError('last_name', window.patientFormMessages.last_name_required);
-      hasError = true;
-  }
-  if (!contactNumber) {
-      showError('contactNumber', window.patientFormMessages.contact_number_required);
-      hasError = true;
-  }
-  if (!dob) {
-      showError('dob', window.patientFormMessages.dob_required);
-      hasError = true;
-  } else if (new Date(dob) >= new Date(today)) {
-      showError('dob', window.patientFormMessages.dob_past);
-      hasError = true;
-  }
-  if (!gender) {
-      showError('gender', window.patientFormMessages.gender_required);
-      hasError = true;
-  }
-  if (!relation) {
-      showError('relation', window.patientFormMessages.relation_required);
-      hasError = true;
-  }
-  let patientAddedMessage = "{{ __('frontend.patient_added_successfully') }}";
-
-  if (!hasError) {
-      formData.append('user_id', state.user_id);
-      fetch(routes.otherPatient, {
-          method: 'POST',
-          headers: {
-              'X-CSRF-TOKEN': csrfToken,
-              'Accept': 'application/json'
-          },
-          body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.status) {
-          $('#addPatientModal').modal('hide');
-          addPatientForm.reset();
-          loadOtherPatients();
-          // Show success message
-          window.successSnackbar('Patient added successfully');
-      }
       })
       .catch(error => {
-          console.error('Error:', error);
-          window.errorSnackbar('{{ __("frontend.error_adding_patient") }}');
+        console.error('Error loading patients:', error);
+        toastr.error('{{ __("frontend.error_loading_patients") }}');
       });
   }
 
-  function showError(fieldName, message) {
+  savePatientBtn.addEventListener('click', function (event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    document.querySelectorAll('.text-danger').forEach(function (element) {
+      element.textContent = ''; // Clear old errors
+    });
+
+    const formData = new FormData(addPatientForm);
+    let hasError = false;
+
+    const firstName = formData.get('first_name');
+    const lastName = formData.get('last_name');
+    const contactNumber = formData.get('contactNumber');
+    const dob = formData.get('dob');
+    const gender = formData.get('gender');
+    const relation = formData.get('relation');
+
+    if (!firstName) {
+      showError('first_name', window.patientFormMessages.first_name_required);
+      hasError = true;
+    }
+    if (!lastName) {
+      showError('last_name', window.patientFormMessages.last_name_required);
+      hasError = true;
+    }
+    if (!contactNumber) {
+      showError('contactNumber', window.patientFormMessages.contact_number_required);
+      hasError = true;
+    }
+    if (!dob) {
+      showError('dob', window.patientFormMessages.dob_required);
+      hasError = true;
+    }
+    if (!gender) {
+      showError('gender', window.patientFormMessages.gender_required);
+      hasError = true;
+    }
+    if (!relation) {
+      showError('relation', window.patientFormMessages.relation_required);
+      hasError = true;
+    }
+    let patientAddedMessage = "{{ __('frontend.patient_added_successfully') }}";
+
+    if (!hasError) {
+      formData.append('user_id', state.user_id);
+      fetch(routes.otherPatient, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status) {
+            $('#addPatientModal').modal('hide');
+            addPatientForm.reset();
+            loadOtherPatients();
+            // Show success message
+            window.successSnackbar('Patient added successfully');
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          window.errorSnackbar('{{ __("frontend.error_adding_patient") }}');
+        });
+    }
+
+    function showError(fieldName, message) {
       const input = document.querySelector(`[name="${fieldName}"]`);
       if (input) {
-          const errorElement = document.createElement('small');
-          errorElement.className = 'text-danger';
-          errorElement.textContent = message;
+        const errorElement = document.createElement('small');
+        errorElement.className = 'text-danger';
+        errorElement.textContent = message;
 
-          const inputGroup = input.closest('.input-group');
-          if (inputGroup) {
-              inputGroup.parentNode.insertBefore(errorElement, inputGroup.nextSibling);
-          }
+        const inputGroup = input.closest('.input-group');
+        if (inputGroup) {
+          inputGroup.parentNode.insertBefore(errorElement, inputGroup.nextSibling);
+        }
       }
-  }
-});
+    }
+  });
 
-// Select patient
-window.selectPatient = function(patientId) {
-  console.log(patientId);
-  otherpatient_id = patientId;
-  document.querySelectorAll('.patient-card').forEach(card => {
+  // Select patient
+  window.selectPatient = function (patientId) {
+    console.log(patientId);
+    otherpatient_id = patientId;
+    document.querySelectorAll('.patient-card').forEach(card => {
       const isSelected = card.dataset.patientId == patientId;
       card.classList.toggle('bg-primary', isSelected);
       card.classList.toggle('border-primary', isSelected);
@@ -267,10 +283,10 @@ window.selectPatient = function(patientId) {
       // Update text color
       const nameElement = card.querySelector('.patient-info .appointments-title');
       if (nameElement) {
-          nameElement.classList.toggle('text-white', isSelected);
+        nameElement.classList.toggle('text-white', isSelected);
       }
-  });
-};
+    });
+  };
 })
 
 function moveToPreviousStep() {
@@ -312,11 +328,11 @@ function updateClinicCard(clinicName) {
        <div class="bg-primary-subtle clinic-box-wizard rounded p-3 position-relative">
     <div class="position-absolute top-0 end-0 m-2">
         <a href="#" class="text-muted" id="clinic-edit-button" data-step="${tabs.find((tab) => tab.value === 'Choose Clinics').index}">
-            <i class="ph ph-pencil-simple"></i>
+            <i class="ph ph-pencil-simple heading-color"></i>
         </a>
     </div>
     <div>
-        <p class="font-size-14 text-body mb-2">${clinicTitle}</p>
+        <p class="font-size-14 heading-color mb-2">${clinicTitle}</p>
         <h6 class="font-size-14 text-heading fw-semibold mb-0">${clinicName}</h6>
     </div>
 </div>
@@ -335,11 +351,11 @@ function updateDoctorCard(doctorName) {
   <div class="bg-primary-subtle doctor-box-wizard rounded p-3 position-relative">
       <div class="position-absolute top-0 end-0 m-2">
           <a href="#" class="text-muted" id="doctor-edit-button" data-step="${tabs.find((tab) => tab.value === 'Choose Doctors').index}">
-              <i class="ph ph-pencil-simple"></i>
+              <i class="ph ph-pencil-simple heading-color"></i>
           </a>
       </div>
       <div>
-          <p class="font-size-14 text-body mb-2">${doctorTitle}</p>
+          <p class="font-size-14 heading-color mb-2">${doctorTitle}</p>
           <h6 class="font-size-14 text-heading fw-semibold mb-0">${doctorName}</h6>
       </div>
   </div>
@@ -408,7 +424,7 @@ function initializeNextButton() {
   }
 }
 
-function toTop(){
+function toTop() {
   document.querySelector('#nextButton').addEventListener('click', (e) => {
     e.preventDefault()
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -550,7 +566,7 @@ function loadStepContent(step) {
       if (i === 3) {
         stepElement.classList.add('d-none')
       } else {
-         stepElement.innerHTML = ''
+        stepElement.innerHTML = ''
       }
     }
   }
@@ -559,14 +575,21 @@ function loadStepContent(step) {
   const currentTab = tabs.find((tab) => tab.index === step)
   const paymentContainer = document.querySelector('.payment-container')
 
+  if (!currentTab) {
+    console.error('Invalid step:', step);
+    return;
+  }
+
   switch (currentTab.value) {
     case 'Choose Clinics':
 
       paymentContainer.classList.add('d-none');
 
-      const clinicshimmerContainer =  document.getElementById('clinic-shimmer-loader');
+      const clinicshimmerContainer = document.getElementById('clinic-shimmer-loader');
 
-      clinicshimmerContainer.classList.remove('d-none');
+      if (clinicshimmerContainer) {
+        clinicshimmerContainer.classList.remove('d-none');
+      }
 
       document.getElementById('step-content-0').innerHTML = `
 
@@ -592,7 +615,9 @@ function loadStepContent(step) {
 
           addCheckboxesToClinicCards();
 
-          clinicshimmerContainer.classList.add('d-none');
+          if (clinicshimmerContainer) {
+            clinicshimmerContainer.classList.add('d-none');
+          }
 
           if (state.selectedClinic) {
             const clinicCards = document.querySelectorAll('.clinics-card');
@@ -622,9 +647,11 @@ function loadStepContent(step) {
     case 'Choose Doctors':
       paymentContainer.classList.add('d-none')
 
-      const doctorshimmerContainer =  document.getElementById('doctor-shimmer-loader');
+      const doctorshimmerContainer = document.getElementById('doctor-shimmer-loader');
 
-      doctorshimmerContainer.classList.remove('d-none');
+      if (doctorshimmerContainer) {
+        doctorshimmerContainer.classList.remove('d-none');
+      }
 
 
 
@@ -649,7 +676,9 @@ function loadStepContent(step) {
         },
         onLoadComplete: () => {
 
-          doctorshimmerContainer.classList.add('d-none');
+          if (doctorshimmerContainer) {
+            doctorshimmerContainer.classList.add('d-none');
+          }
           addCheckboxesToDoctorCards()
           if (state.selectedDoctor) {
             const doctorCards = document.querySelectorAll('.doctor-card')
@@ -679,6 +708,17 @@ function loadStepContent(step) {
       stepElement.classList.remove('d-none')
       fetchDynamicData(state)
 
+      // Set today's date as default if no date is selected
+      if (!state.selectedDate) {
+        const today = new Date().toISOString().split('T')[0];
+        state.selectedDate = today;
+        const dateInput = document.getElementById('appointment_date')
+        if (dateInput) {
+          dateInput.value = today;
+        }
+      }
+
+      // Fetch time slots for the selected date (today by default)
       if (state.selectedDate) {
         const dateInput = document.getElementById('appointment_date')
         if (dateInput) {
@@ -839,8 +879,8 @@ async function fetchDynamicData(state) {
 
     const data = await response.json()
     showTaxDetails(data.taxData, data.tax, data.currency)
-    if(data.is_inclusive_tax == 1){
-        showTaxDetailsInclusive(data.inclusive_tax_data, data.total_inclusive_tax, data.currency)
+    if (data.is_inclusive_tax == 1) {
+      showTaxDetailsInclusive(data.inclusive_tax_data, data.total_inclusive_tax, data.currency)
     }
     updatePaymentDetails(data)
   } catch (error) {
@@ -849,16 +889,21 @@ async function fetchDynamicData(state) {
 // Function to update payment details dynamically
 function updatePaymentDetails(data) {
   const paymentContainer = document.querySelector('.payment-container')
+
+  // Debug logging to help identify data issues
+  console.log('Payment data received:', data)
+  console.log('Total amount:', data.total)
+
   state.totalAmount = data.total
   state.payment.is_enable_advance_payment = data.is_enable_advance_payment ?? 0
   state.payment.advance_payment_amount = data.advancePayableAmount ?? 0
   state.payment.advance_payment_status = data.is_enable_advance_payment ?? 0
 
   const discountLabel = (data?.discountPercentage && data.discountvalue > 0)
-  ? (data.discountPercentage === "percentage"
+    ? (data.discountPercentage === "percentage"
       ? `(${data.discountvalue}%)`
       : `${data.currency}${data.discountvalue.toFixed(2)}`)
-  : '';
+    : '';
 
 
   const priceLabel = (data?.total_inclusive_tax > 0) ? `
@@ -869,54 +914,64 @@ function updatePaymentDetails(data) {
     <div class="d-flex justify-content-between mb-3">
         <span class="font-size-14">${InclusiveTax}</span>
         <span class="text-danger font-size-14 fw-bold">
-            <i class="ph ph-info" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#inclusivetaxDetailsModal"></i>
+            <i class="ph ph-info" style="cursor: pointer;" id="toggleInclusiveTaxDetails"></i>
             ${data.currency}${data.total_inclusive_tax.toFixed(2)}
         </span>
     </div>` : '';
 
-const discountSection = (data?.discountAmount > 0) ? `
+  const discountSection = (data?.discountAmount > 0) ? `
   <div class="d-flex justify-content-between mb-3">
-      <span>Discount <span class="text-success font-size-14">${discountLabel}</span></span>
-      <span class="text-success font-size-14 fw-bold">${data.currency}${data.discountAmount.toFixed(2)}</span>
+      <span class="font-size-14">Discount:</span>
+      <span class="text-success font-size-14 fw-bold">-${data.currency}${data.discountAmount.toFixed(2)}</span>
   </div>` : '';
 
 
   const paymentDetailsHTML = `
   <h5 class="mb-4">${paymentDetail}</h5>
-    <div class="section-bg p-3 mb-3 rounded">
+    <div class="section-bg p-4 mb-3 rounded">
 
+        <!-- Service Price (Original) -->
         <div class="d-flex justify-content-between mb-3">
-            ${priceLabel}
-            <h6 class="font-size-14 m-0 fw-bold">${data.currency}${data.subtotal.toFixed(2)}</h6>
+            <span class="font-size-14">
+                Service Price${data.is_inclusive_tax == 1 ? ' (with inclusive tax)' : ''}:
+            </span>
+            <span class="font-size-14 text-primary fw-bold">${data.currency}${(data.price || 0).toFixed(2)}</span>
         </div>
 
-         ${discountSection}
+        ${discountSection}
 
+        <!-- Subtotal with inclusive tax -->
+        <div class="d-flex justify-content-between mb-3">
+            <span class="font-size-14">Subtotal:</span>
+            <span class="font-size-14 fw-bold">${data.currency}${(data.subtotal || 0).toFixed(2)}</span>
+        </div>
 
-        <div class="d-flex justify-content-between">
-            <span class="font-size-14">${Tax}</span>
+        <!-- Total Tax -->
+        <div class="d-flex justify-content-between mb-3">
+            <span class="font-size-14">Total Tax :</span>
             <span class="text-danger font-size-14 fw-bold">
-                <i class="ph ph-info" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#taxDetailsModal"></i>
-                ${data.currency}${data.tax.toFixed(2)}
+                <i class="ph ph-caret-down" style="cursor: pointer;" id="toggleTaxDetails"></i>
+                ${data.currency}${(data.tax || 0).toFixed(2)}
             </span>
         </div>
 
+        <hr class="my-3" style="border-color: #dee2e6;">
 
-        <div class="d-flex justify-content-between mt-4 pt-4 border-top">
-            <span class="fw-bold font-size-14">${Total}</span>
-            <span class="fw-bold font-size-14 text-primary">${data.currency}${data.total.toFixed(2)}</span>
+        <!-- Total Amount -->
+        <div class="d-flex justify-content-between">
+            <span class="fw-bold font-size-16">Total Amount:</span>
+            <span class="fw-bold font-size-16 text-success">${data.currency}${(data.total || 0).toFixed(2)}</span>
         </div>
 
-        ${
-          data.is_enable_advance_payment && data.advancePayableAmount > 0
-            ? `<div class="d-flex justify-content-between gap-2 mb-2">
+        ${data.is_enable_advance_payment && data.advancePayableAmount > 0
+      ? `<div class="d-flex justify-content-between gap-2 mb-2 mt-3 pt-3 border-top">
                       <span>${AdvancePayableAmount} (${data.advancePayableAmountPercentage}%)</span>
                       <span class="text-secondary fw-bold">
                           ${data.currency}${(parseFloat(data.advancePayableAmount) || 0).toFixed(2)}
                       </span>
                     </div>`
-            : ''
-        }
+      : ''
+    }
     </div>
 
     <div class="text-end">
@@ -924,54 +979,159 @@ const discountSection = (data?.discountAmount > 0) ? `
  </div>
   `
 
-  paymentContainer.innerHTML = paymentDetailsHTML
+  if (paymentContainer) {
+    paymentContainer.innerHTML = paymentDetailsHTML
+    initializeSubmitButton()
+  } else {
+    console.error('Payment container not found!')
+  }
 
-  initializeSubmitButton()
+  // Add toggle functionality for tax details
+  initializeTaxToggle()
 }
 
 function showTaxDetails(taxData, totalTax, currency) {
-  const taxBreakdownList = document.getElementById('taxBreakdownList');
-  const totalTaxAmount = document.getElementById('totalTaxAmount');
-
-  taxBreakdownList.innerHTML = '';
-
-  taxData.forEach((item) => {
-    const listItem = document.createElement('li');
-    listItem.className = 'd-flex justify-content-between mb-2';
-    listItem.innerHTML = `
-      <span>${item.title} ${formatItemValue(item)}</span>
-            <span>${currency}${item.amount.toFixed(2)}</span>
-    `;
-    taxBreakdownList.appendChild(listItem);
-  });
-
-  // Set the total tax amount in the modal
-  totalTaxAmount.textContent = `${currency}${totalTax.toFixed(2)}`;
+  // Store tax data globally for use when details are toggled
+  window.taxData = taxData;
+  window.totalTax = totalTax;
+  window.currency = currency;
 }
 
 function showTaxDetailsInclusive(taxData, totalTax, currency) {
-  const taxBreakdownList = document.getElementById('taxBreakdownListinclusive');
-  const totalTaxAmount = document.getElementById('totalTaxAmountinclusive');
-
-  taxBreakdownList.innerHTML = '';
-
-  taxData.taxes.forEach((item) => {
-    const listItem = document.createElement('li');
-    listItem.className = 'd-flex justify-content-between mb-2';
-    listItem.innerHTML = `
-      <span>${item.title} ${formatItemValue(item)}</span>
-            <span>${currency}${item.amount.toFixed(2)}</span>
-    `;
-    taxBreakdownList.appendChild(listItem);
-  });
-
-  // Set the total tax amount in the modal
-  totalTaxAmount.textContent = `${currency}${totalTax.toFixed(2)}`;
+  // Store inclusive tax data globally for use when details are toggled
+  window.inclusiveTaxData = taxData;
+  window.inclusiveTotalTax = totalTax;
+  window.inclusiveCurrency = currency;
 }
 
 function formatItemValue(item) {
 
   return item.type === 'percent' ? `(${item.value}%)` : ``;
+}
+
+// Function to initialize tax toggle functionality
+function initializeTaxToggle() {
+  // Toggle regular tax details
+  const toggleTaxDetails = document.getElementById('toggleTaxDetails');
+  if (toggleTaxDetails) {
+    toggleTaxDetails.addEventListener('click', function () {
+      const taxRow = this.closest('.d-flex.justify-content-between');
+      const existingDetails = taxRow.nextElementSibling;
+
+      // Toggle icon between up and down
+      if (this.classList.contains('ph-caret-down')) {
+        this.classList.remove('ph-caret-down');
+        this.classList.add('ph-caret-up');
+      } else {
+        this.classList.remove('ph-caret-up');
+        this.classList.add('ph-caret-down');
+      }
+
+      // Remove existing details if they exist
+      if (existingDetails && existingDetails.classList.contains('tax-details-container')) {
+        existingDetails.remove();
+        return;
+      }
+
+      // Create and insert tax details below the tax row
+      const taxDetailsContainer = document.createElement('div');
+      taxDetailsContainer.className = 'tax-details-container mt-2';
+      taxDetailsContainer.innerHTML = `
+        <div class="bg-body rounded p-3">
+          <ul id="taxBreakdownList" class="p-0 mb-0 list-inline">
+            <!-- Dynamic tax breakdown will be injected here -->
+          </ul>
+        </div>
+      `;
+
+      taxRow.parentNode.insertBefore(taxDetailsContainer, taxRow.nextSibling);
+
+      // Populate tax details if data is available
+      if (window.taxData && window.totalTax && window.currency) {
+        populateTaxDetails(taxDetailsContainer, window.taxData, window.totalTax, window.currency);
+      }
+    });
+  }
+
+  // Toggle inclusive tax details
+  const toggleInclusiveTaxDetails = document.getElementById('toggleInclusiveTaxDetails');
+  if (toggleInclusiveTaxDetails) {
+    toggleInclusiveTaxDetails.addEventListener('click', function () {
+      const taxRow = this.closest('.d-flex.justify-content-between');
+      const existingDetails = taxRow.nextElementSibling;
+
+      // Toggle icon between up and down
+      if (this.classList.contains('ph-caret-down')) {
+        this.classList.remove('ph-caret-down');
+        this.classList.add('ph-caret-up');
+      } else {
+        this.classList.remove('ph-caret-up');
+        this.classList.add('ph-caret-down');
+      }
+
+      // Remove existing details if they exist
+      if (existingDetails && existingDetails.classList.contains('tax-details-container')) {
+        existingDetails.remove();
+        return;
+      }
+
+      // Create and insert inclusive tax details below the tax row
+      const taxDetailsContainer = document.createElement('div');
+      taxDetailsContainer.className = 'tax-details-container mt-2';
+      taxDetailsContainer.innerHTML = `
+        <div class="bg-body rounded p-3">
+          <ul id="taxBreakdownListinclusive" class="p-0 mb-0 list-inline">
+            <!-- Dynamic tax breakdown will be injected here -->
+          </ul>
+        </div>
+      `;
+
+      taxRow.parentNode.insertBefore(taxDetailsContainer, taxRow.nextSibling);
+
+      // Populate inclusive tax details if data is available
+      if (window.inclusiveTaxData && window.inclusiveTotalTax && window.inclusiveCurrency) {
+        populateInclusiveTaxDetails(taxDetailsContainer, window.inclusiveTaxData, window.inclusiveTotalTax, window.inclusiveCurrency);
+      }
+    });
+  }
+}
+
+// Helper function to populate tax details
+function populateTaxDetails(container, taxData, totalTax, currency) {
+  const taxBreakdownList = container.querySelector('#taxBreakdownList');
+
+  if (taxBreakdownList) {
+    taxBreakdownList.innerHTML = '';
+
+    taxData.forEach((item) => {
+      const listItem = document.createElement('li');
+      listItem.className = 'd-flex justify-content-between mb-2';
+      listItem.innerHTML = `
+        <span>${item.title} ${formatItemValue(item)}</span>
+        <span>${currency}${item.amount.toFixed(2)}</span>
+      `;
+      taxBreakdownList.appendChild(listItem);
+    });
+  }
+}
+
+// Helper function to populate inclusive tax details
+function populateInclusiveTaxDetails(container, taxData, totalTax, currency) {
+  const taxBreakdownList = container.querySelector('#taxBreakdownListinclusive');
+
+  if (taxBreakdownList) {
+    taxBreakdownList.innerHTML = '';
+
+    taxData.taxes.forEach((item) => {
+      const listItem = document.createElement('li');
+      listItem.className = 'd-flex justify-content-between mb-2';
+      listItem.innerHTML = `
+        <span>${item.title} ${formatItemValue(item)}</span>
+        <span>${currency}${item.amount.toFixed(2)}</span>
+      `;
+      taxBreakdownList.appendChild(listItem);
+    });
+  }
 }
 
 //date change get slot
@@ -1038,9 +1198,9 @@ function updateTimeSlots(timeSlots) {
     button.textContent = time
 
     // Optionally, you can add active class to a default time slot
-    if (time === '03:00 PM') {
-      button.classList.add('active')
-    }
+    // if (time === '03:00 PM') {
+    //   button.classList.add('active')
+    // }
 
     // Add click event listener for time slot selection
     button.addEventListener('click', function () {
@@ -1169,6 +1329,21 @@ async function submitForm() {
     submitButton.disabled = false
 
     if (!isSufficient) {
+      // Uncheck wallet payment method
+      const walletPaymentMethod = document.querySelector('#method-Wallet');
+
+      if (walletPaymentMethod) {
+        walletPaymentMethod.checked = false;
+      }
+
+      state.selectedPaymentMethod = null;
+
+      // Update the selected payment method display
+      const selectedPaymentMethodDisplay = document.getElementById('selected-payment-method');
+      if (selectedPaymentMethodDisplay) {
+        selectedPaymentMethodDisplay.textContent = 'Select Payment Method';
+      }
+
       Snackbar.show({
         text: 'Insufficient balance. Please add funds in wallet',
         pos: 'bottom-left',
@@ -1200,7 +1375,8 @@ async function submitForm() {
   formData.append('status', state.status)
   formData.append('total_amount', state.totalAmount)
   formData.append('advance_payment_status', state.payment.advance_payment_status)
-  formData.append('otherpatient_id',otherpatient_id)
+  formData.append('otherpatient_id', otherpatient_id)
+  formData.append('appointment_extra_info', document.getElementById('appointment_extra_info').value)
   // Log formData
 
   // Submit the form via fetch or other methods
@@ -1220,6 +1396,7 @@ async function submitForm() {
         const paymentDetails = {
           doctorName: data.data.doctor_name || 'N/A',
           clinicName: data.data.clinic_name || 'N/A',
+          serviceName: data.data.servicename || data.data.service_name || data.data.serviceName || state.selectedServiceName || 'Service Name Not Available',
           appointmentDate: data.data.formate_appointment_date || 'N/A',
           appointmentTime: state.selectedTime || 'N/A',
           bookingId: data.data.id || 'N/A',
@@ -1267,16 +1444,18 @@ async function submitForm() {
                 </div>
                 <h5 class="my-3">Great, Appointment Successful!</h5>
                 <h6 class="text-center">
-                    <span class="text-body">Your appointment
-                        with</span> <strong>Dr. ${paymentDetails.doctorName}</strong><span
+                    <span class="text-body">Your appointment for</span> <strong>${paymentDetails.serviceName}</strong><br>
+                    <span class="text-body">with</span> <strong>Dr. ${paymentDetails.doctorName}</strong><span
                         class="text-body"> at</span><br>
                     <strong>${paymentDetails.clinicName}</strong>
                     <span class="text-body">has been confirmed
                         on </span><strong>${paymentDetails.appointmentDate} <span
-                            class="text-body">at</span> ${ paymentDetails.appointmentTime}</strong>.
+                            class="text-body">at</span> ${paymentDetails.appointmentTime}</strong>.
                 </h6>
                 <!-- Booking Info -->
                     <div class="bg-primary-subtle border-none rounded-3 p-3 my-5">
+                    <p class="mb-2 text-body">service name:
+                         <a href="#" class="text-decoration-none fw-semibold">${paymentDetails.serviceName}</a></p>
                         <p class="mb-2 text-body">Booking ID:
                          <a href="#" class="text-decoration-none fw-semibold">#${paymentDetails.bookingId}</a></p>
                                 <div class="d-flex gap-2 align-items-center justify-content-center">
@@ -1287,11 +1466,11 @@ async function submitForm() {
                                 </div>
                     </div>
                 <span class="fw-bold text-body font-size-14">Total Payment</span>
-<h4 class="fw-semibold mb-5 pb-2 mt-2">
-  ${paymentDetails.currency}${(parseFloat(paymentDetails.advancepayment) > 0
-    ? parseFloat(paymentDetails.advancepayment).toFixed(2)
-    : parseFloat(paymentDetails.totalAmount).toFixed(2))}
-</h4>
+                <h4 class="fw-semibold mb-5 pb-2 mt-2">
+                  ${paymentDetails.currency}${(parseFloat(paymentDetails.advancepayment) > 0
+              ? parseFloat(paymentDetails.advancepayment).toFixed(2)
+              : parseFloat(paymentDetails.totalAmount).toFixed(2))}
+                </h4>
 
             </div>
           `,
@@ -1301,8 +1480,15 @@ async function submitForm() {
         }).then((result) => {
           if (result.isConfirmed) {
             submitButton.disabled = false
-            window.location.href = `${baseUrl}/appointment-list`
-            // window.location.href = `${appointmentList}` // Replace with the correct route
+            // Redirect to appointment detail page using the booking ID
+            if (paymentDetails.bookingId && paymentDetails.bookingId !== 'N/A') {
+              const redirectUrl = `${routes.appointmentDetails}/${paymentDetails.bookingId}`;
+              console.log('Redirecting to appointment details:', redirectUrl);
+              window.location.href = redirectUrl;
+            } else {
+              console.error('Invalid booking ID:', paymentDetails.bookingId);
+              window.location.href = routes.appointmentList;
+            }
           }
         })
       } else if (data.redirect) {

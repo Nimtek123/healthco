@@ -25,12 +25,14 @@ class customerRequest extends FormRequest
                     'password' => [
                         'required',
                         'string',
-                        'min:6',             // must be at least 10 characters in length
+                        'min:8',             // must be at least 8 characters in length
+                        'max:14',            // must not be more than 14 characters
                         'regex:/[a-z]/',      // must contain at least one lowercase letter
                         'regex:/[A-Z]/',      // must contain at least one uppercase letter
                         'regex:/[0-9]/',      // must contain at least one digit
                         'regex:/[@$!%*#?&]/', // must contain a special character
                     ],
+                    'confirm_password' => 'required_with:password|same:password',
                 ];
                 break;
             case 'put':
@@ -52,7 +54,11 @@ class customerRequest extends FormRequest
     public function messages()
     {
         return [
-            'password.regex' => 'Password must contain at least one uppercase / one lowercase / one number and one symbol.',            
+            'password.regex' => 'Password must contain at least one uppercase / one lowercase / one number and one symbol.',
+            'password.min' => 'Password must be 8 to 14 characters.',
+            'password.max' => 'Password must be 8 to 14 characters.',
+            'confirm_password.required_with' => 'Please fill confirm password.',
+            'confirm_password.same' => 'Confirm password must match the password.',
         ];
     }
 

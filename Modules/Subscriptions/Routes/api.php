@@ -12,6 +12,5 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::apiResource('planlimitation', PlanLimitationController::class);
     Route::apiResource('plans', PlanController::class);
 });
-?>
 
 

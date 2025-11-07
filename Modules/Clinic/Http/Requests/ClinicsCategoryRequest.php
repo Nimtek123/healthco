@@ -13,26 +13,44 @@ class ClinicsCategoryRequest extends FormRequest
      */
     public function rules(): array
     {
-        $id = request()->id;
+        $id = $this->route('category') ?? request()->id;
         switch (strtolower($this->getMethod())) {
             case 'post':
                 return [
-                    'name' => 'unique:clinics_categories,name,'.$id,
+                    'name' => 'required|string|max:255|unique:clinics_categories,name',
                     'status' => 'boolean',
+                    'file_url' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
                 ];
                 break;
             case 'put':
             case 'patch':
                 return [
-                    // 'system_service_id' => 'required|integer',
-                    'name' => 'unique:clinics_categories,name,'.$id,
+                    'name' => 'required|string|max:255|unique:clinics_categories,name,'.$id,
                     'status' => 'boolean',
+                    'file_url' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
+                    'remove_image' => 'nullable|in:0,1',
                 ];
                 break;
         }
 
         return [];
-        
+    }
+
+    /**
+     * Get custom error messages for validation rules.
+     */
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Category name is required.',
+            'name.unique' => 'This category name already exists. Please choose a different name.',
+            'name.max' => 'Category name cannot exceed 255 characters.',
+            'status.boolean' => 'Status must be a valid boolean value.',
+            'file_url.image' => 'The uploaded file must be an image.',
+            'file_url.mimes' => 'The image must be a file of type: jpeg, jpg, png, gif.',
+            'file_url.max' => 'The image size cannot exceed 2MB.',
+            'remove_image.in' => 'Remove image value must be 0 or 1.',
+        ];
     }
 
     /**
@@ -47,13 +65,15 @@ class ClinicsCategoryRequest extends FormRequest
         $data = [
             'status' => false,
             'message' => $validator->errors()->first(),
-            'all_message' => $validator->errors(),
+            'errors' => $validator->errors(),
         ];
 
-        if (request()->wantsJson() || request()->is('api/*')) {
+        // Always return JSON for AJAX requests or API calls
+        if (request()->wantsJson() || request()->is('api/*') || request()->ajax()) {
             throw new HttpResponseException(response()->json($data, 422));
         }
 
+        // Only redirect for non-AJAX requests
         throw new HttpResponseException(redirect()->back()->withInput()->with('errors', $validator->errors()));
     }
 }

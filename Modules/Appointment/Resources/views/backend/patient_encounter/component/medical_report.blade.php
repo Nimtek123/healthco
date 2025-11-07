@@ -20,9 +20,9 @@
                             <label class="form-label col-md-12">
                                 {{ __('clinic.lbl_name') }} <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="name" id="medical_name" class="form-control col-md-12" placeholder="{{ __('clinic.lbl_name') }}" required>
+                            <input type="text" name="name" id="name" class="form-control col-md-12" placeholder="{{ __('clinic.lbl_name') }}" required>
                             <div class="invalid-feedback">
-                                {{ __('Name field is required.') }}
+                                {{ __('Name is a required field.') }}
                             </div>
                         </div>
 
@@ -31,7 +31,9 @@
                                 {{ __('clinic.lbl_date') }} <span class="text-danger">*</span>
                             </label>
                             <input type="text" name="date" id="date" class="form-control col-md-12" placeholder="{{ __('clinic.lbl_date') }}" required>
-                            <div class="invalid-feedback" id="date-error"> Date field is required</div>
+                            <div class="invalid-feedback" id="date-error" style="display: none;">
+                                {{ __('Date is a required field.') }}
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -76,18 +78,28 @@
             $('#medical-report-submit').on('submit', function(event) {
                 event.preventDefault();
 
+                const nameField = $('#name');
                 const dateField = $('#date');
                 const dateError = $('#date-error');
 
+                // Reset validation states
+                nameField.removeClass('is-invalid');
                 dateField.removeClass('is-invalid');
                 dateError.hide();
 
+                // Validate name field
+                if (!nameField.val()) {
+                    nameField.addClass('is-invalid');
+                }
+
+                // Validate date field
                 if (!dateField.val()) {
                     dateField.addClass('is-invalid');
                     dateError.show();
                 }
+
                 let form = $(this)[0];
-                if (form.checkValidity() === false || dateField.hasClass('is-invalid')) {
+                if (form.checkValidity() === false || nameField.hasClass('is-invalid') || dateField.hasClass('is-invalid')) {
                     event.stopPropagation();
                     form.classList.add('was-validated');
                     return;
@@ -117,7 +129,12 @@
                             $('#addMedicalreport').modal('hide');
                             $('#medical-report-submit')[0].reset();
                             $('#medical_id').val('');
+                            $('#name').val('');
+                            $('#date').val('');
                             $('#medical-report-submit')[0].classList.remove('was-validated');
+                            $('#name').removeClass('is-invalid');
+                            $('#date').removeClass('is-invalid');
+                            $('#date-error').hide();
                             window.successSnackbar(
                                 `Medical report ${hasId ? 'updated' : 'added'} successfully`
                             );
@@ -133,7 +150,13 @@
 
             $('#addMedicalreport').on('hidden.bs.modal', function() {
                 $('#medical_id').val('');
+                $('#name').val('');
+                $('#date').val('');
                 $('#medical-report-submit')[0].reset();
+                $('#medical-report-submit')[0].classList.remove('was-validated');
+                $('#name').removeClass('is-invalid');
+                $('#date').removeClass('is-invalid');
+                $('#date-error').hide();
             });
 
             function updateFileLabel() {

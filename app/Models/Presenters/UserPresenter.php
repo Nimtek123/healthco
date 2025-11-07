@@ -23,7 +23,7 @@ trait UserPresenter
                 return '<span class="badge bg-success">Active</span>';
                 break;
             case '2':
-                return '<span class="badge bg-warning text-dark">Blocked</span>';
+                return '<span class="badge bg-warning heading-color">Blocked</span>';
                 break;
 
             default:

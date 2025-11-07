@@ -35,6 +35,141 @@ Route::get('storage-link', function () {
     return Artisan::call('storage:link');
 });
 
+// ========================================
+// CACHE CLEARING ROUTE - Visit: yourdomain.com/clear-cache
+// ========================================
+Route::get('clear-cache', function () {
+    try {
+        // Clear all types of cache
+        Artisan::call('cache:clear');
+        Artisan::call('config:clear');
+        Artisan::call('route:clear');
+        Artisan::call('view:clear');
+        
+        // Also clear compiled files
+        Artisan::call('clear-compiled');
+        
+        // Try to clear event cache (if exists)
+        try {
+            Artisan::call('event:clear');
+        } catch (\Exception $e) {
+            // Ignore if event:clear doesn't exist
+        }
+        
+        $message = '✓ All Cache Cleared Successfully!';
+        $details = 'Cleared: Application Cache, Config, Routes, Views, Compiled Files';
+        $status = 'success';
+        
+    } catch (\Exception $e) {
+        $message = '✗ Error Clearing Cache';
+        $details = 'Error: ' . $e->getMessage();
+        $status = 'error';
+    }
+    
+    return '<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cache Cleared</title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .container {
+                background: white;
+                padding: 50px;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                text-align: center;
+                max-width: 600px;
+                width: 100%;
+            }
+            h1 {
+                color: ' . ($status == 'success' ? '#28a745' : '#dc3545') . ';
+                font-size: 2.5em;
+                margin-bottom: 20px;
+            }
+            .details {
+                font-size: 1.2em;
+                color: #555;
+                margin: 20px 0;
+                line-height: 1.6;
+            }
+            .timestamp {
+                color: #999;
+                font-size: 0.9em;
+                margin: 15px 0;
+            }
+            .btn {
+                display: inline-block;
+                margin-top: 30px;
+                padding: 15px 40px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-decoration: none;
+                border-radius: 50px;
+                font-size: 1.1em;
+                font-weight: 600;
+                transition: transform 0.2s, box-shadow 0.2s;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            }
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            }
+            .icon {
+                font-size: 4em;
+                margin-bottom: 20px;
+            }
+            .cache-list {
+                text-align: left;
+                margin: 20px auto;
+                max-width: 400px;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 10px;
+            }
+            .cache-list li {
+                padding: 8px 0;
+                color: #666;
+                list-style: none;
+            }
+            .cache-list li:before {
+                content: "✓ ";
+                color: #28a745;
+                font-weight: bold;
+                margin-right: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="icon">' . ($status == 'success' ? '🚀' : '⚠️') . '</div>
+            <h1>' . $message . '</h1>
+            <div class="details">' . $details . '</div>
+            <ul class="cache-list">
+                <li>Application Cache</li>
+                <li>Configuration Cache</li>
+                <li>Route Cache</li>
+                <li>View/Blade Cache</li>
+                <li>Compiled Files</li>
+                <li>Event Cache</li>
+            </ul>
+            <div class="timestamp">⏰ Cleared at: ' . now()->format('Y-m-d H:i:s') . '</div>
+            <a href="/" class="btn">← Back to Home</a>
+        </div>
+    </body>
+    </html>';
+});
+
 Route::get('/', [FrontendController::class, 'index'])->name('frontend.index');
 
 Route::get('/home', function () {

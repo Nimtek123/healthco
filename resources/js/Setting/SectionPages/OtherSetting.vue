@@ -13,7 +13,7 @@
       </div>
     </div>
 
-    <div class="form-group border-bottom pb-3">
+    <!-- <div class="form-group border-bottom pb-3">
       <div class="d-flex justify-content-between align-items-center">
         <label class="form-label m-0 fw-normal" for="category-enable_chat_gpt">{{ $t('setting_integration_page.lbl_enable_chat_gpt') }} </label>
         <div class="form-check form-switch m-0">
@@ -21,7 +21,7 @@
         </div>
       </div>
     </div>
-    <div v-if="enable_chat_gpt == 1">
+    <div v-if="enable_chat_gpt == 1"> -->
       <!-- <div class="form-group border-bottom pb-3">
           <div class="d-flex justify-content-between align-items-center">
             <label class="form-label m-0 fw-normal" for="category-test_without_key">{{ $t('setting_integration_page.lbl_test_without_key') }} </label>
@@ -31,13 +31,13 @@
           </div>
         </div> -->
       <!-- <div v-if="test_without_key == 0"> -->
-      <div class="form-group border-bottom pb-3">
+      <!-- <div class="form-group border-bottom pb-3">
         <label for="category-chatgpt_key">{{ $t('setting_integration_page.key') }}</label>
         <input type="text" class="form-control" v-model="chatgpt_key" id="chatgpt_key" name="chatgpt_key" :errorMessage="errors.chatgpt_key" :errorMessages="errorMessages.chatgpt_key" />
         <p class="text-danger" v-for="msg in errorMessages.chatgpt_key" :key="msg">{{ msg }}</p>
-      </div>
+      </div> -->
       <!-- </div> -->
-    </div>
+    <!-- </div> -->
 
     <div class="form-group">
       <div class="d-flex justify-content-between align-items-center">

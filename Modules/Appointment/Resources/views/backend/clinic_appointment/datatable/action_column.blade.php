@@ -53,8 +53,9 @@
        data-method="DELETE"
        data-token="{{ csrf_token() }}"
        data-bs-toggle="tooltip"
-       title="{{ __('Delete') }}"
-data-confirm="{{ __('messages.are_you_sure?', ['form' => ($data->user->full_name ?? default_user_name()), 'module' => __('appointment.singular_title')]) }}">       <i class="ph ph-trash"></i>
+       title="{{ __('messages.delete') }}"
+       data-confirm="{{ __('messages.are_you_sure?', ['form' => ($data->user->full_name ?? default_user_name()), 'module' => __('appointment.singular_title')]) }}">
+       <i class="ph ph-trash"></i>
     </a>
     @endhasPermission
 @endunless

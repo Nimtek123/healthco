@@ -157,6 +157,19 @@ return [
     |
     */
 
-    'attributes' => [],
+    'attributes' => [
+        'first_name' => 'الاسم الأول',
+        'last_name' => 'اسم العائلة',
+        'email' => 'البريد الإلكتروني',
+        'mobile' => 'رقم الهاتف',
+        'address' => 'العنوان',
+        'country_id' => 'الدولة',
+        'state_id' => 'الولاية',
+        'city_id' => 'المدينة',
+        'pincode' => 'الرمز البريدي',
+        'password' => 'كلمة المرور',
+        'confirm_password' => 'تأكيد كلمة المرور',
+        'gender' => 'النوع',
+    ],
 
 ];

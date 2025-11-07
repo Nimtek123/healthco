@@ -13,6 +13,8 @@
 <button type="button"
     class='btn btn-primary d-flex align-items-center gap-1 {{($small=='true')? 'btn-sm' : ''}} {{$class}}'
     data-crud-id="0"
+    data-bs-toggle="offcanvas"
+    data-bs-target="{{ $target }}"
     title="{{ $title }}">
     <i class="{{$icon}}"></i>
     {{ $slot }}

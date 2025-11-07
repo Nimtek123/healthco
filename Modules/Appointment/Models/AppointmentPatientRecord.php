@@ -31,32 +31,32 @@ class AppointmentPatientRecord extends Model
     protected function subjective(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
-            set: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
+            get: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
+            set: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
         );
     }
 
     protected function objective(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
-            set: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
+            get: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
+            set: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
         );
     }
 
     protected function assessment(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
-            set: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
+            get: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
+            set: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
         );
     }
 
     protected function plan(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
-            set: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
+            get: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
+            set: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
         );
     }
 

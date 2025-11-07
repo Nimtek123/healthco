@@ -78,7 +78,7 @@
             <label>{{ element.label }} <span v-if="element.validation_status === 1" class="text-danger">*</span></label>
             <Multiselect :id="'select_' + element.id" :options="element.option" v-model="element.value" :searchable="true" multiple="false" v-bind="singleSelectOption"> </Multiselect>
 
-            <!-- <select :id="'select_' + element.id" class="form-control select2">
+            <!-- <select :id="'select_' + element.id" class="select2 form-select">
               <option v-if="!element.option.length">No options available</option>
               <option v-else v-for="(option, index) in element.option" :key="index" :value="option">
                 {{ option }}

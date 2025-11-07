@@ -23,7 +23,7 @@
                                         ({{ formatCurrencyVue(serviceItem.discount_value) }}) off
                                     </span> 
                                 </b>
-                                <del> {{ formatCurrencyVue(serviceItem.charges) }}</del> 
+                                <del> {{ formatCurrencyVue(serviceItem.price) }}</del> 
                             </div>
                             <div v-else class="service-price mt-3" >
                               <b>{{ formatCurrencyVue(serviceItem.payable_amount) }}</b>

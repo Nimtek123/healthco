@@ -23,7 +23,8 @@
                                         ({{ formatCurrencyVue(serviceItem.discount_value) }}) off
                                     </span> 
                                 </b>
-                              <del> {{ formatCurrencyVue(serviceItem.charges) }}</del> 
+                              <!-- <del> {{ formatCurrencyVue(serviceItem.charges) }}</del>  -->
+                              <del> {{ formatCurrencyVue(serviceItem.price) }}</del> 
                             </div>
                               <div v-else class="service-price mt-3" >
                                 <b>{{ formatCurrencyVue(serviceItem.payable_amount) }}</b>
@@ -134,6 +135,7 @@
               discount_type: foundService.discount_type,
               discount_value: foundService.discount_value,
               payable_amount: foundService.payable_amount,
+              price: foundService.price,
               vendor_name: foundService.vendor_name,
               start_date_time: store.booking.start_date_time
             }]
@@ -168,6 +170,7 @@
         discount_type:null,
         discount_value:null,
         payable_amount:null,
+        price: null,
         service_price: null,
         vendor_name: null,
         start_date_time: store.booking.start_date_time

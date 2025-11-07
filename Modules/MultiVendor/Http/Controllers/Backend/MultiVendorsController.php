@@ -8,16 +8,25 @@ use Carbon\Carbon;
 use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash as HashFacade;
+use Illuminate\Support\Facades\Artisan;
 use Modules\CustomField\Models\CustomField;
 use Modules\CustomField\Models\CustomFieldGroup;
 use Yajra\DataTables\DataTables;
 use App\Models\User;
+use Modules\World\Models\Country;
+use Modules\World\Models\State;
+use Modules\World\Models\City;
 use Modules\MultiVendor\Http\Requests\MultivendorRequest;
 
 class MultiVendorsController extends Controller
 {
     // use Authorizable;
     protected string $exportClass = '\App\Exports\VendorExport';
+    protected $module_title;
+    protected $module_name;
+    protected $module_icon;
     public function __construct()
     {
         // Page Title
@@ -32,6 +41,168 @@ class MultiVendorsController extends Controller
             'module_title' => $this->module_title,
             'module_icon' => $this->module_icon,
             'module_name' => $this->module_name,
+        ]);
+    }
+
+    public function checkEmail(Request $request)
+    {
+        $email = trim((string) $request->get('email', ''));
+        $excludeId = $request->get('exclude_id');
+
+        if ($email === '') {
+            return response()->json([
+                'available' => false,
+                'message' => __('validation.required', ['attribute' => 'email']),
+            ]);
+        }
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return response()->json([
+                'available' => false,
+                'message' => __('validation.email', ['attribute' => 'email']),
+            ]);
+        }
+
+        $query = User::query()->where('email', $email);
+        if (!empty($excludeId)) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $exists = $query->exists();
+
+        if ($exists) {
+            return response()->json([
+                'available' => false,
+                'message' => __('validation.unique', ['attribute' => 'email']),
+            ]);
+        }
+        return response()->json([
+            'available' => true,
+            'message' => '',
+        ]);
+    }
+
+    public function checkMobile(Request $request)
+    {
+        $mobile = trim((string) $request->get('mobile', ''));
+        $excludeId = $request->get('exclude_id');
+
+        if ($mobile === '') {
+            return response()->json([
+                'available' => false,
+                'message' => __('validation.required', ['attribute' => 'mobile']),
+            ]);
+        }
+
+        // Clean the mobile number - remove spaces, dashes, parentheses
+        $cleanMobile = preg_replace('/[\s\-\(\)]/', '', $mobile);
+        
+        // Try different formats for matching
+        $formats = [
+            $mobile,                    // Original format: +918574965162
+            $cleanMobile,              // Clean format: +918574965162
+            '+' . $cleanMobile,        // With + prefix: ++918574965162
+            $cleanMobile,              // Without + prefix: 918574965162
+            // Add formats with spaces (as stored in database)
+            preg_replace('/(\+\d{2})(\d+)/', '$1 $2', $mobile), // +91 8574965162
+            preg_replace('/(\+\d{2})(\d+)/', '$1 $2', $cleanMobile), // +91 8574965162
+            // Also try with 3-digit country codes
+            preg_replace('/(\+\d{3})(\d+)/', '$1 $2', $mobile),
+            preg_replace('/(\+\d{3})(\d+)/', '$1 $2', $cleanMobile),
+        ];
+
+        // Remove duplicates and empty values
+        $formats = array_filter(array_unique($formats));
+
+        $query = User::query();
+        $query->where(function($q) use ($formats) {
+            foreach ($formats as $format) {
+                $q->orWhere('mobile', $format);
+            }
+        });
+
+        if (!empty($excludeId)) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        $exists = $query->exists();
+
+        // Debug logging
+        \Log::info('Phone validation check:', [
+            'original_mobile' => $mobile,
+            'clean_mobile' => $cleanMobile,
+            'formats_checked' => $formats,
+            'exclude_id' => $excludeId,
+            'exists' => $exists
+        ]);
+        
+        // Additional debug: Check if any format matches exactly
+        $exactMatches = [];
+        foreach ($formats as $format) {
+            $match = User::where('mobile', $format)->first();
+            if ($match) {
+                $exactMatches[] = [
+                    'format' => $format,
+                    'found_mobile' => $match->mobile,
+                    'user_id' => $match->id
+                ];
+            }
+        }
+        
+        \Log::info('Exact format matches:', $exactMatches);
+
+        if ($exists) {
+            return response()->json([
+                'available' => false,
+                'message' => 'Phone Number Exists',
+            ]);
+        }
+        return response()->json([
+            'available' => true,
+            'message' => '',
+        ]);
+    }
+
+    public function getAllMobiles()
+    {
+        $mobiles = User::whereNotNull('mobile')->where('mobile', '!=', '')->pluck('mobile')->toArray();
+        return response()->json([
+            'mobiles' => $mobiles,
+            'count' => count($mobiles)
+        ]);
+    }
+
+    public function testMobileCheck($mobile)
+    {
+        $mobile = trim((string) $mobile);
+        $cleanMobile = preg_replace('/[\s\-\(\)]/', '', $mobile);
+        
+        $formats = [
+            $mobile,
+            $cleanMobile,
+            '+' . $cleanMobile,
+            $cleanMobile,
+            preg_replace('/(\+\d{1,3})(\d+)/', '$1 $2', $mobile),
+            preg_replace('/(\+\d{1,3})(\d+)/', '$1 $2', $cleanMobile),
+        ];
+        
+        $formats = array_filter(array_unique($formats));
+        
+        $query = User::query();
+        $query->where(function($q) use ($formats) {
+            foreach ($formats as $format) {
+                $q->orWhere('mobile', $format);
+            }
+        });
+        
+        $exists = $query->exists();
+        $found = $query->first();
+        
+        return response()->json([
+            'mobile' => $mobile,
+            'formats' => $formats,
+            'exists' => $exists,
+            'found_user' => $found ? $found->mobile : null
         ]);
     }
 
@@ -76,7 +247,15 @@ class MultiVendorsController extends Controller
         ];
         $export_url = route('backend.multivendors.export');
 
-        return view('multivendor::backend.multivendors.index_datatable', compact('module_action', 'filter', 'columns',  'export_import', 'export_columns', 'export_url', 'customefield'));
+        // --- Add this block to fetch countries, states, cities ---
+        $countries = DB::table('countries')->select('id', 'name')->orderBy('name')->get();
+        $states = collect(); // empty for create
+        $cities = collect(); // empty for create
+
+        return view('multivendor::backend.multivendors.index_datatable', compact(
+            'module_action', 'filter', 'columns', 'export_import', 'export_columns', 'export_url', 'customefield',
+            'countries', 'states', 'cities'
+        ));
     }
 
     /**
@@ -88,13 +267,16 @@ class MultiVendorsController extends Controller
     {
         $term = trim($request->q);
 
-        $query_data = User::role(['vendor'])->with('media')->where(function ($q) use ($term) {
-            if (!empty($term)) {
-                $q->orWhere('first_name', 'LIKE', "%$term%");
-                $q->orWhere('last_name', 'LIKE', "%$term%");
-            }
-        });
-       
+        $query_data = User::role(['vendor'])->with('media')
+            ->where('status', 1)  // Only active vendors
+            ->where('is_banned', 0)  // Only unblocked vendors
+            ->where(function ($q) use ($term) {
+                if (!empty($term)) {
+                    $q->orWhere('first_name', 'LIKE', "%$term%");
+                    $q->orWhere('last_name', 'LIKE', "%$term%");
+                }
+            });
+
 
         $query_data = $query_data->get();
 
@@ -116,8 +298,24 @@ class MultiVendorsController extends Controller
         $filter = $request->filter;
 
         if (isset($filter)) {
-            if (isset($filter['column_status'])) {
+            if (isset($filter['column_status']) && $filter['column_status'] !== '' && $filter['column_status'] !== null) {
                 $query->where('status', $filter['column_status']);
+            }
+
+            if (isset($filter['gender']) && $filter['gender'] !== '' && $filter['gender'] !== null) {
+                $query->where('gender', $filter['gender']);
+            }
+
+            if (isset($filter['email_verified']) && $filter['email_verified'] !== '' && $filter['email_verified'] !== null) {
+                if ((string)$filter['email_verified'] === '1') {
+                    $query->whereNotNull('email_verified_at');
+                } elseif ((string)$filter['email_verified'] === '0') {
+                    $query->whereNull('email_verified_at');
+                }
+            }
+
+            if (isset($filter['is_banned']) && $filter['is_banned'] !== '' && $filter['is_banned'] !== null) {
+                $query->where('is_banned', $filter['is_banned']);
             }
         }
         $query->orderBy('created_at', 'desc');
@@ -234,21 +432,23 @@ class MultiVendorsController extends Controller
      */
     public function store(MultivendorRequest $request)
     {
-        $data = $request->except('profile_image');
         $data = $request->all();
+        // dd($data);
+        // Store complete phone number with country code (preserve spaces)
+        // $data['mobile'] = str_replace(' ', '', $data['mobile']); // Removed to preserve spaces
 
-        $data['mobile'] = str_replace(' ', '', $data['mobile']);
-
-        $data['password'] = Hash::make($data['password']);
+        $data['password'] = HashFacade::make($data['password']);
         $data['email_verified_at'] = Carbon::now();
+        // Default status to active (1) on create
+        $data['status'] = $request->has('status') ? 1 : 1;
 
         $data['user_type'] = 'vendor';
 
         $data = User::create($data);
         $data->syncRoles(['vendor']);
 
-        
-        \Artisan::call('cache:clear');
+
+        Artisan::call('cache:clear');
 
         if ($request->custom_fields_data) {
             $data->updateCustomFieldData(json_decode($request->custom_fields_data));
@@ -257,8 +457,12 @@ class MultiVendorsController extends Controller
             storeMediaFile($data, $request->file('profile_image'), 'profile_image');
         }
         $message = __('multivendor.new_vendor');
-
-        return response()->json(['message' => $message, 'status' => true], 200);
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['status' => true, 'message' => $message]);
+        }
+        return redirect()
+            ->route('backend.multivendors.index')
+            ->with('success', $message);
     }
 
     /**
@@ -267,13 +471,19 @@ class MultiVendorsController extends Controller
      * @param  int  $id
      * @return Response
      */
-    public function edit($id)
-    {
+   public function edit($id)
+{
+    $vendor = User::role(['vendor'])->where('id', $id)->firstOrFail();
+    $countries = Country::where('status', 1)->get();
+    $states = State::where('country_id', $vendor->country)->where('status', 1)->get();
+    $cities = City::where('state_id', $vendor->state)->where('status', 1)->get();
+    $genders = ['male' => 'Male', 'female' => 'Female', 'intersex' => 'Intersex'];
 
-        $data = User::role(['vendor'])->where('id',$id)->first();
-
-        return response()->json(['data' => $data, 'status' => true]);
-    }
+    // Return only the form partial for AJAX
+    return view('multivendor::backend.multivendors.multivendor', compact(
+        'vendor', 'countries', 'states', 'cities', 'genders'
+    ));
+}
 
     /**
      * Update the specified resource in storage.
@@ -282,29 +492,37 @@ class MultiVendorsController extends Controller
      * @param  int  $id
      * @return Response
      */
-    public function update(Request $request, $id)
+    public function update(MultivendorRequest $request, $id)
     {
         $data = User::role(['vendor'])->findOrFail($id);
 
-        $request_data = $request->except('profile_image');
-
-        $request_data = $request->except('password');
-        $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']);
+        $request_data = $request->except(['profile_image', 'password', 'remove_profile_image']);
+        // Store complete phone number with country code (preserve spaces)
+        // $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']); // Removed to preserve spaces
+        
+        // Handle checkbox status
+        $request_data['status'] = $request->has('status') ? 1 : 0;
 
         $data->update($request_data);
-        
+
         if ($request->hasFile('profile_image')) {
             storeMediaFile($data, $request->file('profile_image'),'profile_image');
         }
-        
-        if ($request->profile_image == null) {
+
+        // Only clear existing image if user explicitly requested removal
+        if ($request->boolean('remove_profile_image')) {
             $data->clearMediaCollection('profile_image');
         }
 
-       
+
         $message = __('multivendor.update_vendor');
 
-        return response()->json(['message' => $message, 'status' => true], 200);
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['status' => true, 'message' => $message]);
+        }
+        return redirect()
+            ->route('backend.multivendors.index')
+            ->with('success', $message);
     }
 
     /**
@@ -356,7 +574,7 @@ class MultiVendorsController extends Controller
         $data = User::findOrFail($user_id);
 
         $request_data = $request->only('password');
-        $request_data['password'] = Hash::make($request_data['password']);
+        $request_data['password'] = HashFacade::make($request_data['password']);
 
         $data->update($request_data);
 

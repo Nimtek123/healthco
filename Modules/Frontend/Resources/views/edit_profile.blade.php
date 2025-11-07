@@ -302,7 +302,6 @@ requiredFields.forEach(field => {
         if (data.success) {
             $('#edit-profile-modal').modal('hide');
             $('#update-profile').modal('show');
-            window.successSnackbar("Profile updated successfully!");
 
         } else {
             window.errorSnackbar("An error occurred while updating the profile.");
@@ -335,7 +334,7 @@ document.getElementById('edit-profile-modal').addEventListener('hidden.bs.modal'
             const formData = new FormData();
             formData.append("profile_image", file);
 
-            fetch('{{ route('update-profile-image') }}', {
+            fetch("{{ route('update-profile-image') }}", {
                     method: "POST",
                     body: formData,
                     headers: {
@@ -345,7 +344,6 @@ document.getElementById('edit-profile-modal').addEventListener('hidden.bs.modal'
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        window.successSnackbar("Profile Image updated successfully!");
 
                     } else {
                         console.log("Error uploading image:", data.message);

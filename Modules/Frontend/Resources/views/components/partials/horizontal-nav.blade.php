@@ -16,7 +16,7 @@
                 </a>
             </li>
             @auth
-                @if($sectionData['appointments'] == 1 && auth()->user()->hasRole('user'))
+                @if(!empty($sectionData['appointments']) && auth()->user()->hasRole('user'))
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('appointment-list') ? 'active' : '' }}"
                             href="{{ route('appointment-list') }}">
@@ -26,7 +26,7 @@
                 @endif
             @endauth
 
-            @if($sectionData['categories'] == 1)
+            @if(!empty($sectionData['categories']))
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('categories') ? 'active' : '' }}"
                         href="{{ route('categories') }}">
@@ -35,7 +35,7 @@
                 </li>
             @endif
 
-            @if($sectionData['services'] == 1)
+            @if(!empty($sectionData['services']))
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('services') ? 'active' : '' }}" href="{{ route('services') }}">
                         <span class="item-name">{{ __('frontend.services') }}</span>
@@ -43,7 +43,7 @@
                 </li>
             @endif
 
-            @if($sectionData['clinics'] == 1)
+            @if(!empty($sectionData['clinics']))
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('clinics') ? 'active' : '' }}" href="{{ route('clinics') }}">
                         <span class="item-name">{{ __('frontend.clinics') }}</span>
@@ -51,7 +51,7 @@
                 </li>
             @endif
 
-            @if($sectionData['doctors'] == 1)
+            @if(!empty($sectionData['doctors']))
                 <li class="nav-item">
                     <a class="nav-link {{ request()->routeIs('doctors') ? 'active' : '' }}" href="{{ route('doctors') }}">
                         <span class="item-name">{{ __('frontend.doctors') }}</span>
@@ -59,7 +59,7 @@
                 </li>
             @endif
             @auth
-                @if(auth()->user()->hasRole('user'))
+                @if(!empty($sectionData['incidence']) && auth()->user()->hasRole('user'))
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('incidence.index') ? 'active' : '' }}" href="{{ route('incidence.index') }}">
                             <span class="item-name">{{ __('frontend.incidence') }}</span>

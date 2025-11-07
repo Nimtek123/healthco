@@ -60,10 +60,10 @@
                       <span v-else>-</span>
                     </div>
                   </li>
-                  <li class="item">
+                  <li class="item" v-if="EncounterDetails.description">
                     <div class="d-flex align-items-center flex-wrap gap-1">
                       <h6 class="mb-0">{{ $t('appointment.description') }}:</h6>
-                      <span>{{ EncounterDetails.description ?? '-' }} </span>
+                      <span>{{ EncounterDetails.description }}</span>
                     </div>
                   </li>
 
@@ -276,7 +276,7 @@
                         </ul>
                       </div>
                       <div class="card-footer border-top" v-if="EncounterDetails.status == 1">
-                        <textarea class="form-control h-auto" rows="2" placeholder="Enter Notes" v-model="notes" name="notes" id="notes" style="min-height: max-content"></textarea>
+                        <textarea class="form-control h-auto" rows="2" :placeholder="$t('appointment.enter_note')" v-model="notes" name="notes" id="notes" style="min-height: max-content"></textarea>
                         <button class="btn btn-primary mt-3 w-100" @click="addNotesValue()"><i class="ph ph-plus me-2"></i>{{ $t('appointment.add') }}</button>
                       </div>
                     </div>

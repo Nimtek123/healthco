@@ -84,10 +84,10 @@
                                             <small class="text-danger error-message" id="error-phone"></small>
                                         </div>
                                         <div class="col-lg-12 mb-3">
-                                            <textarea type="text" name="description" id="description" class="form-control bg-body" placeholder="{{__('messages.lbl_description')}}" maxlength="500"></textarea>
+                                            <textarea type="text" name="description" id="description" class="form-control bg-body" placeholder="{{__('messages.lbl_description')}}" maxlength="250"></textarea>
                                             <small class="text-danger error-message" id="error-description"></small>
                                             <div class="text-end mt-1">
-                                                <small id="description-count">0 / 500</small>
+                                                <small id="description-count">0 / 250</small>
                                             </div>
                                         </div>
 
@@ -239,18 +239,23 @@
         var iti = window.intlTelInput(input, {
             initialCountry: "in",
             separateDialCode: true,
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js" // To handle number formatting
+            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
         });
 
-        input.addEventListener("countrychange", function () {
-            var fullPhoneNumber = iti.getNumber();
-            document.getElementById('phone').value = fullPhoneNumber;
-        });
+        function updateFullNumber() {
+            const countryData = iti.getSelectedCountryData();
+            const dialCode = countryData.dialCode;
 
-        input.addEventListener("blur", function () {
-            var fullPhoneNumber = iti.getNumber();
-            document.getElementById('phone').value = fullPhoneNumber;
-        });
+            // Remove any existing +countrycode and spaces
+            let number = input.value.replace(/^\+\d+\s*/, '').trim();
+
+            // Now format with the new one
+            const formattedNumber = `+${dialCode} ${number}`;
+            input.value = formattedNumber;
+        }
+
+        input.addEventListener("countrychange", updateFullNumber);
+        input.addEventListener("blur", updateFullNumber);
     });
 </script>
 <script>
@@ -276,7 +281,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const description = document.getElementById('description');
         const count = document.getElementById('description-count');
-        const maxLength = 500;
+        const maxLength = 250;
 
         description.addEventListener('input', function() {
             let currentLength = description.value.length;
@@ -349,8 +354,8 @@
 
         // Description Validation (enforce limit)
         const description = formData.get('description');
-        if (description && description.length > 500) {
-            setError('description', "Description cannot exceed 500 characters.");
+        if (description && description.length > 250) {
+            setError('description', "Description cannot exceed 250 characters.");
         }
 
         // Stop submission if there are errors
@@ -409,7 +414,7 @@
 
     function previewImage(event, id, value = null) {
         const input = value ;
-      
+
         fetch("{{ route('changestatus') }}",
             {
                 method: "POST",

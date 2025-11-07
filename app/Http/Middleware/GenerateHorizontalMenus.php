@@ -61,16 +61,16 @@ class GenerateHorizontalMenus
               ]);
           }
 
-        
-        if(!$user->hasRole('receptionist')){
-            $this->mainRoute($menu, [
-              'icon' => 'ph ph-hospital',
-              'title' => __('sidebar.clinic'),
-              'route' => 'backend.clinics.index',
-              'permission' => ['view_clinics_center'],
-              'active' => ['app/clinics'],
-              'order' => 0,
-          ]);
+            
+            if(!$user->hasRole('receptionist')){
+                $this->mainRoute($menu, [
+                'icon' => 'ph ph-hospital',
+                'title' => __('sidebar.clinic'),
+                'route' => 'backend.clinics.index',
+                'permission' => ['view_clinics_center'],
+                'active' => ['app/clinics'],
+                'order' => 0,
+            ]);
         }
           $this->mainRoute($menu, [
             'icon' => 'ph ph-sliders-horizontal',

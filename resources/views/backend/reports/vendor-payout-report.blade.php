@@ -15,7 +15,7 @@
                 <div class="input-group gap-2 flex-nowrap">
                     <input type="text" name="appointment_date" id="appointment_date" placeholder="{{ __('setting_sidebar.select_date') }}" class="appoinment-date-range form-control form-control-sm ps-3" readonly />
                     <select id="column_employee_id" placeholder="Select an employee" name="column_employee_id"
-                        data-filter="select" class="select2 form-control form-control"
+                        data-filter="select" class="select2 form-select form-control"
                         data-ajax--url="{{ route('backend.get_search_data', ['type' => 'vendors']) }}"
                         data-ajax--cache="true" width="100%">
                         <option value="">{{__('receptionist.select_vendors')}}</option>
@@ -139,20 +139,4 @@
             window.renderedDataTable.ajax.reload(null, false)
         })
     </script>
-
-    <style>
-        .select2-container {
-
-            width: 180px !important;
-        }
-
-        .select2-container--default .select2-selection__arrow {
-            height: 0 !important;
-        }
-
-        .select2-container--default .select2-selection__arrow b {
-
-            margin-top: 15px !important;
-        }
-    </style>
 @endpush

@@ -16,7 +16,7 @@
       <div>
         <x-backend.quick-action url="{{ route('backend.doctor.bulk_action_review') }}">
           <div class="">
-            <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
+            <select name="action_type" class="form-select col-12" id="quick-action-type">
               <option value="">{{ __('messages.no_action') }}</option>
               <option value="delete">{{ __('messages.delete') }}</option>
             </select>
@@ -35,12 +35,6 @@
     <table id="datatable" class="table table-responsive">
     </table>
 </div>
-<x-backend.advance-filter>
-  <x-slot name="title">
-    <h4>Advanced Filter</h4>
-  </x-slot>
-</x-backend.advance-filter>
-</div>
 @endsection
 
 @push('after-styles')
@@ -53,15 +47,6 @@
 <script type="text/javascript" src="{{ asset('vendor/datatable/datatables.min.js') }}"></script>
 
 <script type="text/javascript" defer>
-  const range_flatpicker = document.querySelectorAll('.booking-date-range')
-  Array.from(range_flatpicker, (elem) => {
-    if (typeof flatpickr !== typeof undefined) {
-      flatpickr(elem, {
-        mode: "range",
-        dateFormat: "d-m-Y",
-      })
-    }
-  })
   const columns = [
     @unless(auth()->user()->hasRole('doctor'))
     {
@@ -103,7 +88,21 @@
       name: 'review_msg',
       title: "{{ __('clinic.lbl_message') }}",
       width: '10%',
-      className: 'description-column'
+      className: 'description-column',
+      render: function(data, type, row) {
+        if (type !== 'display') return data;
+        const plain = stripHtml(String(data ?? ''));
+        const safe = escapeHtml(plain);
+        const id = `rv_${row.id ?? Math.random().toString(36).slice(2)}`;
+        return `
+          <div class="review-wrapper" data-review-id="${id}">
+            <div class="review-clamp">${safe}</div>
+            <div class="review-actions mt-1">
+              <a class="text-primary me-2 js-toggle-review" data-action="toggle">Read more</a>
+            </div>
+          </div>
+        `;
+      }
 
     },
     {
@@ -153,13 +152,44 @@
         @else
           [5, "desc"]
         @endif
-      ],
-      advanceFilter: () => {
-        return {
-          booking_date: $('#booking_date').val(),
+      ]
+    });
 
-        }
-      }
+    // escape HTML to prevent injection inside our custom renderer
+    window.escapeHtml = function(str) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return str.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    // remove HTML tags if backend sends wrapped/HTML content
+    window.stripHtml = function(html) {
+      const div = document.createElement('div');
+      div.innerHTML = html;
+      return div.textContent || div.innerText || '';
+    }
+
+    // Delegate click handlers for read more / view
+    $(document).on('click', '.js-toggle-review', function(e) {
+      e.preventDefault();
+      const wrapper = $(this).closest('.review-wrapper');
+      const block = wrapper.find('.review-clamp');
+      block.toggleClass('expanded');
+      $(this).text(block.hasClass('expanded') ? 'Read less' : 'Read more');
+    });
+
+    $(document).on('click', '.js-view-review', function(e) {
+      e.preventDefault();
+      const wrapper = $(this).closest('.review-wrapper');
+      const fullHtml = wrapper.find('.review-clamp').html();
+      $('#fullReviewModal .modal-body').html(fullHtml);
+      const modal = new bootstrap.Modal(document.getElementById('fullReviewModal'));
+      modal.show();
     });
 
     function resetQuickAction() {
@@ -184,4 +214,22 @@
     });
   })
 </script>
+@endpush
+
+@push('after-content')
+<!-- Full Review Modal -->
+<div class="modal fade" id="fullReviewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Full Review</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+  </div>
 @endpush

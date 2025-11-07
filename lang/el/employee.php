@@ -9,6 +9,7 @@ return [
     'lbl_phone_number' => 'Αριθμός Τηλεφώνου',
     'lbl_password' => 'Κωδικός',
     'lbl_confirm_password' => 'Επιβεβαίωση Κωδικού',
+    'lbl_old_password' => 'Παλιός Κωδικός',
     'lbl_gender' => 'Φύλο',
     'lbl_show_in_calender' => 'Εμφάνιση στο Ημερολόγιο',
     'lbl_is_manager' => 'Είναι Διευθυντής',

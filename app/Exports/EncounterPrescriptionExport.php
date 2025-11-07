@@ -77,4 +77,14 @@ class EncounterPrescriptionExport implements FromCollection, WithHeadings
 
         return $newQuery;
     }
+     public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => exportSheetHeader(
+                'Encounter Prescription List',
+                $this->columns,
+                $this->dateRange
+            ),
+        ];
+    }
 }

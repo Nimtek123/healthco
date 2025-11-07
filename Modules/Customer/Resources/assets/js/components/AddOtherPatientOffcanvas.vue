@@ -40,15 +40,20 @@
 
         <!-- Date of Birth -->
         <div class="col-md-12">
-          <label class="form-label">{{ $t('customer.lbl_date_of_birth') }} <span class="text-danger">*</span></label>
+          <label class="form-label">
+            {{ $t('customer.lbl_date_of_birth') }}
+            <span class="text-danger">*</span>
+          </label>
           <flat-pickr 
             v-model="dob"
             :config="dobConfig"
             class="form-control"
-            :class="{ 'is-invalid': errors.dob }"
+            :class="{ 'is-invalid': dobError }"
+            :placeholder="$t('clinic.date_of_birth')"
           />
-          <div class="invalid-feedback">{{ errors.dob }}</div>
+          <div class="invalid-feedback">{{ dobError }}</div>
         </div>
+
 
         <!-- Phone Number -->
         <div class="col-md-12">
@@ -57,6 +62,12 @@
             v-model="contactNumber"
             :class="{ 'is-invalid': errors.contactNumber }"
             @input="handleInput"
+            @blur="handleBlur"
+            :mode="'international'"
+            :autoDefaultCountry="true"
+            :enableFormatting="true"
+            :preferredCountries="['in','us','gb','au','ca']"
+            :separateDialCode="true"
             :placeholder="$t('customer.enter_phone_number')"
           />
           <div class="invalid-feedback">{{ errors.contactNumber }}</div>
@@ -117,44 +128,66 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { PATIENT_OTHER_STORE_URL} from '../constant/constant'
+import { PATIENT_OTHER_STORE_URL } from '../constant/constant'
 
 import { VueTelInput } from 'vue3-tel-input'
 import 'vue3-tel-input/dist/vue3-tel-input.css'
 import flatPickr from 'vue-flatpickr-component'
 import 'flatpickr/dist/flatpickr.css'
-import { useModuleId,useRequest } from '@/helpers/hooks/useCrudOpration'
+import { useModuleId, useRequest } from '@/helpers/hooks/useCrudOpration'
 import imageComponent from '@/vue/components/form-elements/imageComponent.vue'
 import * as yup from 'yup'
 import { useField, useForm } from 'vee-validate'
+
 const { t } = useI18n()
 const { storeRequest } = useRequest()
-
 const isSubmitting = ref(false)
 
 const dobConfig = {
   dateFormat: 'Y-m-d',
   maxDate: 'today'
 }
-const currentId = useModuleId(() => {
 
-}, 'employee_assign')
+const currentId = useModuleId(() => {}, 'employee_assign')
 
+// ✅ Validation schema
 const validationSchema = yup.object({
   first_name: yup.string().required(t('First Name is Required')),
   last_name: yup.string().required(t('Last Name is Required')),
-  dob: yup.string().required(t('Date Of Birth is Required')),
+  dob: yup.date().nullable().required(t('Date Of Birth is Required')),
   gender: yup.string().required(t('Gender Required')),
   relation: yup.string().required(t('Relation is Required'))
 })
 
+// ✅ useForm configured to validate ONLY on submit
+const { handleSubmit, errors, resetForm, setFieldValue } = useForm({
+  validationSchema,
+  validateOnMount: false,
+  validateOnBlur: false,
+  validateOnChange: false
+})
+
+// ✅ Fields
+const { value: first_name } = useField('first_name')
+const { value: last_name } = useField('last_name')
+// DOB field → only validates on submit
+const { value: dob, errorMessage: dobError } = useField('dob', undefined, {
+  validateOnValueUpdate: false
+})
+const { value: contactNumber } = useField('contactNumber')
+const lastPhoneMeta = ref(null)
+const { value: gender } = useField('gender')
+const { value: relation } = useField('relation')
+const { value: profile_image } = useField('profile_image')
+const { value: user_id } = useField('user_id')
+
+const image_url = ref()
+
 // Default form data
 const defaultData = () => {
-  errors.value = {}
   return {
     first_name: '',
     last_name: '',
-    dob: '',
     contactNumber: '',
     gender: '',
     relation: '',
@@ -163,14 +196,42 @@ const defaultData = () => {
   }
 }
 
-const handleInput = (Number, phoneObject) => {
+// Handle phone input and keep E.164 when possible
+// const handleInput = (number, phoneObject) => {
+//   if (phoneObject) {
+//     lastPhoneMeta.value = phoneObject
+//     // Prefer E.164 if present; fallback to international
+//     const e164 = phoneObject.number || phoneObject.e164 || ''
+//     const international = phoneObject.international || phoneObject.formatted || number || ''
+//     contactNumber.value = e164 || international
+//   } else {
+//     contactNumber.value = number || ''
+//   }
+// }
+
+const handleInput = (phone, phoneObject) => {
   // Handle the input event
-  if (phoneObject?.formatted) {
-    contactNumber.value = phoneObject.formatted
+ if (phoneObject?.countryCallingCode && phoneObject?.nationalNumber) {
+    // Ensure country code starts with "+"
+    const dialCode = phoneObject.countryCallingCode.startsWith('+')
+      ? phoneObject.countryCallingCode
+      : `+${phoneObject.countryCallingCode}`;
+    contactNumber.value = `${dialCode} ${phoneObject.nationalNumber}`;
+  } else if (phoneObject?.formatted) {
+    contactNumber.value = phoneObject.formatted;
   }
 }
-const image_url = ref()
-// Set form data function
+
+// On blur, re-normalize to E.164
+const handleBlur = () => {
+  if (lastPhoneMeta.value) {
+    const e164 = lastPhoneMeta.value.number || lastPhoneMeta.value.e164
+    const international = lastPhoneMeta.value.international || lastPhoneMeta.value.formatted
+    contactNumber.value = e164 || international || contactNumber.value
+  }
+}
+
+// Set form data
 const setFormData = (data) => {
   image_url.value = data.profile_image
   resetForm({
@@ -186,24 +247,12 @@ const setFormData = (data) => {
     }
   })
 }
+
 onMounted(() => {
   setFormData(defaultData())
 })
 
-// Update form validation
-const { handleSubmit, errors, resetForm } = useForm({
-  validationSchema
-})
-
-const { value: first_name } = useField('first_name')
-const { value: last_name } = useField('last_name')
-const { value: dob } = useField('dob')
-const { value: contactNumber } = useField('contactNumber')
-const { value: gender } = useField('gender')
-const { value: relation } = useField('relation')
-const { value: profile_image } = useField('profile_image')
-const { value: user_id } = useField('user_id')
-// Reset and close handler
+// Submit handler
 const reset_datatable_close_offcanvas = (res) => {
   isSubmitting.value = false
   if (res.status) {
@@ -213,33 +262,35 @@ const reset_datatable_close_offcanvas = (res) => {
     setFormData(defaultData())
   } else {
     window.errorSnackbar(res.message)
-    errors.value = res.all_message
   }
 }
 
-// Update submit function
 const submitForm = handleSubmit((values) => {
   isSubmitting.value = true
-values.user_id=currentId.value
-  storeRequest({ 
-    url: PATIENT_OTHER_STORE_URL, 
-    body: values, 
-    type: 'file' 
+  // Ensure E.164 just before submit
+  if (lastPhoneMeta.value) {
+    const e164 = lastPhoneMeta.value.number || lastPhoneMeta.value.e164
+    const international = lastPhoneMeta.value.international || lastPhoneMeta.value.formatted
+    values.contactNumber = e164 || international || values.contactNumber
+  }
+  values.user_id = currentId.value
+  storeRequest({
+    url: PATIENT_OTHER_STORE_URL,
+    body: values,
+    type: 'file'
   })
-  .then((res) => {
-    reset_datatable_close_offcanvas(res)
-  })
-  .catch(error => {
-    isSubmitting.value = false
-    if (error.response?.data?.errors) {
-      errors.value = error.response.data.errors
-    } else {
-      window.errorSnackbar('Something went wrong')
-    }
-  })
+    .then((res) => {
+      reset_datatable_close_offcanvas(res)
+    })
+    .catch(error => {
+      isSubmitting.value = false
+      if (error.response?.data?.errors) {
+        window.errorSnackbar('Please check the form again')
+      } else {
+        window.errorSnackbar('Something went wrong')
+      }
+    })
 })
-
-// Add onMounted hook
 
 defineExpose({
   setFormData,

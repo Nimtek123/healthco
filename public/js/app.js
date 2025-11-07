@@ -1,3 +1,474 @@
-/*! For license information please see app.js.LICENSE.txt */
-(()=>{function t(e){return t="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t},t(e)}function e(t,e){return function(t){if(Array.isArray(t))return t}(t)||function(t,e){var r=null==t?null:"undefined"!=typeof Symbol&&t[Symbol.iterator]||t["@@iterator"];if(null!=r){var n,a,o,i,c=[],l=!0,u=!1;try{if(o=(r=r.call(t)).next,0===e){if(Object(r)!==r)return;l=!1}else for(;!(l=(n=o.call(r)).done)&&(c.push(n.value),c.length!==e);l=!0);}catch(t){u=!0,a=t}finally{try{if(!l&&null!=r.return&&(i=r.return(),Object(i)!==i))return}finally{if(u)throw a}}return c}}(t,e)||function(t,e){if(t){if("string"==typeof t)return r(t,e);var n={}.toString.call(t).slice(8,-1);return"Object"===n&&t.constructor&&(n=t.constructor.name),"Map"===n||"Set"===n?Array.from(t):"Arguments"===n||/^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)?r(t,e):void 0}}(t,e)||function(){throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.")}()}function r(t,e){(null==e||e>t.length)&&(e=t.length);for(var r=0,n=Array(e);r<e;r++)n[r]=t[r];return n}function n(t,e){var r=Object.keys(t);if(Object.getOwnPropertySymbols){var n=Object.getOwnPropertySymbols(t);e&&(n=n.filter((function(e){return Object.getOwnPropertyDescriptor(t,e).enumerable}))),r.push.apply(r,n)}return r}function a(t){for(var e=1;e<arguments.length;e++){var r=null!=arguments[e]?arguments[e]:{};e%2?n(Object(r),!0).forEach((function(e){o(t,e,r[e])})):Object.getOwnPropertyDescriptors?Object.defineProperties(t,Object.getOwnPropertyDescriptors(r)):n(Object(r)).forEach((function(e){Object.defineProperty(t,e,Object.getOwnPropertyDescriptor(r,e))}))}return t}function o(e,r,n){return(r=function(e){var r=function(e,r){if("object"!=t(e)||!e)return e;var n=e[Symbol.toPrimitive];if(void 0!==n){var a=n.call(e,r||"default");if("object"!=t(a))return a;throw new TypeError("@@toPrimitive must return a primitive value.")}return("string"===r?String:Number)(e)}(e,"string");return"symbol"==t(r)?r:r+""}(r))in e?Object.defineProperty(e,r,{value:n,enumerable:!0,configurable:!0,writable:!0}):e[r]=n,e}function i(){"use strict";i=function(){return r};var e,r={},n=Object.prototype,a=n.hasOwnProperty,o=Object.defineProperty||function(t,e,r){t[e]=r.value},c="function"==typeof Symbol?Symbol:{},l=c.iterator||"@@iterator",u=c.asyncIterator||"@@asyncIterator",s=c.toStringTag||"@@toStringTag";function f(t,e,r){return Object.defineProperty(t,e,{value:r,enumerable:!0,configurable:!0,writable:!0}),t[e]}try{f({},"")}catch(e){f=function(t,e,r){return t[e]=r}}function d(t,e,r,n){var a=e&&e.prototype instanceof w?e:w,i=Object.create(a.prototype),c=new T(n||[]);return o(i,"_invoke",{value:C(t,r,c)}),i}function h(t,e,r){try{return{type:"normal",arg:t.call(e,r)}}catch(t){return{type:"throw",arg:t}}}r.wrap=d;var p="suspendedStart",m="suspendedYield",v="executing",y="completed",b={};function w(){}function g(){}function _(){}var $={};f($,l,(function(){return this}));var k=Object.getPrototypeOf,x=k&&k(k(q([])));x&&x!==n&&a.call(x,l)&&($=x);var O=_.prototype=w.prototype=Object.create($);function E(t){["next","throw","return"].forEach((function(e){f(t,e,(function(t){return this._invoke(e,t)}))}))}function j(e,r){function n(o,i,c,l){var u=h(e[o],e,i);if("throw"!==u.type){var s=u.arg,f=s.value;return f&&"object"==t(f)&&a.call(f,"__await")?r.resolve(f.__await).then((function(t){n("next",t,c,l)}),(function(t){n("throw",t,c,l)})):r.resolve(f).then((function(t){s.value=t,c(s)}),(function(t){return n("throw",t,c,l)}))}l(u.arg)}var i;o(this,"_invoke",{value:function(t,e){function a(){return new r((function(r,a){n(t,e,r,a)}))}return i=i?i.then(a,a):a()}})}function C(t,r,n){var a=p;return function(o,i){if(a===v)throw Error("Generator is already running");if(a===y){if("throw"===o)throw i;return{value:e,done:!0}}for(n.method=o,n.arg=i;;){var c=n.delegate;if(c){var l=S(c,n);if(l){if(l===b)continue;return l}}if("next"===n.method)n.sent=n._sent=n.arg;else if("throw"===n.method){if(a===p)throw a=y,n.arg;n.dispatchException(n.arg)}else"return"===n.method&&n.abrupt("return",n.arg);a=v;var u=h(t,r,n);if("normal"===u.type){if(a=n.done?y:m,u.arg===b)continue;return{value:u.arg,done:n.done}}"throw"===u.type&&(a=y,n.method="throw",n.arg=u.arg)}}}function S(t,r){var n=r.method,a=t.iterator[n];if(a===e)return r.delegate=null,"throw"===n&&t.iterator.return&&(r.method="return",r.arg=e,S(t,r),"throw"===r.method)||"return"!==n&&(r.method="throw",r.arg=new TypeError("The iterator does not provide a '"+n+"' method")),b;var o=h(a,t.iterator,r.arg);if("throw"===o.type)return r.method="throw",r.arg=o.arg,r.delegate=null,b;var i=o.arg;return i?i.done?(r[t.resultName]=i.value,r.next=t.nextLoc,"return"!==r.method&&(r.method="next",r.arg=e),r.delegate=null,b):i:(r.method="throw",r.arg=new TypeError("iterator result is not an object"),r.delegate=null,b)}function L(t){var e={tryLoc:t[0]};1 in t&&(e.catchLoc=t[1]),2 in t&&(e.finallyLoc=t[2],e.afterLoc=t[3]),this.tryEntries.push(e)}function P(t){var e=t.completion||{};e.type="normal",delete e.arg,t.completion=e}function T(t){this.tryEntries=[{tryLoc:"root"}],t.forEach(L,this),this.reset(!0)}function q(r){if(r||""===r){var n=r[l];if(n)return n.call(r);if("function"==typeof r.next)return r;if(!isNaN(r.length)){var o=-1,i=function t(){for(;++o<r.length;)if(a.call(r,o))return t.value=r[o],t.done=!1,t;return t.value=e,t.done=!0,t};return i.next=i}}throw new TypeError(t(r)+" is not iterable")}return g.prototype=_,o(O,"constructor",{value:_,configurable:!0}),o(_,"constructor",{value:g,configurable:!0}),g.displayName=f(_,s,"GeneratorFunction"),r.isGeneratorFunction=function(t){var e="function"==typeof t&&t.constructor;return!!e&&(e===g||"GeneratorFunction"===(e.displayName||e.name))},r.mark=function(t){return Object.setPrototypeOf?Object.setPrototypeOf(t,_):(t.__proto__=_,f(t,s,"GeneratorFunction")),t.prototype=Object.create(O),t},r.awrap=function(t){return{__await:t}},E(j.prototype),f(j.prototype,u,(function(){return this})),r.AsyncIterator=j,r.async=function(t,e,n,a,o){void 0===o&&(o=Promise);var i=new j(d(t,e,n,a),o);return r.isGeneratorFunction(e)?i:i.next().then((function(t){return t.done?t.value:i.next()}))},E(O),f(O,s,"Generator"),f(O,l,(function(){return this})),f(O,"toString",(function(){return"[object Generator]"})),r.keys=function(t){var e=Object(t),r=[];for(var n in e)r.push(n);return r.reverse(),function t(){for(;r.length;){var n=r.pop();if(n in e)return t.value=n,t.done=!1,t}return t.done=!0,t}},r.values=q,T.prototype={constructor:T,reset:function(t){if(this.prev=0,this.next=0,this.sent=this._sent=e,this.done=!1,this.delegate=null,this.method="next",this.arg=e,this.tryEntries.forEach(P),!t)for(var r in this)"t"===r.charAt(0)&&a.call(this,r)&&!isNaN(+r.slice(1))&&(this[r]=e)},stop:function(){this.done=!0;var t=this.tryEntries[0].completion;if("throw"===t.type)throw t.arg;return this.rval},dispatchException:function(t){if(this.done)throw t;var r=this;function n(n,a){return c.type="throw",c.arg=t,r.next=n,a&&(r.method="next",r.arg=e),!!a}for(var o=this.tryEntries.length-1;o>=0;--o){var i=this.tryEntries[o],c=i.completion;if("root"===i.tryLoc)return n("end");if(i.tryLoc<=this.prev){var l=a.call(i,"catchLoc"),u=a.call(i,"finallyLoc");if(l&&u){if(this.prev<i.catchLoc)return n(i.catchLoc,!0);if(this.prev<i.finallyLoc)return n(i.finallyLoc)}else if(l){if(this.prev<i.catchLoc)return n(i.catchLoc,!0)}else{if(!u)throw Error("try statement without catch or finally");if(this.prev<i.finallyLoc)return n(i.finallyLoc)}}}},abrupt:function(t,e){for(var r=this.tryEntries.length-1;r>=0;--r){var n=this.tryEntries[r];if(n.tryLoc<=this.prev&&a.call(n,"finallyLoc")&&this.prev<n.finallyLoc){var o=n;break}}o&&("break"===t||"continue"===t)&&o.tryLoc<=e&&e<=o.finallyLoc&&(o=null);var i=o?o.completion:{};return i.type=t,i.arg=e,o?(this.method="next",this.next=o.finallyLoc,b):this.complete(i)},complete:function(t,e){if("throw"===t.type)throw t.arg;return"break"===t.type||"continue"===t.type?this.next=t.arg:"return"===t.type?(this.rval=this.arg=t.arg,this.method="return",this.next="end"):"normal"===t.type&&e&&(this.next=e),b},finish:function(t){for(var e=this.tryEntries.length-1;e>=0;--e){var r=this.tryEntries[e];if(r.finallyLoc===t)return this.complete(r.completion,r.afterLoc),P(r),b}},catch:function(t){for(var e=this.tryEntries.length-1;e>=0;--e){var r=this.tryEntries[e];if(r.tryLoc===t){var n=r.completion;if("throw"===n.type){var a=n.arg;P(r)}return a}}throw Error("illegal catch attempt")},delegateYield:function(t,r,n){return this.delegate={iterator:q(t),resultName:r,nextLoc:n},"next"===this.method&&(this.arg=e),b}},r}function c(t,e,r,n,a,o,i){try{var c=t[o](i),l=c.value}catch(t){return void r(t)}c.done?e(l):Promise.resolve(l).then(n,a)}function l(t){return function(){var e=this,r=arguments;return new Promise((function(n,a){var o=t.apply(e,r);function i(t){c(o,n,a,i,l,"next",t)}function l(t){c(o,n,a,i,l,"throw",t)}i(void 0)}))}}!function(){"use strict";$(document).on("change",'.datatable-filter [data-filter="select"]',(function(){window.renderedDataTable.ajax.reload(null,!1)})),$(document).on("input",".dt-search",(function(){window.renderedDataTable.ajax.reload(null,!1)})),$(".modal").on("show.bs.modal",(function(t){$(this).find("select").select2({width:"100%",tags:!0,createTag:function(t){return{id:t.term,text:t.term}}})}));var t=function(){var t=l(i().mark((function t(e){return i().wrap((function(t){for(;;)switch(t.prev=t.next){case 0:return console.log(e),t.next=3,Swal.fire({title:e,icon:"question",showCancelButton:!0,confirmButtonColor:"#d33",cancelButtonColor:"#858482",confirmButtonText:"Yes",showClass:{popup:"animate__animated animate__zoomIn"},hideClass:{popup:"animate__animated animate__zoomOut"}}).then((function(t){return t}));case 3:return t.abrupt("return",t.sent);case 4:case"end":return t.stop()}}),t)})));return function(e){return t.apply(this,arguments)}}();window.confirmSwal=t;var r=function(){var t=l(i().mark((function t(e){return i().wrap((function(t){for(;;)switch(t.prev=t.next){case 0:return console.log(e.message),t.next=3,Swal.fire({title:e.message,icon:"question",showCancelButton:!0,confirmButtonColor:"#d33",cancelButtonColor:"#858482",confirmButtonText:"Yes",showClass:{popup:"animate__animated animate__zoomIn"},hideClass:{popup:"animate__animated animate__zoomOut"}}).then((function(t){return t}));case 3:return t.abrupt("return",t.sent);case 4:case"end":return t.stop()}}),t)})));return function(e){return t.apply(this,arguments)}}();function n(t){var e=t.url,r=t.body;$.ajax({type:"POST",url:e,data:r,success:function(t){if(t.status){window.successSnackbar(t.message),window.renderedDataTable.ajax.reload(c,!1);var e=new CustomEvent("update_quick_action",{detail:{value:!0}});document.dispatchEvent(e)}else Swal.fire({title:"Error",text:t.message,icon:"error",showClass:{popup:"animate__animated animate__zoomIn"},hideClass:{popup:"animate__animated animate__zoomOut"}})}})}function n(t){var e=t.url,r=t.body;$.ajax({type:"POST",url:e,data:r,success:function(t){if(t.status){window.successSnackbar(t.message),window.renderedDataTable.ajax.reload(c,!1);var e=new CustomEvent("update_quick_action",{detail:{value:!0}});document.dispatchEvent(e)}else window.errorSnackbar(t.message)}})}window.confirmDeleteSwal=r,$("#quick-action-form").on("submit",(function(e){e.preventDefault();var r=$(this),a=r.attr("action"),o=$('[name="message_'+$('[name="action_type"]').val()+'"]').val(),i=$("#datatable_wrapper .select-table-row:checked").map((function(){return $(this).val()})).get();t(o).then((function(t){t.isConfirmed&&n({url:"".concat(a,"?rowIds=").concat(i),body:r.serialize()})}))})),$(document).on("change","#datatable_wrapper .switch-status-featured",(function(){var t=$(this).attr("data-url"),e={featured:$(this).prop("checked")?1:0,_token:$(this).attr("data-token")};n({url:t,body:e})})),$(document).on("change","#datatable_wrapper .switch-status-change",(function(){var t=$(this).attr("data-url"),e={status:$(this).prop("checked")?1:0,_token:$(this).attr("data-token")};n({url:t,body:e})})),$(document).on("change","#datatable_wrapper .change-select",(function(){var t=$(this).attr("data-url"),e={value:$(this).val(),_token:$(this).attr("data-token")};n({url:t,body:e})})),$(document).on("click","#datatable_wrapper .button-status-change",(function(){var t=$(this).attr("data-url"),e={status:1,_token:$(this).attr("data-token")};n({url:t,body:e})}));window.dataTableRowCheck=function(t){o(),$(".select-table-row:checked").length>0?($("#quick-action-form").removeClass("form-disabled"),document.getElementById("select-all-table").indeterminate=!0,$("#quick-actions").find("input, textarea, button, select").removeAttr("disabled")):(document.getElementById("select-all-table").indeterminate=!1,$("#select-all-table").attr("checked",!1),c()),$("#datatable-row-"+t).is(":checked")?$("#row-"+t).addClass("table-active"):$("#row-"+t).removeClass("table-active")};window.selectAllTable=function(t){for(var e=document.getElementsByName("datatable_ids[]"),r=0,n=e.length;r<n;r++)$("#"+e[r].id).prop("disabled")||(e[r].checked=t.checked),$("#"+e[r].id).is(":checked")?($("#"+e[r].id).closest("tr").addClass("table-active"),$("#quick-actions").find("input, textarea, button, select").removeAttr("disabled"),""==$("#quick-action-type").val()&&$("#quick-action-apply").attr("disabled",!0)):($("#"+e[r].id).closest("tr").removeClass("table-active"),c());o()};var o=function(){$(".select-table-row:checked").length>0?($("#quick-action-form").removeClass("form-disabled"),$("#quick-action-apply").removeClass("btn-gray").addClass("btn-secondary")):($("#quick-action-form").addClass("form-disabled"),$("#quick-action-apply").removeClass("btn-secondary").addClass("btn-gray"))};window.checkRow=o;var c=function(){o(),void 0!==document.getElementById("select-all-table")&&null!==document.getElementById("select-all-table")&&(document.getElementById("select-all-table").checked=!1,$("#quick-action-form")[0].reset(),$("#quick-actions").find("input, textarea, button, select").attr("disabled","disabled"),$("#quick-action-form").find("select").select2("destroy").select2().val(null).trigger("change"))};window.resetActionButtons=c;window.initDatatable=function(t){var e=t.url,r=t.finalColumns,n=t.advanceFilter,o=t.drawCallback,i=void 0===o?void 0:o,c=t.orderColumn,l=$('meta[name="data_table_limit"]').attr("content");window.renderedDataTable=$("#datatable").DataTable({processing:!0,serverSide:!0,autoWidth:!1,responsive:!0,fixedHeader:!0,lengthMenu:[[5,10,15,20,25,50,100,-1],[5,10,15,20,25,50,100,"All"]],order:c,pageLength:l,dom:'<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',ajax:{type:"GET",url:e,data:function(t){t.search={value:$(".dt-search").val()},t.filter={column_status:$("#column_status").val()},"function"==typeof n&&void 0!==n()&&(t.filter=a(a({},t.filter),n()))}},drawCallback:function(){void 0!==laravel&&window.laravel.initialize(),$(".select2").select2(),void 0!==i&&"function"==typeof i&&i()},columns:r})},window.formatCurrency=function(t,r,n,a,o,i){var c=e(parseFloat(t).toFixed(r).split("."),2),l=c[0],u=c[1];l=l.replace(/\B(?=(\d{3})+(?!\d))/g,a),u=u||"";var s="";return"left"!==o&&"left_with_space"!==o||(s+=i,"left_with_space"===o&&(s+=" "),s+=l,r>0&&(s+=n+u)),"right"!==o&&"right_with_space"!==o||(r>0&&(s+=l+n+u),"right_with_space"===o&&(s+=" "),s+=i),s}}()})();
-//# sourceMappingURL=app.js.map
+/******/ (() => { // webpackBootstrap
+/*!*****************************!*\
+  !*** ./resources/js/app.js ***!
+  \*****************************/
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
+function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
+function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
+function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+(function () {
+  "use strict";
+
+  $(document).on('change', '.datatable-filter [data-filter="select"]', function () {
+    window.renderedDataTable.ajax.reload(null, false);
+  });
+  $(document).on('input', '.dt-search', function () {
+    window.renderedDataTable.ajax.reload(null, false);
+  });
+  var confirmSwal = /*#__PURE__*/function () {
+    var _ref = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(message) {
+      var _window$localMessages, _window$localMessages2;
+      return _regenerator().w(function (_context) {
+        while (1) switch (_context.n) {
+          case 0:
+            console.log(message);
+            _context.n = 1;
+            return Swal.fire({
+              title: message,
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonColor: '#d33',
+              cancelButtonColor: '#858482',
+              confirmButtonText: ((_window$localMessages = window.localMessagesUpdate) === null || _window$localMessages === void 0 || (_window$localMessages = _window$localMessages.messages) === null || _window$localMessages === void 0 ? void 0 : _window$localMessages.yes) || 'Yes',
+              cancelButtonText: ((_window$localMessages2 = window.localMessagesUpdate) === null || _window$localMessages2 === void 0 || (_window$localMessages2 = _window$localMessages2.messages) === null || _window$localMessages2 === void 0 ? void 0 : _window$localMessages2.cancel) || 'Cancel',
+              showClass: {
+                popup: 'animate__animated animate__zoomIn'
+              },
+              hideClass: {
+                popup: 'animate__animated animate__zoomOut'
+              }
+            }).then(function (result) {
+              return result;
+            });
+          case 1:
+            return _context.a(2, _context.v);
+        }
+      }, _callee);
+    }));
+    return function confirmSwal(_x) {
+      return _ref.apply(this, arguments);
+    };
+  }();
+  window.confirmSwal = confirmSwal;
+  var confirmDeleteSwal = /*#__PURE__*/function () {
+    var _ref2 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2(message) {
+      var _window$localMessages3, _window$localMessages4;
+      return _regenerator().w(function (_context2) {
+        while (1) switch (_context2.n) {
+          case 0:
+            _context2.n = 1;
+            return Swal.fire({
+              title: message.message,
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonColor: '#d33',
+              cancelButtonColor: '#858482',
+              confirmButtonText: ((_window$localMessages3 = window.localMessagesUpdate) === null || _window$localMessages3 === void 0 || (_window$localMessages3 = _window$localMessages3.messages) === null || _window$localMessages3 === void 0 ? void 0 : _window$localMessages3.yes) || 'Yes',
+              cancelButtonText: ((_window$localMessages4 = window.localMessagesUpdate) === null || _window$localMessages4 === void 0 || (_window$localMessages4 = _window$localMessages4.messages) === null || _window$localMessages4 === void 0 ? void 0 : _window$localMessages4.cancel) || 'Cancel',
+              showClass: {
+                popup: 'animate__animated animate__zoomIn'
+              },
+              hideClass: {
+                popup: 'animate__animated animate__zoomOut'
+              }
+            }).then(function (result) {
+              return result;
+            });
+          case 1:
+            return _context2.a(2, _context2.v);
+        }
+      }, _callee2);
+    }));
+    return function confirmDeleteSwal(_x2) {
+      return _ref2.apply(this, arguments);
+    };
+  }();
+  window.confirmDeleteSwal = confirmDeleteSwal;
+  $('#quick-action-form').on('submit', function (e) {
+    e.preventDefault();
+    var form = $(this);
+    var url = form.attr('action');
+    var message = $('[name="message_' + $('[name="action_type"]').val() + '"]').val();
+    var rowdIds = $("#datatable_wrapper .select-table-row:checked").map(function () {
+      return $(this).val();
+    }).get();
+    confirmSwal(message).then(function (result) {
+      if (!result.isConfirmed) return;
+      callActionAjax({
+        url: "".concat(url, "?rowIds=").concat(rowdIds),
+        body: form.serialize()
+      });
+    });
+  });
+
+  // Update status on switch
+  $(document).on('change', '#datatable_wrapper .switch-status-featured', function (e) {
+    if (!e.originalEvent) return;
+    var url = $(this).attr('data-url');
+    var body = {
+      featured: $(this).prop('checked') ? 1 : 0,
+      _token: $(this).attr('data-token')
+    };
+    callActionAjax({
+      url: url,
+      body: body
+    });
+  });
+
+  // Update status on switch
+  $(document).on('change', '#datatable_wrapper .switch-status-change', function (e) {
+    if (!e.originalEvent) return;
+    var url = $(this).attr('data-url');
+    var body = {
+      status: $(this).prop('checked') ? 1 : 0,
+      _token: $(this).attr('data-token')
+    };
+    callActionAjax({
+      url: url,
+      body: body
+    });
+  });
+  $(document).on('change', '#datatable_wrapper .change-select', function (e) {
+    if (!e.originalEvent) return;
+    var url = $(this).attr('data-url');
+    var body = {
+      value: $(this).val(),
+      _token: $(this).attr('data-token')
+    };
+    callActionAjax({
+      url: url,
+      body: body
+    });
+  });
+  function callActionAjax(_ref3) {
+    var url = _ref3.url,
+      body = _ref3.body;
+    $.ajax({
+      type: 'POST',
+      url: url,
+      data: body,
+      success: function success(res) {
+        if (res.status) {
+          window.successSnackbar(res.message);
+          window.renderedDataTable.ajax.reload(resetActionButtons, false);
+          var event = new CustomEvent('update_quick_action', {
+            detail: {
+              value: true
+            }
+          });
+          document.dispatchEvent(event);
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: res.message,
+            icon: "error",
+            showClass: {
+              popup: 'animate__animated animate__zoomIn'
+            },
+            hideClass: {
+              popup: 'animate__animated animate__zoomOut'
+            }
+          });
+          // window.errorSnackbar(res.message)
+        }
+      }
+    });
+  }
+
+  // Update status on button click
+  $(document).on('click', '#datatable_wrapper .button-status-change', function () {
+    var url = $(this).attr('data-url');
+    var body = {
+      status: 1,
+      _token: $(this).attr('data-token')
+    };
+    callActionAjax({
+      url: url,
+      body: body
+    });
+  });
+  function callActionAjax(_ref4) {
+    var url = _ref4.url,
+      body = _ref4.body;
+    $.ajax({
+      type: 'POST',
+      url: url,
+      data: body,
+      success: function success(res) {
+        if (res.status) {
+          window.successSnackbar(res.message);
+          window.renderedDataTable.ajax.reload(resetActionButtons, false);
+          var event = new CustomEvent('update_quick_action', {
+            detail: {
+              value: true
+            }
+          });
+          document.dispatchEvent(event);
+        } else {
+          window.errorSnackbar(res.message);
+        }
+      }
+    });
+  }
+
+  //select row in datatable
+  var dataTableRowCheck = function dataTableRowCheck(id) {
+    checkRow();
+    if ($(".select-table-row:checked").length > 0) {
+      $("#quick-action-form").removeClass('form-disabled');
+      //if at-least one row is selected
+      document.getElementById("select-all-table").indeterminate = true;
+      $("#quick-actions").find("input, textarea, button, select").removeAttr("disabled");
+    } else {
+      //if no row is selected
+      document.getElementById("select-all-table").indeterminate = false;
+      $("#select-all-table").attr("checked", false);
+      resetActionButtons();
+    }
+    if ($("#datatable-row-" + id).is(":checked")) {
+      $("#row-" + id).addClass("table-active");
+    } else {
+      $("#row-" + id).removeClass("table-active");
+    }
+  };
+  window.dataTableRowCheck = dataTableRowCheck;
+  var selectAllTable = function selectAllTable(source) {
+    var checkboxes = document.getElementsByName("datatable_ids[]");
+    for (var i = 0, n = checkboxes.length; i < n; i++) {
+      // if disabled property is given to checkbox, it won't select particular checkbox.
+      if (!$("#" + checkboxes[i].id).prop('disabled')) {
+        checkboxes[i].checked = source.checked;
+      }
+      if ($("#" + checkboxes[i].id).is(":checked")) {
+        $("#" + checkboxes[i].id).closest("tr").addClass("table-active");
+        $("#quick-actions").find("input, textarea, button, select").removeAttr("disabled");
+        if ($("#quick-action-type").val() == "") {
+          $("#quick-action-apply").attr("disabled", true);
+        }
+      } else {
+        $("#" + checkboxes[i].id).closest("tr").removeClass("table-active");
+        resetActionButtons();
+      }
+    }
+    checkRow();
+  };
+  window.selectAllTable = selectAllTable;
+  var checkRow = function checkRow() {
+    if ($(".select-table-row:checked").length > 0) {
+      $("#quick-action-form").removeClass('form-disabled');
+      $("#quick-action-apply").removeClass("btn-gray").addClass("btn-secondary");
+    } else {
+      $("#quick-action-form").addClass('form-disabled');
+      $("#quick-action-apply").removeClass("btn-secondary").addClass("btn-gray");
+    }
+  };
+  window.checkRow = checkRow;
+
+  //reset table action form elements
+  var resetActionButtons = function resetActionButtons() {
+    checkRow();
+    if (document.getElementById("select-all-table") !== undefined && document.getElementById("select-all-table") !== null) {
+      document.getElementById("select-all-table").checked = false;
+      $("#quick-action-form")[0].reset();
+      $("#quick-actions").find("input, textarea, button, select").attr("disabled", "disabled");
+      $("#quick-action-form").find("select").val(null).trigger("change");
+    }
+  };
+  window.resetActionButtons = resetActionButtons;
+  var initDatatable = function initDatatable(_ref5) {
+    var url = _ref5.url,
+      finalColumns = _ref5.finalColumns,
+      advanceFilter = _ref5.advanceFilter,
+      _ref5$drawCallback = _ref5.drawCallback,
+      _drawCallback = _ref5$drawCallback === void 0 ? undefined : _ref5$drawCallback,
+      orderColumn = _ref5.orderColumn;
+    var data_table_limit = $('meta[name="data_table_limit"]').attr('content');
+
+    // console.log("test",advanceFilter);
+    window.renderedDataTable = $('#datatable').DataTable({
+      processing: true,
+      serverSide: true,
+      autoWidth: false,
+      responsive: true,
+      fixedHeader: true,
+      lengthMenu: [[5, 10, 15, 20, 25, 50, 100, -1], [5, 10, 15, 20, 25, 50, 100, 'All']],
+      order: orderColumn,
+      pageLength: data_table_limit,
+      dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',
+      ajax: {
+        "type": "GET",
+        "url": url,
+        "data": function data(d) {
+          d.search = {
+            value: $('.dt-search').val()
+          };
+          d.filter = {
+            column_status: $('#column_status').val()
+          };
+          if (typeof advanceFilter == 'function' && advanceFilter() !== undefined) {
+            d.filter = _objectSpread(_objectSpread({}, d.filter), advanceFilter());
+          }
+        }
+      },
+      drawCallback: function drawCallback() {
+        if (laravel !== undefined) {
+          window.laravel.initialize();
+        }
+        if (_drawCallback !== undefined && typeof _drawCallback == 'function') {
+          _drawCallback();
+        }
+      },
+      columns: finalColumns
+    });
+  };
+
+  // Dynamic footer positioning based on datatable size
+  var adjustFooterPosition = function adjustFooterPosition() {
+    var footer = document.querySelector('.footer');
+    var datatableWrapper = document.querySelector('#datatable_wrapper');
+    var mainContent = document.querySelector('.main-content');
+    if (footer && datatableWrapper && mainContent) {
+      var datatableHeight = datatableWrapper.offsetHeight;
+      var viewportHeight = window.innerHeight;
+      var headerHeight = 120; // Approximate header height
+      var footerHeight = footer.offsetHeight;
+
+      // Calculate available space for content
+      var availableSpace = viewportHeight - headerHeight - footerHeight;
+      if (datatableHeight < availableSpace) {
+        // If datatable is small, position footer at bottom of viewport
+        footer.style.position = 'sticky';
+        footer.style.bottom = '0';
+        footer.style.marginTop = 'auto';
+        mainContent.style.minHeight = 'calc(100vh - 120px)';
+      } else {
+        // If datatable is large, let footer follow content
+        footer.style.position = 'relative';
+        footer.style.marginTop = '20px';
+        mainContent.style.minHeight = 'auto';
+      }
+    }
+  };
+
+  // Enhanced initDatatable function with footer positioning
+  var enhancedInitDatatable = function enhancedInitDatatable(_ref6) {
+    var url = _ref6.url,
+      finalColumns = _ref6.finalColumns,
+      advanceFilter = _ref6.advanceFilter,
+      _ref6$drawCallback = _ref6.drawCallback,
+      _drawCallback2 = _ref6$drawCallback === void 0 ? undefined : _ref6$drawCallback,
+      orderColumn = _ref6.orderColumn;
+    var data_table_limit = $('meta[name="data_table_limit"]').attr('content');
+    window.renderedDataTable = $('#datatable').DataTable({
+      processing: true,
+      serverSide: true,
+      autoWidth: false,
+      responsive: true,
+      fixedHeader: true,
+      lengthMenu: [[5, 10, 15, 20, 25, 50, 100, -1], [5, 10, 15, 20, 25, 50, 100, 'All']],
+      order: orderColumn,
+      pageLength: data_table_limit,
+      dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',
+      ajax: {
+        "type": "GET",
+        "url": url,
+        "data": function data(d) {
+          d.search = {
+            value: $('.dt-search').val()
+          };
+          d.filter = {
+            column_status: $('#column_status').val()
+          };
+          if (typeof advanceFilter == 'function' && advanceFilter() !== undefined) {
+            d.filter = _objectSpread(_objectSpread({}, d.filter), advanceFilter());
+          }
+        }
+      },
+      drawCallback: function drawCallback() {
+        if (laravel !== undefined) {
+          window.laravel.initialize();
+        }
+        if (_drawCallback2 !== undefined && typeof _drawCallback2 == 'function') {
+          _drawCallback2();
+        }
+        // Adjust footer position after datatable draw
+        setTimeout(adjustFooterPosition, 100);
+      },
+      columns: finalColumns
+    });
+  };
+  window.initDatatable = enhancedInitDatatable;
+  window.adjustFooterPosition = adjustFooterPosition;
+
+  // Call adjustFooterPosition on window resize
+  $(window).on('resize', adjustFooterPosition);
+
+  // Call adjustFooterPosition on page load
+  $(document).ready(function () {
+    setTimeout(adjustFooterPosition, 500);
+  });
+  function formatCurrency(number, noOfDecimal, decimalSeparator, thousandSeparator, currencyPosition, currencySymbol) {
+    // Convert the number to a string with the desired decimal places
+    var formattedNumber = parseFloat(number).toFixed(noOfDecimal);
+
+    // Split the number into integer and decimal parts
+    var _formattedNumber$spli = formattedNumber.split('.'),
+      _formattedNumber$spli2 = _slicedToArray(_formattedNumber$spli, 2),
+      integerPart = _formattedNumber$spli2[0],
+      decimalPart = _formattedNumber$spli2[1];
+
+    // Add thousand separators to the integer part
+    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+
+    // Set decimalPart to an empty string if it is undefined
+    decimalPart = decimalPart || '';
+
+    // Construct the final formatted currency string
+    var currencyString = '';
+    if (currencyPosition === 'left' || currencyPosition === 'left_with_space') {
+      currencyString += currencySymbol;
+      if (currencyPosition === 'left_with_space') {
+        currencyString += ' ';
+      }
+      currencyString += integerPart;
+      // Add decimal part and decimal separator if applicable
+      if (noOfDecimal > 0) {
+        currencyString += decimalSeparator + decimalPart;
+      }
+    }
+    if (currencyPosition === 'right' || currencyPosition === 'right_with_space') {
+      // Add decimal part and decimal separator if applicable
+      if (noOfDecimal > 0) {
+        currencyString += integerPart + decimalSeparator + decimalPart;
+      }
+      if (currencyPosition === 'right_with_space') {
+        currencyString += ' ';
+      }
+      currencyString += currencySymbol;
+    }
+    return currencyString;
+  }
+  window.formatCurrency = formatCurrency;
+
+  // Ensure formatCurrency is available globally with fallback
+  if (typeof window.formatCurrency === 'undefined') {
+    window.formatCurrency = formatCurrency;
+  }
+
+  // Also make it available as a global function for compatibility
+  window.currencyFormat = formatCurrency;
+})();
+/******/ })()
+;

@@ -43,6 +43,7 @@ class DoctorSessionController extends Controller
 
     public function index_list(Request $request)
     {
+        
         $clinic_id = $request->clinic_id;
 
         $doctor_id = $request->doctor_id;
@@ -56,6 +57,8 @@ class DoctorSessionController extends Controller
                 ->where('doctor_id', $doctor_id)
                 ->get();
         }
+        
+         
         return response()->json(['data' => $data, 'clinic_mapping_data' => $clinicMappingData,  'status' => true]);
     }
 
@@ -284,7 +287,7 @@ class DoctorSessionController extends Controller
     public function store(Request $request)
     {
         $data = $request->all();
-
+        
         $doctor_id = $data['doctor_id'];
         $clinic_id = $data['clinic_id'];
         $weekdays = $data['weekdays'];
@@ -416,4 +419,93 @@ class DoctorSessionController extends Controller
         $data = DoctorClinicMapping::where('id',$request->id)->first();
         return response()->json(['data' => $data, 'status' => true]);
     }
-}
+
+    // Controller method
+    public function doctorClinics(Request $request)
+    {
+        $doctorId = $request->input('doctor_id');
+
+        // Fetch clinic mapping
+        $clinicMapping = DoctorClinicMapping::where('doctor_id', $doctorId)
+            ->with(['clinics:id,name'])
+            ->get()
+            ->map(function ($m) {
+                return [
+                    'clinic_id'   => $m->clinic_id,
+                    'clinic_name' => optional($m->clinics)->name ?? 'Unnamed Clinic',
+                ];
+            })
+            ->values();
+
+        // Fetch all sessions for this doctor, grouped by clinic_id and day
+        $sessions = DoctorSession::where('doctor_id', $doctorId)->get();
+
+        // Group sessions by clinic_id
+        $sessionsByClinic = [];
+        foreach ($sessions as $session) {
+            $clinicId = $session->clinic_id;
+            if (!isset($sessionsByClinic[$clinicId])) {
+                $sessionsByClinic[$clinicId] = [];
+            }
+            $sessionsByClinic[$clinicId][] = [
+                'id'         => $session->id,
+                'day'        => $session->day,
+                'start_time' => $session->start_time,
+                'end_time'   => $session->end_time,
+                'is_holiday' => $session->is_holiday,
+                'breaks'     => is_string($session->breaks) ? json_decode($session->breaks, true) : $session->breaks,
+                'clinic_id'  => $session->clinic_id,
+                'doctor_id'  => $session->doctor_id,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'clinic_mapping_data' => $clinicMapping,
+            'doctor_id' => $doctorId,
+            'sessions' => $sessionsByClinic,
+        ]);
+    }
+
+    public function getDoctorSessions($doctorId)
+    {
+        $sessions = DoctorSession::where('doctor_id', $doctorId)->get();
+
+        $days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+        $weekdays = [];
+
+        foreach ($days as $day) {
+            $session = $sessions->where('day', $day)->first();
+            $breaks = [];
+
+            if ($session) {
+                if (is_string($session->breaks)) {
+                    $breaks = json_decode($session->breaks, true) ?? [];
+                } elseif (is_array($session->breaks)) {
+                    $breaks = $session->breaks;
+                }
+            }
+
+            $weekdays[] = [
+                'day'        => $day,
+                'start_time' => $session->start_time ?? '09:00',
+                'end_time'   => $session->end_time ?? '18:00',
+                'is_holiday' => $session->is_holiday ?? false,
+                'breaks'     => $breaks,
+                'clinic_id'  => $session->clinic_id ?? null,
+                'id'         => $session->id ?? null,
+            ];
+        }
+
+        return response()->json([
+            'doctor_id' => $doctorId,
+            'weekdays'  => $weekdays,
+        ]);
+    }
+
+
+
+
+    
+
+}   

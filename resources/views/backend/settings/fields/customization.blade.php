@@ -125,7 +125,7 @@
                             <label class="btn btn-border d-flex align-items-center bg-transparent"
                                 for="sidebar-dark" data-bs-toggle="tooltip" data-bs-placement="top"
                                 title="Sidebar Dark" data-bs-original-title="Sidebar Dark">
-                                <i class="text-dark">
+                                <i class="heading-color">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-18"
                                         width="18" viewBox="0 0 24 24" fill="currentColor">
                                         <circle cx="12" cy="12" r="8"
@@ -160,7 +160,7 @@
                                 for="sidebar-transparent" data-bs-toggle="tooltip"
                                 data-bs-placement="top" title="Sidebar Transparent"
                                 data-bs-original-title="Sidebar Transparent">
-                                <i class="text-dark">
+                                <i class="heading-color">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-18"
                                         width="18" viewBox="0 0 24 24" fill="currentColor">
                                         <circle cx="12" cy="12" r="8"
@@ -176,7 +176,7 @@
                             <label class="btn btn-border d-flex align-items-center bg-transparent"
                                 for="sidebar-glass" data-bs-toggle="tooltip" data-bs-placement="top"
                                 title="Sidebar Transparent" data-bs-original-title="Sidebar Transparent">
-                                <i class="text-dark">
+                                <i class="heading-color">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon-18"
                                         width="18" viewBox="0 0 24 24" fill="currentColor">
                                         <circle cx="12" cy="12" r="8"

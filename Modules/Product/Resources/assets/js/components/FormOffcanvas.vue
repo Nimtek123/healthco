@@ -10,7 +10,7 @@
               <div class="text-center">
                 <img :src="ImageViewer || defaultImage" alt="feature-image" class="img-fluid mb-2 product-image-thumbnail" />
                 <div class="d-flex align-items-center justify-content-center gap-2">
-                  <input type="file" ref="profileInputRef" class="form-control d-none" id="file_url" name="file_url" @change="fileUpload" accept=".jpeg, .jpg, .png, .gif" />
+                  <input type="file" ref="profileInputRef" class="form-control d-none" id="file_url" name="file_url" @change="fileUpload" accept=".jpeg, .jpg, .png" />
                   <label class="btn btn-info" for="file_url">{{ $t('messages.upload') }}</label>
                   <input type="button" class="btn btn-danger" name="remove" :value="$t('messages.remove')" @click="removeLogo()" v-if="ImageViewer" />
                 </div>

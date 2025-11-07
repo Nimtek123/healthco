@@ -77,6 +77,10 @@ class BillingRecord extends BaseModel
         return $this->hasMany(BillingItem::class, 'billing_id','id')->with('clinicservice');
     }
 
+    public function appointmentTransaction(){
+        return $this->hasOne(AppointmentTransaction::class,'appointment_id','appointment_id');
+    }
+
     public function scopeSetRole($query, $user)
     {
        $user_id = $user->id;

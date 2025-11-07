@@ -19,12 +19,6 @@ class ServiceDetailsResource extends JsonResource
     {
         $discount_amount = 0;
 
-        if($this->discount == 1){
-            $discount_amount = ( $this->discount_type == 'percentage')
-                                 ? $this->charges * $this->discount_value / 100
-                                 : $this->discount_value;
-        }
-
         if(auth()->user() && auth()->user()->hasRole('doctor')){
             $doctor_service =  $this->doctor_service->where('doctor_id',auth()->user()->id);
         }
@@ -36,7 +30,19 @@ class ServiceDetailsResource extends JsonResource
         foreach($this->ClinicServiceMapping as $service){
             $clinics[] = $service->center;
         }
-        $inclusive_tax_data = $this->calculate_inclusive_tax($this->charges-$discount_amount,$this->inclusive_tax);
+        // dd($this->charges-$discount_amount);
+        if ($this->is_inclusive_tax == 1) {
+            $inclusive_tax_data =  $this->calculate_inclusive_tax($this->charges,$this->inclusive_tax);
+        } else {
+            $inclusive_tax_data = ['taxes' => [], 'total_inclusive_tax' => 0];
+        }
+        // dd($inclusive_tax_data);
+        $charges = ($inclusive_tax_data['total_inclusive_tax'] ?? 0) + $this->charges ?? $this->charges;
+        if($this->discount == 1){
+            $discount_amount = ( $this->discount_type == 'percentage')
+                                 ? $charges * $this->discount_value / 100
+                                 : $this->discount_value;
+        }
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -56,8 +62,8 @@ class ServiceDetailsResource extends JsonResource
             'discount_type'=>$this->discount_type,
             'discount_value'=>$this->discount_value,
             'discount_amount'=>$discount_amount,
-            'payable_amount'=> $this->charges- $discount_amount+$this->inclusive_tax_price,
-            'total_inclusive_tax' => $this->inclusive_tax_price,
+            'payable_amount'=> $charges - $discount_amount,
+            'total_inclusive_tax' => $inclusive_tax_data['total_inclusive_tax'] ?? 0,
             'inclusive_tax_data' => $inclusive_tax_data['taxes'] ?? null,
             'is_enable_advance_payment'=> $this->is_enable_advance_payment,
             'advance_payment_amount' => $this->advance_payment_amount,

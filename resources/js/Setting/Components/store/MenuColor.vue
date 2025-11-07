@@ -10,7 +10,7 @@
       <span>  {{ $t('customization.default') }}</span>
     </radio-input>
     <radio-input btn-name="sidebar_color" labelClass="d-flex align-items-center bg-transparent gap-1 fw-normal" id="sidebar-dark" :default-checked="sidebarColor" value="sidebar-dark" @onChange="store.sidebar_color">
-      <i class="text-dark">
+      <i class="heading-color">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="12" r="8" fill="currentColor"></circle>
         </svg>
@@ -26,7 +26,7 @@
   </div>
   <div class="d-grid gap-3 grid-cols-2 mb-4">
     <radio-input btn-name="sidebar_color" labelClass="d-flex align-items-center bg-transparent gap-1 fw-normal" :imgComponent="true" :default-checked="sidebarColor" id="sidebar-transparent" value="sidebar-transparent" @onChange="store.sidebar_color">
-      <i class="text-dark">
+      <i class="heading-color">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="12" r="8" fill="#F5F6FA" stroke="black" stroke-width="3"></circle>
         </svg>
@@ -34,7 +34,7 @@
       <span> {{ $t('customization.transparent') }} </span>
     </radio-input>
     <radio-input btn-name="sidebar_color" labelClass="d-flex align-items-center bg-transparent gap-1 fw-normal" :imgComponent="true" :default-checked="sidebarColor" id="sidebar-glass" value="sidebar-glass" @onChange="store.sidebar_color">
-      <i class="text-dark">
+      <i class="heading-color">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" viewBox="0 0 24 24" fill="currentColor">
           <circle cx="12" cy="12" r="8" fill="#F5F6FA" stroke="black" stroke-width="3"></circle>
         </svg>

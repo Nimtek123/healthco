@@ -9,6 +9,8 @@ use Modules\Clinic\Models\Receptionist;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use App\Models\Setting;
 
 class ReceptionistExport implements FromCollection, WithHeadings, WithEvents, WithCustomStartCell
 {
@@ -76,9 +78,9 @@ class ReceptionistExport implements FromCollection, WithHeadings, WithEvents, Wi
                         break;
 
                     case 'status':
-                        $selectedData[$column] = 'no';
+                        $selectedData[$column] = 'Inactive';
                         if ($row[$column]) {
-                            $selectedData[$column] = 'yes';
+                            $selectedData[$column] = 'Active';
                         }
                         break;
 
@@ -105,22 +107,11 @@ class ReceptionistExport implements FromCollection, WithHeadings, WithEvents, Wi
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
-                $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($this->columns));
-
-                // Add "From Date" and "To Date" at the top
-                $sheet->setCellValue('A1', "From Date: {$this->dateRange[0]}");
-                $sheet->setCellValue('A2', "To Date: {$this->dateRange[1]}");
-
-                // Merge cells for a cleaner header
-                $sheet->mergeCells("A1:{$lastColumn}1");
-                $sheet->mergeCells("A2:{$lastColumn}2");
-
-                // Style the headers (optional)
-                $sheet->getStyle('A1:A2')->getFont()->setBold(true);
-                $sheet->getStyle('A1:A2')->getFont()->setSize(12);
-            },
+            AfterSheet::class => exportSheetHeader(
+                'Receptionist List',
+                $this->columns,
+                $this->dateRange
+            ),
         ];
     }
 }

@@ -40,6 +40,7 @@ use PayPal\Rest\ApiContext;
 use Illuminate\Support\Str;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
+use Modules\Clinic\Models\SystemService;
 use Modules\Customer\Models\OtherPatient;
 
 class AppointmentController extends Controller
@@ -115,9 +116,42 @@ class AppointmentController extends Controller
 
         $doctors = Doctor::CheckMultivendor()->with('user')->get();
 
-        return view('frontend::appointments', compact('appointments', 'doctors'));
-    }
+        $clinics = Clinics::CheckMultivendor()->where('status', 1)->get();
 
+        $categories = ClinicsCategory::where('status', 1)->get();
+
+        $services = ClinicsService::CheckMultivendor()->where('status', 1)->get();
+
+        $doctorOptions = $doctors->map(function($d) {
+            return [
+                'id' => optional($d->user)->id,
+                'name' => getDisplayName($d->user)
+            ];
+        });
+
+        $clinicOptions = $clinics->map(function($c) {
+            return [
+                'id' => $c->id,
+                'name' => $c->name
+            ];
+        });
+
+        $categoryOptions = $categories->map(function($c) {
+            return [
+                'id' => $c->id,
+                'name' => $c->name
+            ];
+        });
+        $serviceOptions = $services->map(function($s) {
+            return [
+                'id' => $s->id,
+                'name' => $s->name
+            ];
+        });
+
+    return view('frontend::appointments', compact('appointments', 'doctors', 'clinics', 'categories', 'doctorOptions', 'clinicOptions', 'categoryOptions','serviceOptions','services'));
+
+}
     public function index_data(Request $request)
     {
         $appointment_list = Appointment::CheckMultivendor()->with('appointmenttransaction', 'cliniccenter', 'clinicservice', 'user', 'doctor');
@@ -137,9 +171,87 @@ class AppointmentController extends Controller
             }
         }
 
-        if (isset($filter['doctor_id'])) {
-            $doctorId = $filter['doctor_id'];
-            $appointment_list = $appointment_list->where('doctor_id', $doctorId);
+        if (!empty($filter['filter_type']) && !empty($filter['filter_value'])) {
+            switch ($filter['filter_type']) {
+                case 'doctor':
+                    $appointment_list->where('doctor_id', $filter['filter_value']);
+                    break;
+
+                case 'clinic':
+                    $appointment_list->where('clinic_id', $filter['filter_value']);
+                    break;
+
+                case 'service':
+                    $appointment_list->where('service_id', $filter['filter_value']);
+                    break;
+
+                case 'category':
+                    $category = ClinicsCategory::find($filter['filter_value']);
+                    if ($category) {
+                        $services = SystemService::where('category_id', $category->id)->pluck('id')->toArray();
+                        $appointment_list->whereIn('service_id', $services);
+                    }
+                    break;
+                case 'consultation_type':
+                    if ($filter['filter_value'] == 'online') {
+                        $appointment_list->whereHas('clinicservice', function ($q) {
+                                                $q->where('type', 'online');
+                                            });
+                    } elseif ($filter['filter_value'] == 'inclinic') {
+                        $appointment_list->whereHas('clinicservice', function ($q) {
+                                                $q->where('type', 'in_clinic');
+                                            });;
+                    }
+                    break;
+                case 'payment_status':
+                    switch ($filter['filter_value']) {
+                        case 'paid':
+                            $appointment_list->whereHas('appointmenttransaction', function ($q) {
+                                $q->where('payment_status', 1);
+                            })->where('status', '!=', 'cancelled');
+                            break;
+
+                        case 'pending':
+                            $appointment_list->whereHas('appointmenttransaction', function ($q) {
+                                $q->where('payment_status', 0)->where('advance_payment_status', 0);
+                            });
+                            break;
+
+                        case 'advance_paid':
+                            $appointment_list->where('advance_paid_amount', '>', 0)
+                                            ->where('status', '!=', 'cancelled')
+                                            ->whereHas('appointmenttransaction', function ($q) {
+                                                $q->where('payment_status', 0)
+                                                  ->where('advance_payment_status', 1);
+                                            });
+                            break;
+
+                        case 'advance_refunded':
+                            $appointment_list->where('status', 'cancelled')
+                                            ->where('advance_paid_amount', '>', 0);
+                            break;
+
+                        case 'payment_refunded':
+                            $appointment_list->where('status', 'cancelled')
+                                            ->whereHas('appointmenttransaction', function ($q) {
+                                                $q->where('payment_status', 1)->where('advance_payment_status', 0);
+                                            });
+                            break;
+                    }
+                    break;
+
+                case 'date':
+                    $dates = explode(' to ', $filter['filter_value']);
+                    if (count($dates) === 2) {
+                            $firstDate = \Carbon\Carbon::createFromFormat('d-m-Y', trim($dates[0]))->startOfDay();
+                            $lastDate  = \Carbon\Carbon::createFromFormat('d-m-Y', trim($dates[1]))->endOfDay();
+                            $appointment_list->whereBetween('start_date_time', [$firstDate, $lastDate]);
+                    } else {
+                            $date = \Carbon\Carbon::createFromFormat('d-m-Y', $filter['filter_value'])->startOfDay();
+                            $appointment_list->whereDate('start_date_time', $date);
+                    }
+                    break;
+            }
         }
 
         $appointments = $appointment_list->orderBy('updated_at', 'desc');
@@ -166,12 +278,11 @@ class AppointmentController extends Controller
             return redirect()->route('appointment-list')->with('error', 'Appointment not found!');
         }
 
+        // Encounter data (for encounter modal only - added by doctors during consultation)
         $medical_history = EncouterMedicalHistroy::where('encounter_id', optional($appointment->patientEncounter)->id)->get()->groupBy('type');
         $medical_report = EncounterMedicalReport::where('encounter_id', optional($appointment->patientEncounter)->id)->first();
         $prescriptions = EncounterPrescription::where('encounter_id', optional($appointment->patientEncounter)->id)->get();
-
         $bodychart = AppointmentPatientBodychart::where('encounter_id', optional($appointment->patientEncounter)->id)->get();
-
         $soap = AppointmentPatientRecord::where('encounter_id', optional($appointment->patientEncounter)->id)->first();
 
 
@@ -229,7 +340,14 @@ class AppointmentController extends Controller
         }
         $appointment->currency_symbol = $currencySymbol;
 
-        $medical_reports = EncounterMedicalReport::where('encounter_id', optional($appointment->patientEncounter)->id)->get();
+        // Get medical reports uploaded by user during booking (not from encounter)
+        $medical_reports = $appointment->getMedia('file_url')->map(function($media) {
+            return (object)[
+                'name' => $media->name ?? $media->file_name,
+                'file_url' => $media->getUrl(),
+                'date' => $media->created_at->format('Y-m-d'),
+            ];
+        });
 
         return view('frontend::appointment_detail', compact('appointment', 'medical_history', 'medical_report', 'prescriptions', 'tax_percentage', 'review', 'advancePaid', 'paymentMethods', 'bodychart', 'soap','medical_reports'));
     }
@@ -252,7 +370,7 @@ class AppointmentController extends Controller
                 $medical_history = EncouterMedicalHistroy::where('encounter_id', $encounter->id)->get()->groupBy('type');
                 $medical_report = EncounterMedicalReport::where('encounter_id', $encounter->id)->first();
                 $prescriptions = EncounterPrescription::where('encounter_id', $encounter->id)->get();
-                $bodychart = AppointmentPatientBodychart::where('appointment_id', optional($encounter->appointment)->id)->get();
+                $bodychart = AppointmentPatientBodychart::where('encounter_id', $encounter->id)->get();
                 $soap = AppointmentPatientRecord::where('encounter_id', $encounter->id)->first();
                 return view('frontend::components.card.encounter_card', compact('encounter', 'bodychart', 'soap', 'medical_history', 'medical_report', 'prescriptions'))->render();
             })
@@ -264,6 +382,7 @@ class AppointmentController extends Controller
 
     public function getPaymentData(Request $request)
     {
+        // DD($request->all());
         // Initialize default values
         $service_charge = 0;
         $discount_amount = 0;
@@ -286,18 +405,22 @@ class AppointmentController extends Controller
             if ($data && $data->doctor_service->isNotEmpty()) {
                 $doctorService = $data->doctor_service->first();
                 $service_charge = $doctorService->charges;
-                if ($data->discount == 1) {
-                    $discount_amount = ($data->discount_type == 'percentage')
-                        ? $service_charge * $data->discount_value / 100
-                        : $data->discount_value;
-                    $service_charge = $service_charge - $discount_amount;
-                }
+
+                // First, add inclusive tax to the service charge if applicable
                 if ($data->is_inclusive_tax == 1) {
                     $service_inclusive_tax = $data->inclusive_tax ?? null;
                     $inclusive_tax = $this->calculate_inclusive_tax_frontend($service_charge, $service_inclusive_tax);
                     $inclusive_tax_amount = $inclusive_tax['total_inclusive_tax'];
                     $service_charge = $service_charge + $inclusive_tax_amount;
                     $total_inclusivetax = collect($inclusive_tax['taxes'])->sum('amount');
+                }
+
+                // Then, apply discount to the service charge (with inclusive tax if applicable)
+                if ($data->discount == 1) {
+                    $discount_amount = ($data->discount_type == 'percentage')
+                        ? $service_charge * $data->discount_value / 100
+                        : $data->discount_value;
+                    $service_charge = $service_charge - $discount_amount;
                 }
             }
         }
@@ -310,13 +433,25 @@ class AppointmentController extends Controller
         $totalTax = collect($taxData)->sum('amount');
         $tax = $totalTax; // Example tax value
         $total = $subtotal + $totalTax;  // Total price includes tax
-
+        // Calculate doctor price including inclusive tax if applicable
+        if ($doctorService) {
+            $doctorprice = $doctorService->charges;
+            if (isset($data) && $data->is_inclusive_tax == 1) {
+                $service_inclusive_tax = $data->inclusive_tax ?? null;
+                $inclusive_tax_data = $this->calculate_inclusive_tax_frontend($doctorprice, $service_inclusive_tax);
+                $inclusive_tax_amount = $inclusive_tax_data['total_inclusive_tax'];
+                $doctorprice += $inclusive_tax_amount;
+            }
+        } else {
+            $doctorprice = 0;
+        }
+// dd($doctorprice);
         $advancePayableAmount = ($total * $data->advance_payment_amount) / 100;
         $currency = Currency::where('is_primary', 1)->first();
         $currencySymbol = $currency ? $currency->currency_symbol : '$';
         // Return the response as JSON
         return response()->json([
-            'price' => $doctorService ? $doctorService->charges : 0,
+            'price' => $doctorprice,
             'discountPercentage' => $data->discount_type,
             'discountvalue' => $data->discount_value,
             'discountAmount' => $discount_amount,
@@ -594,6 +729,7 @@ class AppointmentController extends Controller
         $data['clinic_name'] = $service->ClinicServiceMapping->first()->center->name;
         $data['is_enable_advance_payment'] = $service->is_enable_advance_payment;
         $data['formate_appointment_date'] = DateFormate($data['appointment_date']);
+        $data['appointment_extra_info' ] = $request->input('appointment_extra_info');
 
 
         if ($service->is_enable_advance_payment == 1) {
@@ -684,7 +820,7 @@ class AppointmentController extends Controller
             'cinet' => 'CinetPayment',
             'sadad' => 'SadadPayment',
             'airtel' => 'AirtelPayment',
-            'phonepe' => 'PhonePePayment',
+            'PhonePay' => 'PhonePePayment',
             'midtrans' => 'MidtransPayment',
         ];
         if (array_key_exists($paymentMethod, $paymentHandlers)) {
@@ -722,9 +858,15 @@ class AppointmentController extends Controller
         $currency = Currency::where('is_primary', 1)->first();
         $currencySymbol = $currency ? $currency->currency_symbol : '$';
 
-        $totalAmount = $appointment->patientEncounter && $appointment->patientEncounter->billingrecord
-            ? $appointment->patientEncounter->billingrecord->final_total_amount
-            : $appointment->total_amount;
+
+        $totalAmount = $appointment->total_amount;
+
+         // aaeae adavcae payment kariye tyrae ae totoal amount nathi lae saktu ena mate aa chnages karya che ...
+
+
+        // $totalAmount = $appointment->patientEncounter && $appointment->patientEncounter->billingrecord
+        //     ? $appointment->patientEncounter->billingrecord->final_total_amount
+        //     : $appointment->total_amount;
 
         $paymentData = [
             'id' => $appointment->id,
@@ -761,6 +903,7 @@ class AppointmentController extends Controller
             $paymentData['advance_paid_amount'] = $appointment->advance_paid_amount;
             $paymentData['remaining_payment_amount'] = $paymentData['total_amount'] - $paymentData['advance_paid_amount'];
 
+            // dd($paymentData['remaining_payment_amount']);
             $paymentData['payble_amount'] = $paymentData['remaining_payment_amount'];
             $paymentData['advance_payment_status'] = 0;
             $paymentData['payment_status'] = 1;
@@ -840,7 +983,6 @@ class AppointmentController extends Controller
 
     protected function StripePayment(Request $request, $paymentData, $price)
     {
-
         $baseURL = url('/');
 
         $stripe_secret_key = GetpaymentMethod('stripe_secretkey');
@@ -854,6 +996,7 @@ class AppointmentController extends Controller
 
         $price = number_format($price, 2, '.', '');
 
+        // dd($price);
         $priceInCents = $price * 100;
         // Create the checkout session
         $checkout_session = $stripe->checkout->sessions->create([
@@ -1393,60 +1536,103 @@ class AppointmentController extends Controller
 
     //phonepe payment
 
-    protected function PhonePePayment(Request $request, $paymentData, $price)
+     protected function PhonePePayment(Request $request, $paymentData, $price)
     {
-        $price = $request->input('price');
-        $service_id = $request->input('service_id');
+        // Get price and service ID from payment data
+        $price = $paymentData['payble_amount'];
+        $service_id = $paymentData['service_id'];
+        $appointment_id= $paymentData['id'];
 
         try {
-            $response = $this->makePhonePePaymentRequest($price, $service_id);
+            $response = $this->makePhonePePaymentRequest($price, $service_id, $appointment_id);
 
-            if ($response->status === 'SUCCESS' && isset($response->data->payment_url)) {
-                return redirect($response->data->payment_url);
-            } else {
-                return redirect()->back()->withErrors('Payment initiation failed: ' . ($response->message ?? 'Unknown error'));
+
+            // Check for failure in response
+            if (isset($response['success']) && $response['success'] === false) {
+                return redirect()->back()->withErrors('Payment initiation failed: ' . ($response['message'] ?? 'Unknown error'));
             }
+
+            // Redirect if redirectUrl is present
+            if (isset($response['redirectUrl'])) {
+                $redirectUrl = $response['redirectUrl'];
+                return response()->json([
+                    'success' => true,
+                    'redirect' => $redirectUrl,
+                    'orderId' => $response['orderId'],
+                ]);
+            }
+
+            // If failed, show the error message
+            return redirect()->back()->withErrors('Payment initiation failed: ' . ($response['message'] ?? 'Unknown error'));
         } catch (\Exception $e) {
             return redirect()->back()->withErrors('Payment initiation failed: ' . $e->getMessage());
         }
     }
-    //make phonepe payment request
-    protected function makePhonePePaymentRequest($price, $plan_id)
+
+    // Make PhonePe payment request
+    protected function makePhonePePaymentRequest($price, $service_id, $appointment_id)
     {
+        $authToken = $this->getPhonePeAuthToken();
+        $merchantOrderId ='TXN' . time();
 
-        $currency = GetcurrentCurrency();
+        $payload = [
+            "merchantOrderId" => $merchantOrderId,
+            "amount" => $price * 100, // in paisa
 
-        $formattedCurrency = strtoupper(strtolower($currency));
-        $baseURL = url('/');
-
-        $url = 'https://api.phonepe.com/apis/hermes/pg/v1/pay';
-        $data = [
-            'amount' => $price * 100, // Convert to paisa
-            'plan_id' => $plan_id,
-            'callbackUrl' => $baseURL . '/payment/success?gateway=phonepe',
-            'currency' =>  $formattedCurrency,
+            "paymentFlow" => [
+                "type" => "PG_CHECKOUT",
+                "message" => "Payment for order {$merchantOrderId}",
+                "merchantUrls" => [
+                    "redirectUrl" => url('/payment/success?gateway=phonepe&appointment_id='.$appointment_id.'&orderId=' . $merchantOrderId),
+                ]
+            ]
         ];
+        $url = env('PHONEPE_ENV') === 'production'
+        ? 'https://api.phonepe.com/apis/pg/checkout/v2/pay'
+        : 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/pay';
 
-        try {
-            $client = new \GuzzleHttp\Client();
-            $payload = json_encode($data);
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => "O-Bearer {$authToken}",
+        ])->post($url, $payload);
+        // $url = env('PHONEPE_ENV') == 'production'
+        //     ? 'https://api.phonepe.com/apis/pg/checkout/v2/pay'
+        //     : 'https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/pay';
 
-            // Generate X-VERIFY token
-            $phonePeSecretKey = env('PHONEPE_SECRET_KEY');
-            $verifyToken = hash('sha256', $payload . $phonePeSecretKey);
+        // $response = Http::withHeaders([
+        //     "Content-Type" => "application/json",
+        //     "Authorization" => "O-Bearer {$authToken}",
+        // ])->post($url, $payload);
+        \Log::info('PhonePe Payment Response:', [
+        'url' => $url,
+        'payload' => $payload,
+        'response' => $response->json(),
+    ]);
 
-            $response = $client->post($url, [
-                'body' => $payload,
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                    'X-VERIFY' => $verifyToken,
-                ],
-            ]);
+        return $response->json();
+    }
 
-            return json_decode($response->getBody());
-        } catch (\Exception $e) {
-            throw new \Exception('PhonePe API request failed: ' . $e->getMessage());
+    protected function getPhonePeAuthToken()
+    {
+        $clientId = setting('phonepay_app_id'); // or env('PHONEPE_CLIENT_ID')
+        $clientSecret = setting('phonepay_salt_key'); // or env('PHONEPE_CLIENT_SECRET')
+
+        $url = env('PHONEPE_ENV') == 'production'
+            ? 'https://api.phonepe.com/apis/identity-manager/v1/oauth/token'
+            : 'https://api-preprod.phonepe.com/apis/pg-sandbox/v1/oauth/token';
+
+        $response = Http::asForm()->post($url, [
+            'client_id' => $clientId,
+            'client_secret' => $clientSecret,
+            'client_version' => 1,
+            'grant_type' => 'client_credentials',
+        ]);
+
+        if ($response->successful() && isset($response['access_token'])) {
+            return $response['access_token']; // This is your O-Bearer token
         }
+
+        throw new \Exception('Unable to generate PhonePe auth token: ' . $response->body());
     }
 
 
@@ -1623,6 +1809,13 @@ class AppointmentController extends Controller
             $payment->save();
         }
 
+        // When settling the remaining amount, ensure the transaction reflects fully paid status
+        if (!empty($payment) && ($data['payment_status'] ?? 0) == 1) {
+            $payment->payment_status = 1;
+            $payment->advance_payment_status = 0; // reset advance flag on completion
+            $payment->save();
+        }
+
         // Fetch the full appointment with all relations
         $appointment_notification = Appointment::with(['user', 'doctor', 'clinicservice'])->findOrFail($data['id']);
 
@@ -1684,11 +1877,12 @@ class AppointmentController extends Controller
             ['user_id' => $appointment->user_id],
             ['amount' => 0]
         );
-
+// dd($payment_status, $advance_paid_amount, $total_paid);
         // UNPAID (Advance paid only)
-        if ($payment_status == 0) {
+    if ($payment_status == 0 || $advance_paid_amount > 0) {
             if ($advance_paid_amount >= $cancellation_charge_amount) {
                 $refund_amount = $advance_paid_amount - $cancellation_charge_amount;
+            //    dd($refund_amount);
             } else {
                 $wallet_deduct = $cancellation_charge_amount - $advance_paid_amount;
 
@@ -1720,6 +1914,7 @@ class AppointmentController extends Controller
         // PAID
         else {
             $refund_amount = $total_paid - $cancellation_charge_amount;
+            // dd($refund_amount);
         }
         // Refund if applicable
         if ($refund_amount > 0) {
@@ -1809,6 +2004,7 @@ class AppointmentController extends Controller
     //stripe payment success
     protected function handleStripeSuccess(Request $request)
     {
+        // dd($request->all());
         $previousUrl = url()->previous();
         $stripe_secret_key = GetpaymentMethod('stripe_secretkey');
         $sessionId = $request->input('session_id');
@@ -1820,7 +2016,10 @@ class AppointmentController extends Controller
         $paymentData = [
             'id' => $metadata->appointment_id ?? null,
             'transaction_type' => 'stripe',
-            'payment_status' => ($session->payment_status == 'paid') ? 1 : 0,
+			// Respect advance payments: if this was an advance payment, keep payment_status as unpaid (0)
+			'payment_status' => ((isset($metadata->advance_payment_status) && (int)$metadata->advance_payment_status === 1)
+				? 0
+				: (($session->payment_status == 'paid') ? 1 : 0)),
             'external_transaction_id' => $sessionId,
             'tip' => $metadata->tip_amount ?? 0,
             'advance_payment_status' => $metadata->advance_payment_status ?? 0,
@@ -1839,6 +2038,7 @@ class AppointmentController extends Controller
             'service_id' => $metadata->service_id,
             'type' => $metadata->type,
         ];
+        // dd($paymentData);
         $this->savePayment($paymentData);
         return $this->handlePaymentSuccess($paymentData);
         // } catch (\Exception $e) {
@@ -2177,31 +2377,68 @@ class AppointmentController extends Controller
     //handle phonepe payment success
     protected function handlePhonePeSuccess(Request $request)
     {
-        $transactionId = $request->input('transaction_id');
-        $paymentStatus = $request->input('status');
-        $amount = $request->input('amount') / 100; // Convert from paisa to rupees
-        $planId = $request->input('plan_id');
-        $metadata = $request->input('metadata', []);
+        // Capture the merchantOrderId from query or POST
+        $merchantOrderId = $request->input('orderId') ?? $request->query('orderId');
+        $appointment_id = $request->input('appointment_id') ?? $request->query('appointment_id');
 
-        if ($paymentStatus !== 'SUCCESS') {
-            return redirect('/')->with('error', 'Payment failed: Invalid payment status.');
+        if (!$merchantOrderId) {
+            return redirect('/')->with('error', 'Invalid payment request: Order ID missing.');
         }
 
-        $currency = GetcurrentCurrency();
-        $formattedCurrency = strtoupper(strtolower($currency));
-        // Payment data for processing
-        $paymentData = [
-            'payment_status' => 1,
-            'amountTotal' => $amount,
-            'currency' => $formattedCurrency,
-            'transaction_type' => 'phonepe',
-            'transaction_id' => $transactionId,
-            'plan_id' => $planId,
-            'metadata' => $metadata, // Add custom metadata if needed
-        ];
+        try {
+            // Step 1: Verify payment status from PhonePe API
+            $authToken = $this->getPhonePeAuthToken();
+            $url = "https://api-preprod.phonepe.com/apis/pg-sandbox/checkout/v2/order/{$merchantOrderId}/status";
 
-        $this->savePayment($paymentData);
-        return $this->handlePaymentSuccess($paymentData);
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => "O-Bearer {$authToken}",
+            ])->get($url);
+
+            $result = $response->json();
+
+            // Log for debugging
+
+
+            // Step 2: Validate the response
+            if (!isset($result['state']) || $result['state'] != "COMPLETED") {
+                return redirect('/')->with('error', 'Payment verification failed: ' . ($result['message'] ?? 'Unknown error.'));
+            }
+
+            $paymentDetails = $result['paymentDetails'] ?? [];
+            $data = $paymentDetails[0] ?? [];
+            $paymentState = $data['state'] ?? 'UNKNOWN';
+            $transactionId = $data['transactionId'] ?? null;
+            $amount = isset($data['amount']) ? ($data['amount'] / 100) : 0;
+
+            // Step 3: Handle based on status
+            if ($paymentState != "COMPLETED") {
+                return redirect('/')->with('error', "Payment not completed. Status: {$paymentState}");
+            }
+
+            // Step 4: Prepare payment data for storage
+            $currency = GetcurrentCurrency();
+            $formattedCurrency = strtoupper(strtolower($currency));
+
+            $paymentData = [
+                'payment_status' => 1,
+                'amountTotal' => $amount,
+                'currency' => $formattedCurrency,
+                'transaction_type' => 'phonepe',
+                'external_transaction_id' => $transactionId,
+                'order_id' => $merchantOrderId,
+                'metadata' => $data,
+                'id' => $appointment_id,
+            ];
+
+            // Step 5: Save and handle post-payment logic
+            $this->savePayment($paymentData);
+            return $this->handlePaymentSuccess($paymentData);
+
+        } catch (\Exception $e) {
+            \Log::error('PhonePe Payment Verification Error: ' . $e->getMessage());
+            return redirect('/')->with('error', 'Payment verification failed: ' . $e->getMessage());
+        }
     }
 
     //handle payment success
@@ -2303,7 +2540,7 @@ class AppointmentController extends Controller
 
     public function randomSlot(Request $request)
     {
-        // Fetch slots from clinic or service when no doctor is available
+        // Fetch slots from clinic or service when no doctor is explicitly selected.
         $timezone = new \DateTimeZone(setting('default_time_zone') ?? 'UTC');
         $time_slot_duration = 10;
         $timeslot = ClinicsService::where('id', $request->service_id)->value('time_slot');
@@ -2314,12 +2551,14 @@ class AppointmentController extends Controller
                 (int) $timeslot;
         }
 
+        $appointmentDate = Carbon::parse($request->appointment_date, $timezone);
+        $today = Carbon::today($timezone);
+
         // Get available doctor sessions for the clinic on the specified appointment date
         $clinicSessions = DoctorSession::where('clinic_id', $request->clinic_id)
-            ->where('day', Carbon::parse($request->appointment_date)->locale('en')->dayName)
+            ->where('day', $appointmentDate->locale('en')->dayName)
             ->get();
 
-        // If no sessions are found, return an error
         if ($clinicSessions->isEmpty()) {
             return response()->json([
                 'status' => false,
@@ -2327,31 +2566,97 @@ class AppointmentController extends Controller
             ]);
         }
 
-
-
         // Pick a random session from available sessions
-        $randomSession = $clinicSessions->random(); // Randomly select one session
+        $randomSession = $clinicSessions->random();
         $doctor = Doctor::where('doctor_id', $randomSession->doctor_id)->first();
-        // Get the available time slots for the selected session
-        $startTime = Carbon::parse($randomSession->start_time, $timezone);
-        $endTime = Carbon::parse($randomSession->end_time, $timezone);
-        $allAvailableSlots = [];
 
-        $current = $startTime->copy();
-        while ($current < $endTime) {
-            $allAvailableSlots[] = $current->format('H:i');
-            $current->addMinutes($time_slot_duration);
+        // Build time slots within session, excluding session breaks
+        $sessionStart = Carbon::parse($randomSession->start_time, $timezone);
+        $sessionEnd = Carbon::parse($randomSession->end_time, $timezone);
+        $sessionBreaks = is_array($randomSession->breaks) ? $randomSession->breaks : [];
+
+        $timeSlots = [];
+        $cursor = $sessionStart->copy();
+        while ($cursor < $sessionEnd) {
+            $inBreak = false;
+            foreach ($sessionBreaks as $break) {
+                $breakStart = Carbon::parse($break['start_break'] ?? null, $timezone);
+                $breakEnd = Carbon::parse($break['end_break'] ?? null, $timezone);
+                if ($breakStart && $breakEnd && $cursor >= $breakStart && $cursor < $breakEnd) {
+                    $inBreak = true;
+                    break;
+                }
+            }
+
+            if (!$inBreak) {
+                $timeSlots[] = $cursor->format('H:i');
+            }
+            $cursor->addMinutes($time_slot_duration);
         }
 
-        // Shuffle the available slots to randomize the order
-        shuffle($allAvailableSlots);
+        // If appointment date is today, filter out past slots
+        if ($appointmentDate->isSameDay($today)) {
+            $now = Carbon::now($timezone);
+            $timeSlots = array_values(array_filter($timeSlots, function ($slot) use ($now, $timezone) {
+                return Carbon::parse($slot, $timezone)->greaterThan($now);
+            }));
+        }
 
-        // Return the random available slots for the selected doctor session
+        // Filter by clinic holiday window
+        $clinicHoliday = \App\Models\Holiday::where('clinic_id', $request->clinic_id)
+            ->where('date', $appointmentDate->toDateString())
+            ->first();
+        if ($clinicHoliday) {
+            $holidayStart = Carbon::parse($clinicHoliday->start_time, $timezone);
+            $holidayEnd = Carbon::parse($clinicHoliday->end_time, $timezone);
+            $timeSlots = array_values(array_filter($timeSlots, function ($slot) use ($holidayStart, $holidayEnd, $timezone) {
+                $slotTime = Carbon::parse($slot, $timezone);
+                return !($slotTime->between($holidayStart, $holidayEnd));
+            }));
+        }
+
+        // Filter by doctor holiday window
+        $doctorHoliday = \App\Models\DoctorHoliday::where('doctor_id', $doctor->doctor_id)
+            ->where('date', $appointmentDate->toDateString())
+            ->first();
+        if ($doctorHoliday) {
+            $holidayStart = Carbon::parse($doctorHoliday->start_time, $timezone);
+            $holidayEnd = Carbon::parse($doctorHoliday->end_time, $timezone);
+            $timeSlots = array_values(array_filter($timeSlots, function ($slot) use ($holidayStart, $holidayEnd, $timezone) {
+                $slotTime = Carbon::parse($slot, $timezone);
+                return !($slotTime->between($holidayStart, $holidayEnd));
+            }));
+        }
+
+        // Remove slots already booked for this doctor on this date
+        $appointments = Appointment::where('appointment_date', $appointmentDate->toDateString())
+            ->where('doctor_id', $doctor->doctor_id)
+            ->where('status', '!=', 'cancelled')
+            ->get();
+
+        $bookedMap = [];
+        foreach ($appointments as $appt) {
+            $startTimestamp = strtotime(Carbon::parse($appt->start_date_time));
+            $durationMinutes = (int) $appt->duration;
+            $endTimestamp = $startTimestamp + ($durationMinutes * 60);
+            $slotCursor = $startTimestamp - ($durationMinutes * 60);
+            while ($slotCursor < $endTimestamp) {
+                $bookedMap[date('H:i', $slotCursor)] = true;
+                $slotCursor += ($time_slot_duration * 60);
+            }
+        }
+        $timeSlots = array_values(array_filter($timeSlots, function ($slot) use ($bookedMap) {
+            return empty($bookedMap[$slot]);
+        }));
+
+        // Randomize presentation order (optional)
+        shuffle($timeSlots);
+
         return response()->json([
             'status' => true,
-            'doctor_id' => $doctor->id, // Pass the doctor_id of the selected session
-            'session' => $randomSession, // Include the session details in the response if needed
-            'available_slots' => $allAvailableSlots // Return the randomized available slots
+            'doctor_id' => $doctor->id,
+            'session' => $randomSession,
+            'available_slots' => $timeSlots,
         ]);
     }
 

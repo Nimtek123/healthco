@@ -69,7 +69,7 @@
                 <div class="col-7">                   
                     <form id="paginationForm" method="GET" action="{{ url()->current() }}" class="d-inline">
                         <label for="perPageSelect" class="me-2">Show</label>
-                        <select name="per_page" id="perPageSelect" class="form-select form-select-sm d-inline w-auto"
+                        <select name="per_page" id="perPageSelect" class="form-select d-inline-block w-auto"
                             onchange="document.getElementById('paginationForm').submit()">
                             <option value="10" {{ request('per_page') == 10 ? 'selected' : '' }}>10</option>
                             <option value="25" {{ request('per_page') == 25 ? 'selected' : '' }}>25</option>

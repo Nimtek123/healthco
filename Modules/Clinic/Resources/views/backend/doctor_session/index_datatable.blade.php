@@ -9,10 +9,10 @@
             @unless(auth()->user()->hasRole('doctor'))
                 <div>
                     <button type="button" class="btn btn-primary" data-modal="export">
-                    <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+                    <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
                     </button>
       {{--          <button type="button" class="btn btn-primary" data-modal="import">--}}
-      {{--            <i class="ph ph-download-simple me-1"></i> Import--}}
+      {{--            <i class="ph ph-export me-1"></i> Import--}}
       {{--          </button>--}}
                   </div>
                   @endunless
@@ -90,7 +90,7 @@
                 name: 'clinic_id',
                 title: `{{ __('clinic.singular_title') }}`,
                 orderable: false,
-                searchable: false,
+                searchable: true,
             },
             @endunless
             {

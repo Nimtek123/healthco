@@ -230,7 +230,11 @@ class Clinics extends BaseModel
             });
         }
         else{
-            $query = $query->where('status',1);
+            $user = auth()->user() ?? null;
+            if($user == null) {
+                $query = $query->where('status',1);
+            }
+            
         }
     }
 }

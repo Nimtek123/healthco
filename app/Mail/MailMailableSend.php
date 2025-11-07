@@ -35,7 +35,16 @@ class MailMailableSend extends Mailable
      */
     public function build()
     {
-        $this->templateData = $this->mailable->defaultNotificationTemplateMap->mail_template_detail;
+        // $this->templateData = $this->mailable->defaultNotificationTemplateMap->mail_template_detail;
+        if (!empty($this->data['mailTemplate'] ?? null)) {
+            $this->templateData = $this->data['mailTemplate'];
+        } elseif (!empty($this->data['mail'] ?? null)) {
+            $this->templateData = $this->data['mail'];
+        } elseif (!empty($this->mailable->mail_template_detail ?? null)) {
+            $this->templateData = $this->mailable->mail_template_detail;
+        } else {
+            $this->templateData = '<p>No mail template found.</p>';
+        }
 
         foreach ($this->data as $key => $value) {
             if (is_scalar($value) || is_null($value)) {

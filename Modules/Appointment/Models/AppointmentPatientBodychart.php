@@ -52,8 +52,8 @@ class AppointmentPatientBodychart extends BaseModel
     protected function description(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
-            set: fn (string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
+            get: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
+            set: fn (?string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
         );
     }
     

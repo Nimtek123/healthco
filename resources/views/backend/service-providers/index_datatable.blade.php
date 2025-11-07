@@ -16,7 +16,7 @@
                             auth()->user()->can('delete_service_provider'))
                         <x-backend.quick-action url="{{ route('backend.service-providers.bulk_action') }}">
                             <div class="">
-                                <select name="action_type" class="form-control select2 col-12" id="quick-action-type"
+                                <select name="action_type" class="select2 form-select col-12" id="quick-action-type"
                                     style="width:100%">
                                     <option value="">{{ __('messages.no_action') }}</option>
                                     @can('edit_service_provider')
@@ -28,7 +28,7 @@
                                 </select>
                             </div>
                             <div class="select-status d-none quick-action-field" id="change-status-action">
-                                <select name="status" class="form-control select2" id="status" style="width:100%">
+                                <select name="status" class="select2 form-select" id="status" style="width:100%">
                                     <option value="1" selected>{{ __('messages.active') }}</option>
                                     <option value="0">{{ __('messages.inactive') }}</option>
                                 </select>
@@ -39,7 +39,7 @@
                 <x-slot name="toolbar">
                     <div>
                         <div class="datatable-filter">
-                            <select name="column_status" id="column_status" class="select2 form-control p-10"
+                            <select name="column_status" id="column_status" class="select2 form-select p-10"
                                 data-filter="select" style="width: 100%">
                                 <option value="">{{ __('messages.all') }}</option>
                                 <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>

@@ -86,17 +86,35 @@ class ClinicExport implements FromCollection, WithHeadings, WithEvents, WithCust
                 $sheet = $event->sheet->getDelegate();
                 $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($this->columns));
 
-                // Add "From Date" and "To Date" at the top
-                $sheet->setCellValue('A1', "From Date: {$this->dateRange[0]}");
-                $sheet->setCellValue('A2', "To Date: {$this->dateRange[1]}");
-
-                // Merge cells for a cleaner header
+                // Show "From Date" and "To Date" in one line, centered
+                $sheet->setCellValue('A1', "From Date: {$this->dateRange[0]}    To Date: {$this->dateRange[1]}");
                 $sheet->mergeCells("A1:{$lastColumn}1");
-                $sheet->mergeCells("A2:{$lastColumn}2");
+                $sheet->getStyle("A1")->getFont()->setBold(true);
+                $sheet->getStyle("A1")->getFont()->setSize(12);
+                $sheet->getStyle("A1")->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
-                // Style the headers (optional)
-                $sheet->getStyle('A1:A2')->getFont()->setBold(true);
-                $sheet->getStyle('A1:A2')->getFont()->setSize(12);
+                // Set custom column widths based on the columns selected
+                $customWidths = [
+                    'name' => 15,
+                    'system_service_category' => 15,
+                    'description' => 30,
+                    'contact_number' => 15,
+                    'vendor_id' => 15,
+                    'status' => 12,
+                ];
+
+                foreach ($this->columns as $index => $column) {
+                    $columnLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($index + 1);
+                    $width = isset($customWidths[$column]) ? $customWidths[$column] : 20;
+                    $sheet->getColumnDimension($columnLetter)->setWidth($width);
+                }
+
+                // Style the headings row
+                $headerRow = 3; // Since data starts at A3, headings are at row 3
+                $headerRange = "A{$headerRow}:{$lastColumn}{$headerRow}";
+                $sheet->getStyle($headerRange)->getFont()->setBold(true);
+                $sheet->getStyle($headerRange)->getFont()->setSize(12);
+                $sheet->getStyle($headerRange)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
             },
         ];
     }

@@ -41,6 +41,7 @@ class DoctorDetailsResource extends JsonResource
             }
             else{
                 $services[] = [
+                    'id' => optional($doctor_service->clinicservice)->id ,
                     'service_name' => optional($doctor_service->clinicservice)->name,
                     'total_appointments' => $appointments_count,
                     'clinic_name' => $clinic_names,
@@ -49,6 +50,13 @@ class DoctorDetailsResource extends JsonResource
         }
         
         
+        $rawMobile = optional($this->user)->mobile;
+        $formattedMobile = $rawMobile;
+        if (!empty($rawMobile)) {
+            // Insert a space after a leading "+<country_code>" (1-3 digits)
+            $formattedMobile = preg_replace('/^\+(\d{1,3})(\d+)/', '+$1 $2', $rawMobile);
+        }
+
         return [
             'id' => $this->id,
             'doctor_id' =>optional($this->user)->id,
@@ -56,7 +64,7 @@ class DoctorDetailsResource extends JsonResource
             'last_name' =>optional($this->user)->last_name,
             'full_name' =>optional($this->user)->full_name,
             'email' => optional($this->user)->email,
-            'mobile' =>optional($this->user)->mobile,
+            'mobile' => $formattedMobile,
             'player_id' =>optional($this->user)->player_id,
             'gender' =>optional($this->user)->gender,
             'expert' => optional(optional($this->user)->profile)->expert,

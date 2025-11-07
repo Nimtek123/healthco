@@ -14,10 +14,6 @@
     font-family: var(--#{$prefix}font-monospace);
 }
 
-.heading-color {
-    color: var(--bs-headings-color);
-}
-
 .btn-white {
     color: var(--bs-body-color);
     background-color: var(--bs-white);
@@ -152,6 +148,13 @@
 
         &.offcanvas-w-80 {
             width: 90%;
+        }
+    }
+}
+@include media-breakpoint-down(lg) {
+    .offcanvas {
+        &.offcanvas-w-40 {
+            width: 75%;
         }
     }
 }

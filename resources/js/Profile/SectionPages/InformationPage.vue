@@ -32,6 +32,73 @@
                 <span class="input-group-text"></span>
               </div>
             </div>
+            <div class="form-group">
+              <label class="form-label" for="date_of_birth">{{ $t('profile.lbl_date_of_birth') }}</label>
+              <InputField
+                class="col-md-6"
+                type="date"
+                :is-required="true"
+                :label="$t('profile.lbl_date_of_birth')"
+                :value="date_of_birth"
+                :placeholder="$t('profile.lbl_date_of_birth')"
+                v-model="date_of_birth"
+                ></InputField>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="country">{{ $t('profile.lbl_country') }}</label>
+              <Multiselect
+                v-model="country"
+                :options="countries.options"
+                :placeholder="$t('profile.lbl_country')"
+                class="col-md-6"
+                :is-required="true"
+                :label="label"
+                :error-message="errors['country']"
+                @select="getState"
+              />
+              <span class="text-danger">{{ errors['country'] }}</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="state">{{ $t('profile.lbl_state') }}</label>
+              <Multiselect
+                id="state-list"
+                v-model="state"
+                :options="states.options"
+                :placeholder="$t('profile.lbl_state')"
+                class="col-md-6"
+                :is-required="true"
+                :label="label"
+                :error-message="errors['state']"
+                @select="getCity"
+              />
+              <span class="text-danger">{{ errors['state'] }}</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="city">{{ $t('profile.lbl_city') }}</label>
+              <Multiselect
+                id="city-list"
+                v-model="city"
+                :options="cities.options"
+                :placeholder="$t('profile.lbl_city')"
+                class="col-md-6"
+                :is-required="true"
+                :label="label"
+                :error-message="errors['city']"
+              />
+              <span class="text-danger">{{ errors['city'] }}</span>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pincode">{{ $t('profile.lbl_pincode') }}</label>
+              <InputField
+                class="col-md-6"
+                :is-required="true"
+                :label="$t('profile.lbl_postal_code')"
+                :value="pincode"
+                :placeholder="$t('profile.lbl_postal_code')"
+                v-model="pincode"
+                :error-message="errors['pincode']"
+              ></InputField>
+            </div>
           </div>
         </div>
 
@@ -83,7 +150,8 @@ import InputField from '@/vue/components/form-elements/InputField.vue'
 import { onMounted, ref } from 'vue'
 import { useField, useForm } from 'vee-validate'
 import { VueTelInput } from 'vue3-tel-input'
-import { INFORMATION_STORE, GET_URL } from '@/vue/constants/users'
+import { INFORMATION_STORE,COUNTRY_URL, STATE_URL, CITY_URL, GET_URL } from '@/vue/constants/users'
+import { useSelect } from '@/helpers/hooks/useSelect'
 
 import { readFile } from '@/helpers/utilities'
 import { createRequest } from '@/helpers/utilities'
@@ -178,19 +246,49 @@ const setFormData = (data) => {
       email: data.email,
       mobile: data.mobile,
       address: data.address,
+      date_of_birth: data.date_of_birth,
+      city: data.city,
+      state: data.state,
+      country: data.country,
+      pincode: data.pincode,
       show_in_calender: data.show_in_calender,
       gender: data.gender,
       profile_image: data.profile_image
     }
   })
+  // Fetch and set country
+  if (data.country) {
+    getState(data.country)
+    country.value = data.country
+  }
+  // Fetch and set state
+  if (data.state) {
+    getCity(data.state)
+    state.value = data.state
+  }
+  // Set city
+  if (data.city) {
+    city.value = data.city
+  }
 }
 
 // phone number
 const handleInput = (phone, phoneObject) => {
   // Handle the input event
   // if (phoneObject?.formatted) {
-  mobile.value = phoneObject.formatted
+  // mobile.value = phoneObject.formatted
   // }
+  console.log(phoneObject?.country?.dialCode, phoneObject?.nationalNumber )
+  if (phoneObject?.country?.dialCode && phoneObject?.nationalNumber) {
+    // Ensure dialCode starts with "+"
+    const dialCode = phoneObject.country.dialCode.startsWith('+')
+      ? phoneObject.country.dialCode
+      : `+${phoneObject.country.dialCode}`;
+    mobile.value = `${dialCode} ${phoneObject.nationalNumber}`;
+  } else {
+    // Fallback: ensure starts with "+"
+    mobile.value = phone.startsWith('+') ? phone : `+${phone}`;
+  }
 }
 
 const validationSchema = yup.object({
@@ -204,6 +302,11 @@ const validationSchema = yup.object({
       const digits = value.replace(/\D/g, '')
       return value && digits.length >= 7 && digits.length <= 15 && value.startsWith('+') && /^[+\d\s]*$/.test(value)
     }),
+  date_of_birth: yup.string().required('Date of birth is required'),
+  city: yup.string().required('City is required'),
+  state: yup.string().required('State is required'),
+  country: yup.string().required('Country is required'),
+  pincode: yup.string().required('Postal code is required'),
   show_in_calender: yup.string().required('Show in calender is required')
 })
 
@@ -216,6 +319,11 @@ const { value: last_name } = useField('last_name')
 const { value: email } = useField('email')
 const { value: mobile } = useField('mobile')
 const { value: address } = useField('address')
+const { value: date_of_birth } = useField('date_of_birth')
+const { value: city } = useField('city')
+const { value: state } = useField('state')
+const { value: country } = useField('country')
+const { value: pincode } = useField('pincode')
 const { value: show_in_calender } = useField('show_in_calender')
 const { value: gender } = useField('gender')
 const { value: profile_image } = useField('profile_image')
@@ -228,6 +336,57 @@ onMounted(() => {
       setFormData(response.data)
     }
   })
+})
+
+const countries = ref({ options: [], list: [] })
+const states = ref({ options: [], list: [] })
+const cities = ref({ options: [], list: [] })
+
+const getCountry = () => {
+  useSelect({ url: COUNTRY_URL }, { value: 'id', label: 'name' })
+    .then((data) => {
+      const list = data.list || data.options || data;
+      countries.value.options = list.map(item => ({
+        value: item.id ?? item.country_id ?? item.value,
+        label: item.name ?? item.country_name ?? item.text ?? item.label
+      }));
+      // If country.value is set, ensure it's selected
+      if (country.value) {
+        country.value = country.value;
+      }
+    });
+}
+
+const getState = (countryId) => {
+  useSelect({ url: STATE_URL, data: countryId }, { value: 'id', label: 'name' })
+    .then((data) => {
+      states.value.options = (data.options || data).map(item => ({
+        value: item.id ?? item.state_id ?? item.value,
+        label: item.name ?? item.state_name ?? item.text ?? item.label
+      }));
+      // If state.value is set, ensure it's selected
+      if (state.value) {
+        state.value = state.value;
+      }
+    });
+}
+
+const getCity = (stateId) => {
+  useSelect({ url: CITY_URL, data: stateId }, { value: 'id', label: 'name' })
+    .then((data) => {
+      cities.value.options = (data.options || data).map(item => ({
+        value: item.id ?? item.city_id ?? item.value,
+        label: item.name ?? item.city_name ?? item.text ?? item.label
+      }));
+      // If city.value is set, ensure it's selected
+      if (city.value) {
+        city.value = city.value;
+      }
+    });
+}
+
+onMounted(() => {
+  getCountry()
 })
 
 // message

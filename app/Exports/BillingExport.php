@@ -8,8 +8,12 @@ use Modules\Appointment\Models\BillingRecord;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use App\Currency\CurrencyChange;
+use App\Exports\Traits\CurrencyFormatting;
+
 class BillingExport implements FromCollection, WithHeadings, WithEvents, WithCustomStartCell
 {
+    use CurrencyFormatting;
     public array $columns;
 
     public array $dateRange;
@@ -28,8 +32,25 @@ class BillingExport implements FromCollection, WithHeadings, WithEvents, WithCus
         $modifiedHeadings = [];
 
         foreach ($this->columns as $column) {
-            // Capitalize each word and replace underscores with spaces
-            $modifiedHeadings[] = ucwords(str_replace('_', ' ', $column));
+            // Custom label mapping
+            switch ($column) {
+                case 'user_id':
+                    $modifiedHeadings[] = 'Patient Name';
+                    break;
+                case 'clinic_id':
+                    $modifiedHeadings[] = 'Clinic Name';
+                    break;
+                case 'doctor_id':
+                    $modifiedHeadings[] = 'Doctor Name';
+                    break;
+                case 'service_id':
+                    $modifiedHeadings[] = 'Service Name';
+                    break;
+                default:
+                    // Capitalize each word and replace underscores with spaces
+                    $modifiedHeadings[] = ucwords(str_replace('_', ' ', $column));
+                    break;
+            }
         }
 
         return $modifiedHeadings;
@@ -47,7 +68,10 @@ class BillingExport implements FromCollection, WithHeadings, WithEvents, WithCus
 
         $query = $query->get();
 
-        $newQuery = $query->map(function ($row) {
+        // Initialize currency formatter
+        $currencyChange = new CurrencyChange();
+
+        $newQuery = $query->map(function ($row) use ($currencyChange) {
             $selectedData = [];
 
             foreach ($this->columns as $column) {
@@ -75,7 +99,8 @@ class BillingExport implements FromCollection, WithHeadings, WithEvents, WithCus
                         break;
 
                     case 'total_amount':
-                        $selectedData[$column] = $row->total_amount;
+                        // Format amount with currency symbol from currency table
+                        $selectedData[$column] = $this->formatAmountWithCurrencyNoDecimals($row->total_amount);
                         break;
 
                     case 'date':
@@ -105,22 +130,11 @@ class BillingExport implements FromCollection, WithHeadings, WithEvents, WithCus
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
-                $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($this->columns));
-
-                // Add "From Date" and "To Date" at the top
-                $sheet->setCellValue('A1', "From Date: {$this->dateRange[0]}");
-                $sheet->setCellValue('A2', "To Date: {$this->dateRange[1]}");
-
-                // Merge cells for a cleaner header
-                $sheet->mergeCells("A1:{$lastColumn}1");
-                $sheet->mergeCells("A2:{$lastColumn}2");
-
-                // Style the headers (optional)
-                $sheet->getStyle('A1:A2')->getFont()->setBold(true);
-                $sheet->getStyle('A1:A2')->getFont()->setSize(12);
-            },
+            AfterSheet::class => exportSheetHeader(
+                'Billing list', // Change this per file, e.g. 'Billing Module'
+                $this->columns,
+                $this->dateRange
+            ),
         ];
     }
 }

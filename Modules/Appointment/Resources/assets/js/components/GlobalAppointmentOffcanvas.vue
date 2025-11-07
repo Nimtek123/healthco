@@ -62,7 +62,7 @@
                 </div>
                 <div class="row" v-if="selectedPatient.mobile">
                   <label class="col-3 col-xl-2 fw-500">
-                    <strong class="fst-normal text-dark">{{
+                    <strong class="fst-normal heading-color">{{
                       $t("booking.lbl_phone")
                     }}</strong>
                   </label>
@@ -71,7 +71,7 @@
                 <div class="row" v-if="selectedPatient.email">
                   <label class="col-3 col-xl-2 fw-500">
                     <strong
-                      ><span class="fst-normal text-dark">{{
+                      ><span class="fst-normal heading-color">{{
                         $t("booking.lbl_e-mail")
                       }}</span></strong
                     >
@@ -400,9 +400,8 @@
         <div class="modal-body">
           <div>
             <div v-for="tax in apliedTax" :key="tax.name" class="d-flex justify-content-between align-items-center">
-              {{ tax.name }}:
-              <span v-if="tax.type === 'percent'">{{ tax.amount.toFixed(2) }} ({{ tax.value }}%)</span>
-              <span v-else>{{ formatCurrencyVue(tax.amount) }}</span>
+              {{ tax.type === 'percent' ? tax.name + ' (' + tax.value + '%):' : tax.name + ':' }}
+              <span>{{ tax.type === 'percent' ? tax.amount.toFixed(2) : formatCurrencyVue(tax.amount) }}</span>
             </div>
           </div>
         </div>

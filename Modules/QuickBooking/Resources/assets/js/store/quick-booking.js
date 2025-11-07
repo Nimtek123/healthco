@@ -28,6 +28,8 @@ export const useQuickBooking = defineStore('quickBooking', {
                     "start_date_time": null,
                     "discount_amount": 0,
                     "discount_type": null,
+                    "inclusive_tax_details": null,
+                    "price": null,
                     "discount_value": null,
                     "payable_amount": 0,
                     'vendor_name':null
@@ -74,6 +76,8 @@ export const useQuickBooking = defineStore('quickBooking', {
                         "discount_amount": 0,
                         "discount_type": null,
                         "discount_value": null,
+                        "inclusive_tax_details": null,
+                        "price": null,
                         "payable_amount": 0,
                         'vendor_name':null
                     }

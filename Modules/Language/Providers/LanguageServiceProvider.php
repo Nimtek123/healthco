@@ -67,19 +67,41 @@ class LanguageServiceProvider extends ServiceProvider
      *
      * @return void
      */
+    // public function registerViews()
+    // {
+    //     $viewPath = resource_path('views/modules/'.$this->moduleNameLower);
+
+    //     $sourcePath = base_path('Modules/Language/Resources/views');
+
+    //     $this->publishes([
+    //         $sourcePath => $viewPath,
+    //     ], ['views', $this->moduleNameLower.'-module-views']);
+
+    //     $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);
+    // }
     public function registerViews()
     {
-        $viewPath = resource_path('views/modules/'.$this->moduleNameLower);
-
-        $sourcePath = base_path('Modules/Language/Resources/views');
-
-        $this->publishes([
-            $sourcePath => $viewPath,
-        ], ['views', $this->moduleNameLower.'-module-views']);
-
-        $this->loadViewsFrom(array_merge($this->getPublishableViewPaths(), [$sourcePath]), $this->moduleNameLower);
+        $viewPath   = resource_path('views/modules/' . $this->moduleNameLower);
+        $sourcePath = base_path('Modules/' . $this->moduleName . '/Resources/views');
+    
+        // Publish views only if source path exists
+        if (is_dir($sourcePath)) {
+            $this->publishes([
+                $sourcePath => $viewPath,
+            ], ['views', $this->moduleNameLower . '-module-views']);
+        }
+    
+        // Collect only existing view paths
+        $paths = array_filter(
+            array_merge($this->getPublishableViewPaths(), [$sourcePath]),
+            fn($path) => is_dir($path)
+        );
+    
+        if (!empty($paths)) {
+            $this->loadViewsFrom($paths, $this->moduleNameLower);
+        }
     }
-
+    
     /**
      * Register translations.
      *

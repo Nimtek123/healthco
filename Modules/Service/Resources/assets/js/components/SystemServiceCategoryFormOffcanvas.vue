@@ -8,6 +8,7 @@
               <div class="form-group">
                 <label class="form-label" for="subcategory_id">{{ $t('clinic.clinic_image') }}  </label>
                 <ImageComponent :ImageViewer="image_url" v-model="file_url" id="file_url"/>
+                <span class="text-danger">Only .jpeg, .jpg, .png files are allowed.</span>
               </div>             
 
             <div class="form-group">

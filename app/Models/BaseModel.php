@@ -127,7 +127,7 @@ class BaseModel extends Model implements HasMedia
                 break;
 
             case '2':
-                return '<span class="badge bg-warning-subtle text-dark">Pending</span>';
+                return '<span class="badge bg-warning-subtle heading-color">Pending</span>';
                 break;
 
             default:
@@ -143,7 +143,7 @@ class BaseModel extends Model implements HasMedia
                 return '<span class="badge bg-success">Active</span>';
                 break;
             case '2':
-                return '<span class="badge bg-warning text-dark">Inactive</span>';
+                return '<span class="badge bg-warning heading-color">Inactive</span>';
                 break;
             default:
                 return '<span class="badge bg-primary">Status:'.$this->status.'</span>';

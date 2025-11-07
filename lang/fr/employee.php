@@ -9,6 +9,7 @@ return [
     'lbl_phone_number' => 'Numéro de téléphone',
     'lbl_password' => 'Mot de passe',
     'lbl_confirm_password' => 'Confirmer le mot de passe',
+    'lbl_old_password' => 'Ancien mot de passe',
     'lbl_gender' => 'Genre',
     'lbl_show_in_calender' => 'Afficher dans le calendrier',
     'lbl_is_manager' => 'Est un manager',
@@ -49,5 +50,24 @@ return [
     'change_password' => 'Changer le mot de passe',
     'lbl_phone_number_placeholder' => 'Entrez un numéro de téléphone',
     'date_of_birth' => 'Sélectionnez la date de naissance',
-
+    
+    // Missing labels
+    'lbl_old_password' => 'Ancien mot de passe',
+    'lbl_password' => 'Nouveau mot de passe',
+    'lbl_confirm_password' => 'Confirmer le nouveau mot de passe',
+    
+    // Placeholder text
+    'placeholder_oldpassword' => 'Entrez l\'ancien mot de passe',
+    'placeholder_newpassword' => 'Entrez le nouveau mot de passe',
+    'placeholder_confirmpassword' => 'Confirmez le nouveau mot de passe',
+    
+    // Validation Messages
+    'old_password_required' => 'L\'ancien mot de passe est requis',
+    'new_password_required' => 'Le nouveau mot de passe est requis',
+    'confirm_password_required' => 'La confirmation du mot de passe est requise',
+    'password_min_length' => 'Le mot de passe doit contenir au moins 8 caractères',
+    'password_max_length' => 'Le mot de passe ne doit pas dépasser 14 caractères',
+    'password_complexity' => 'Le mot de passe doit contenir au moins une majuscule, une minuscule, un chiffre et un caractère spécial',
+    'password_not_same' => 'Le nouveau mot de passe ne peut pas être identique à l\'ancien',
+    'passwords_must_match' => 'Les mots de passe doivent correspondre',
 ];

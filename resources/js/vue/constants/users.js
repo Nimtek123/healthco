@@ -11,3 +11,6 @@ export const CHANGE_PASSWORD_URL = () => {return {path: `users/change-password/`
 
 export const PROFILE_CHANGE_PASSWORD_URL = () => {return {path: `my-profile/change-password/`, method: 'POST'}}
 export const GOOGLE_AUTH = () => {return {path: `google-auth`, method: 'GET'}}
+export const COUNTRY_URL = () => {return {path: `country/index_list`, method: 'GET'}}
+export const STATE_URL = (id) => {return {path: `state/index_list?country_id=${id}`, method: 'GET'}}
+export const CITY_URL = (id) => {return {path: `city/index_list?state_id=${id}`, method: 'GET'}}

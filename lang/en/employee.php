@@ -50,6 +50,17 @@ return [
     'change_password' => 'Change Password',
     'lbl_phone_number_placeholder' => 'Enter a phone number',
     'date_of_birth'=>'Select Date Of Birth',
+    'placeholder_oldpassword' => 'Enter Old Password',
     'placeholder_newpassword' => 'Enter New Password',
-    'placeholder_confirmpassword'=>'Enter Confirm New Password)'
+    'placeholder_confirmpassword' => 'Enter Confirm New Password',
+    
+    // Validation Messages
+    'old_password_required' => 'Old password is required',
+    'new_password_required' => 'New password is required',
+    'confirm_password_required' => 'Confirm new password is required',
+    'password_min_length' => 'Password must be at least 8 characters long',
+    'password_max_length' => 'Password must not exceed 14 characters',
+    'password_complexity' => 'Password must contain at least one uppercase, lowercase, number, and special character',
+    'password_not_same' => 'New password cannot be the same as old password',
+    'passwords_must_match' => 'Passwords must match',
 ];

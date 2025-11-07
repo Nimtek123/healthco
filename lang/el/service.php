@@ -70,4 +70,21 @@ return [
     'request_title' => 'Αίτημα Υπηρεσίας',
     'request_service_status' => 'Η κατάσταση του αιτήματος υπηρεσίας ενημερώθηκε',
     'lbl_request_status' => 'Κατάσταση αιτήματος υπηρεσίας',
+    'inclusive_tax' => 'Συμπεριλαμβανόμενη Φορολογία',
+    'inclusive_taxes' => 'Συμπεριλαμβανόμενες Φορολογίες',
+    'inclusive_tax_breakdown' => 'Ανάλυση Συμπεριλαμβανόμενης Φορολογίας',
+    'no_inclusive_taxes_applied' => 'Δεν εφαρμόστηκαν συμπεριλαμβανόμενες φορολογίες',
+    'total_inclusive_tax' => 'Συνολική Συμπεριλαμβανόμενη Φορολογία',
+    'with_inclusive_tax' => 'Με Συμπεριλαμβανόμενη Φορολογία',
+    'view_inclusive_taxes' => 'Προβολή Συμπεριλαμβανόμενων Φορολογιών',
+    'request_service' => 'Αίτηση Υπηρεσίας',
+    
+    // Additional Service Form Messages
+    'file_selected' => 'επιλεγμένο αρχείο',
+    'preview' => 'Προεπισκόπηση',
+    'unknown' => 'Άγνωστο',
+    'something_went_wrong' => 'Κάτι πήγε στραβά!',
+    'advance_payment_amount_must_be_greater_than_zero' => 'Το ποσό προκαταβολής πρέπει να είναι μεγαλύτερο από μηδέν *',
+    'description_must_not_exceed_250_characters' => 'Η περιγραφή δεν πρέπει να υπερβαίνει τους 250 χαρακτήρες',
+    'select_vendor_first' => 'Επιλέξτε πρώτα τον προμηθευτή',
 ];

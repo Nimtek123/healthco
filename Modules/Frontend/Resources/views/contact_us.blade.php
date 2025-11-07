@@ -55,7 +55,7 @@
                             @if(!empty($settings['helpline_number']))
                                 <div class="d-flex gap-2 mb-1">
                                     <h5 class="mb-0 font-size-14 fw-medium">Phone:</h5>
-                                    <p class="mb-0 font-size-14">+{{ $settings['helpline_number'] }}</p>
+                                    <p class="mb-0 font-size-14">{{ $settings['helpline_number'] }}</p>
                                 </div>
                             @endif
 

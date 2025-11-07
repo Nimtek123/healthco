@@ -13,6 +13,10 @@ return [
     'PAYMENT_STATUS' => [
         '0' => ['title' => 'Pending'],
         '1' => ['title' => 'Paid'],
+        '2' => ['title' => 'Failed'],
+        '3' => ['title' => 'Refunded'],
+        '4' => ['title' => 'Partially Paid'],
+        '5' => ['title' => 'Advance Paid'],
     ],
     'DEFAULT_STATUS' => 'pending',
 ];

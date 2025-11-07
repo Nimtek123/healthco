@@ -15,13 +15,16 @@ use Carbon\Carbon;
 use Modules\RequestService\Models\RequestService;
 use Modules\Clinic\Http\Requests\SystemServiceRequest;
 use Modules\Clinic\Models\ClinicsService;
+use Illuminate\Support\Facades\Log;
 
 class SystemServiceController extends Controller
 {
+    protected string $module_name;
+    protected string $module_icon;
     protected string $exportClass = '\App\Exports\SystemServiceExport';
     public function __construct()
     {
-     
+
         // module name
         $this->module_name = 'system-service';
 
@@ -50,9 +53,10 @@ class SystemServiceController extends Controller
         // if ($data !== null) {
         //     $data->is_status = 'accept';
         //     $data->save();
-        // }        
+        // }
         $categories = ClinicsCategory::whereNull('parent_id')->get();
         $subcategories = ClinicsCategory::whereNotNull('parent_id')->get();
+
 
         $export_import = true;
         $export_columns = [
@@ -87,7 +91,8 @@ class SystemServiceController extends Controller
     public function index_data(Datatables $datatable, Request $request)
     {
         $module_name = $this->module_name;
-        $query = SystemService::query();
+        // Show in descending order by id
+        $query = SystemService::query()->orderByDesc('id');
 
         $filter = $request->filter;
 
@@ -98,13 +103,9 @@ class SystemServiceController extends Controller
             if (isset($filter['category_id'])) {
                 $query->where('category_id', $filter['category_id']);
             }
-        
             if (isset($filter['sub_category_id'])) {
                 $query->where('subcategory_id', $filter['sub_category_id']);
             }
-            
-        
-            
         }
 
         $datatable = $datatable->eloquent($query)
@@ -114,18 +115,14 @@ class SystemServiceController extends Controller
             ->editColumn('name', function ($data) {
                 return '<img src=' . $data->file_url . " class='avatar avatar-50 rounded-pill me-3'> $data->name";
             })
-
             ->addColumn('action', function ($data) use ($module_name) {
                 return view('clinic::backend.systemservice.action_column', compact('module_name', 'data'));
             })
-
-          
             ->editColumn('status', function ($row) {
                 $checked = '';
                 if ($row->status) {
                     $checked = 'checked="checked"';
                 }
-
                 return '
                     <div class="form-check form-switch ">
                         <input type="checkbox" data-url="' . route('backend.system-service.update_status', $row->id) . '" data-token="' . csrf_token() . '" class="switch-status-change form-check-input"  id="datatable-row-' . $row->id . '"  name="status" value="' . $row->id . '" ' . $checked . '>
@@ -137,7 +134,6 @@ class SystemServiceController extends Controller
                 if ($row->featured) {
                     $checked = 'checked="checked"';
                 }
-
                 return '
                     <div class="form-check form-switch ">
                         <input type="checkbox" data-url="' . route('backend.system-service.update_featured', $row->id) . '" data-token="' . csrf_token() . '" class="switch-status-featured form-check-input"  id="datatable-row-' . $row->id . '"  name="featured" value="' . $row->id . '" ' . $checked . '>
@@ -156,22 +152,16 @@ class SystemServiceController extends Controller
             ->editColumn('subcategory_id', function ($data) {
                 $subcategory = isset($data->sub_category->name) ? $data->sub_category->name : '-';
                 return $subcategory;
-
             })
-
             ->editColumn('updated_at', function ($data) {
                 $module_name = $this->module_name;
-
                 $diff = Carbon::now()->diffInHours($data->updated_at);
-
                 if ($diff < 25) {
                     return $data->updated_at->diffForHumans();
                 } else {
                     return $data->updated_at->isoFormat('llll');
                 }
-            })
-
-            ->orderColumns(['id'], '-:column $1');
+            });
 
         $customFieldColumns = CustomField::customFieldData($datatable, SystemService::CUSTOM_FIELD_MODEL, null);
 
@@ -183,7 +173,7 @@ class SystemServiceController extends Controller
     {
 
         $data = SystemService::query();
-        
+
         $data = $data->get();
 
 
@@ -203,20 +193,20 @@ class SystemServiceController extends Controller
                 $SystemService = SystemService::whereIn('id', $ids)->update(['status' => $request->status]);
                 $message = __('clinic.systemservice_status');
                 break;
-                
+
             case 'change-featured':
                 $ClinicsCategory = SystemService::whereIn('id', $ids)->update(['featured' => $request->featured]);
                 if($request->featured==1){
-    
+
                     $message= __('messages.add_service_as_featured');
-    
+
                 }else{
-    
-                    $message=__('messages.remove_service_from_featured'); 
+
+                    $message=__('messages.remove_service_from_featured');
                 }
-                  
+
                     break;
-                
+
 
             case 'delete':
 
@@ -254,7 +244,7 @@ class SystemServiceController extends Controller
 
         }else{
 
-            $message=__('messages.remove_service_from_featured'); 
+            $message=__('messages.remove_service_from_featured');
         }
 
         return response()->json(['status' => true, 'message' => $message]);
@@ -273,7 +263,6 @@ class SystemServiceController extends Controller
      */
     public function store(SystemServiceRequest $request)
     {
-        
         $data = $request->except('file_url');
         $query = SystemService::create($data);
         $RequestService = RequestService::where('name', $query->name)->first();
@@ -311,21 +300,41 @@ class SystemServiceController extends Controller
      */
     public function edit($id)
     {
-        $data = SystemService::findOrFail($id);
+        try {
+            Log::info('SystemService edit called with ID: ' . $id);
 
-        if (!is_null($data)) {
-            $custom_field_data = $data->withCustomFields();
-            $data['custom_field_data'] = collect($custom_field_data->custom_fields_data)
-                ->filter(function ($value) {
-                    return $value !== null;
-                })
-                ->toArray();
+            $data = SystemService::findOrFail($id);
+            Log::info('SystemService found: ' . $data->name);
+
+            if (!is_null($data)) {
+                try {
+                    $custom_field_data = $data->withCustomFields();
+                    $data['custom_field_data'] = collect($custom_field_data->custom_fields_data)
+                        ->filter(function ($value) {
+                            return $value !== null;
+                        })
+                        ->toArray();
+                    Log::info('Custom fields loaded successfully');
+                } catch (\Exception $e) {
+                    // If custom fields fail, continue without them
+                    Log::warning('Custom fields error in SystemService edit: ' . $e->getMessage());
+                    $data['custom_field_data'] = [];
+                }
+            }
+
+            $data['file_url'] = $data->file_url;
+            Log::info('SystemService edit completed successfully');
+
+            return response()->json(['data' => $data, 'status' => true]);
+        } catch (\Exception $e) {
+            Log::error('SystemService edit error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['data' => null, 'status' => false, 'message' => 'Failed to load service data'], 500);
         }
-
-        $data['file_url'] = $data->file_url;
-
-        return response()->json(['data' => $data, 'status' => true]);
     }
+
+
+
 
     /**
      * Update the specified resource in storage.
@@ -339,7 +348,8 @@ class SystemServiceController extends Controller
             $data->updateCustomFieldData(json_decode($request->custom_fields_data));
         }
 
-        if ($request->file_url == null) {
+        // Only remove existing image when explicitly requested
+        if ($request->boolean('remove_image')) {
             $data->clearMediaCollection('file_url');
         }
 
@@ -356,7 +366,7 @@ class SystemServiceController extends Controller
                 ]);
             }
         }
-        
+
         $message = __('messages.update_form', ['form' => __('service.system_service_list')]);
 
         if ($request->is('api/*')) {
@@ -383,4 +393,18 @@ class SystemServiceController extends Controller
 
         return response()->json(['message' => $message, 'status' => true], 200);
     }
+
+    public function getSubcategories(Request $request)
+    {
+         Log::info('Fetching subcategories for category_id:', ['category_id' => $request->category_id]);
+        $categoryId = $request->query('category_id');
+
+        $subcategories = ClinicsCategory::where('parent_id', $categoryId)
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json($subcategories);
+    }
+
+
 }

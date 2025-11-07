@@ -237,15 +237,38 @@ return new class extends Migration {
                 'type' => 'notification_param_button',
                 'value' => 'clinic_name',
                 'name' => 'Clinic Name',
-            ]
-
+            ],
+            [
+                'type' => 'notification_param_button',
+                'value' => 'title',
+                'name' => 'Title',
+            ],
+            [
+                'type' => 'notification_param_button',
+                'value' => 'description',
+                'name' => 'Description',
+            ],
+            [
+                'type' => 'notification_param_button',
+                'value' => 'phone_number',
+                'name' => 'Phone number',
+            ],
+            [
+                'type' => 'notification_param_button',
+                'value' => 'email',
+                'name' => 'Email',
+            ],
+            [
+                'type' => 'notification_param_button',
+                'value' => 'reply',
+                'name' => 'Reply',
+            ],
         ];
 
         foreach ($types as $value) {
             Constant::updateOrCreate(['type' => $value['type'], 'value' => $value['value']], $value);
         }
 
-        echo " Insert: notificationtempletes \n\n";
 
         // Enable foreign key checks!
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');

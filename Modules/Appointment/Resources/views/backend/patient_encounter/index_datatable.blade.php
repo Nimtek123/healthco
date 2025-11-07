@@ -9,7 +9,7 @@
             @if(auth()->user()->can('edit_encounter') || auth()->user()->can('delete_encounter'))
             <x-backend.quick-action url="{{ route('backend.encounter.bulk_action') }}">
                 <div class="">
-                    <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
+                    <select name="action_type" class="select2 form-select col-12" id="quick-action-type" style="width:100%">
                         <option value="">{{ __('messages.no_action') }}</option>
                         @can('edit_encounter')
                         <option value="change-status">{{ __('messages.status') }}</option>
@@ -20,7 +20,7 @@
                     </select>
                 </div>
                 <div class="select-status d-none quick-action-field" id="change-status-action">
-                    <select name="status" class="form-control select2" id="status" style="width:100%">
+                    <select name="status" class="select2 form-select" id="status" style="width:100%">
                         <option value="" selected>{{ __('messages.select_status') }}</option>
                         <option value="1">{{ __('messages.open') }}</option>
                         <option value="0">{{ __('messages.close') }}</option>
@@ -30,7 +30,7 @@
             @endif
             <div>
                 <button type="button" class="btn btn-primary" data-modal="export">
-                <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+                <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
                 </button>
                 {{-- <button type="button" class="btn btn-secondary" data-modal="import">--}}
                 {{-- <i class="fa-solid fa-upload"></i> Import--}}
@@ -41,7 +41,7 @@
 
             <div>
                 <div class="datatable-filter">
-                    <select name="column_status" id="column_status" class="select2 form-control" data-filter="select" style="width: 100%">
+                    <select name="column_status" id="column_status" class="select2 form-select" data-filter="select" style="width: 100%">
                         <option value="">{{__('messages.all')}}</option>
                         <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>
                             {{ __('appointment.close') }}
@@ -88,7 +88,7 @@
     <div class="form-group datatable-filter">
     <label for="patient_name">{{__('clinic.patient')}}</label>
     <div class="col-12">
-        <select name="patient_name" id="patient_name" class="form-control select2" data-filter="select"
+        <select name="patient_name" id="patient_name" class="select2 form-select" data-filter="select"
             data-ajax--url="{{ route('backend.get_search_data', ['type' => 'customers']) }}"
             data-ajax--cache="true" placeholder="Select a patient">
             <option value="" disabled selected>{{ __('clinic.lbl_select_patient') }}</option>
@@ -100,7 +100,7 @@
     <label for="form-label"> {{ __('clinic.lbl_clinic') }}</label>
     <div class="col-12">
         <select id="clinic_name" name="clinic_name" data-filter="select"
-            class="select2 form-control"
+            class="select2 form-select"
             data-ajax--url="{{ route('backend.get_search_data', ['type' => 'clinic_name']) }}"
             data-ajax--cache="true" placeholder="Select a clinic">
             <option value="" disabled selected>{{ __('clinic.lbl_select_clinic') }}</option>
@@ -112,7 +112,7 @@
     <label for="form-label"> {{ __('clinic.doctors') }}</label>
     <div class="col-12">
         <select id="doctor_name" name="doctor_name" data-filter="select"
-            class="select2 form-control"
+            class="select2 form-select"
             data-ajax--url="{{ route('backend.get_search_data', ['type' => 'doctors']) }}"
             data-ajax--cache="true" placeholder="Select a doctor">
             <option value="" disabled selected>{{ __('clinic.lbl_select_doctor') }}</option>
@@ -147,6 +147,18 @@
             exportable: false,
             orderable: false,
             searchable: false,
+        },
+
+        {
+            data: 'encounter_id',
+            name: 'encounter_id',
+            title: "{{ __('sidebar.id') }}"
+        },
+        {
+            data: 'appointment_id',
+            name: 'appointment_id',
+            title: "{{ __('sidebar.appoitment_id') }}",
+            className: 'text-center'
         },
 
         {
@@ -230,6 +242,17 @@
                     clinic_name: $('#clinic_name').val(),
                     doctor_name: $('#doctor_name').val(),
                 }
+                },
+            drawCallback: () => {
+                // Reinitialize select2 for dynamically created elements in DataTable
+                $('.change-select').each(function() {
+                    if (!$(this).hasClass('select2-hidden-accessible')) {
+                        $(this).select2({
+                            width: '100%',
+                            minimumResultsForSearch: -1
+                        });
+                    }
+                });
             }
         });
         $('#reset-filter').on('click', function(e) {

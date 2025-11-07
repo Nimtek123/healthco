@@ -11,18 +11,23 @@ use Modules\Appointment\Transformers\AppointmentDetailResource;
 use Auth;
 use Carbon\Carbon;
 use Modules\Appointment\Trait\AppointmentTrait;
+use Modules\Clinic\Models\ClinicsCategory;
 use Modules\Clinic\Models\Receptionist;
+use Modules\Clinic\Models\SystemService;
 use Notification;
 use Modules\Commission\Models\CommissionEarning;
+use DB;
+use Modules\Clinic\Models\Clinics;
 class AppointmentsController extends Controller
 {
     use AppointmentTrait;
 
     public function appointmentList(Request $request){
-        $perPage = $request->input('per_page', 10); 
+        
+        $perPage = $request->input('per_page', 10);
 
         $user_id = $request->has('user_id') ? $request->user_id : auth()->id();
-  
+
         $appointment = Appointment::CheckMultivendor()->with('appointmenttransaction','cliniccenter','clinicservice','user','doctor','otherPatient');
 
 
@@ -41,7 +46,7 @@ class AppointmentsController extends Controller
                 $doctor_id=$request->has('doctor_id') ? $request->doctor_id : Auth::id();
 
                 $appointment->where('doctor_id',$doctor_id);
-         
+
 
             }elseif(auth()->user()->hasRole('user')){
 
@@ -61,10 +66,10 @@ class AppointmentsController extends Controller
                 }else{
                     $appointment->where('clinic_id',$clinic_id);
                 }
-                
+
 
             }
-            
+
           }
 
          if($request->has('vendor_id') && ($request->vendor_id !='')){
@@ -78,22 +83,22 @@ class AppointmentsController extends Controller
           }
 
           if($request->has('doctor_id') && ($request->doctor_id !='')){
-          
+
               $appointment->where('doctor_id',$request->doctor_id);
           }
 
           if($request->has('clinic_id') && ($request->clinic_id !='')){
-          
+
             $appointment->where('clinic_id',$request->clinic_id);
           }
 
           if($request->has('service_id') && ($request->service_id !='')){
-          
+
             $appointment->where('service_id',$request->service_id);
           }
 
         if($request->has('user_id') && ($request->user_id !='')){
-          
+
             $appointment->where('user_id',$request->user_id);
          }
 
@@ -101,6 +106,102 @@ class AppointmentsController extends Controller
         if($request->has('upcoming_appointment')) {
             $appointment->whereIn('status', ['pending', 'confirmed'])->where('start_date_time', '>', now());
           }
+
+        if($request->has('category_id')) {
+            $category = ClinicsCategory::where('id', $request->category_id)->first();
+            if ($category) {
+                $services = SystemService::where('category_id', $category->id)->pluck('id')->toArray();
+                $appointment->whereIn('service_id', $services);
+            }
+        }
+
+        if ($request->has('consultation_type')) {
+            if ($request->consultation_type == 'online') {
+                $appointment->whereHas('clinicservice', function ($q) {
+                    $q->where('type', 'online');
+                });
+            } elseif ($request->consultation_type == 'inclinic') {
+                $appointment->whereHas('clinicservice', function ($q) {
+                    $q->where('type', 'in_clinic');
+                });
+            }
+        }
+        if ($request->has('payment_status') && $request->payment_status != '') {
+            switch ($request->payment_status) {
+                case 'paid':
+                    $appointment->whereHas('appointmenttransaction', function ($q) {
+                        $q->where('payment_status', 1)->where('advance_payment_status', '=', 0); ;
+                    })->where('status', '!=', 'cancelled');
+                    break;
+
+                case 'pending':
+                        $appointment->whereHas('appointmenttransaction', function ($q) {
+                        $q->where('payment_status', 0)->where('advance_payment_status', '=', 0);
+                        });
+                    break;
+
+                case 'advance_paid':
+                    $appointment->where('advance_paid_amount', '>', 0)
+                                ->where('status', '!=', 'cancelled');
+                    break;
+
+                case 'advance_refunded':
+                    $appointment->where('status', 'cancelled')
+                                ->where('advance_paid_amount', '>', 0);
+                    break;
+
+                case 'payment_refunded':
+                    $appointment->where('status', 'cancelled')
+                                ->whereHas('appointmenttransaction', function ($q) {
+                                    $q->where('payment_status', 1)->where('advance_payment_status', '=', 0);
+                                })
+                                ;
+                    break;
+            }
+        }
+
+        if($request->has('first_date') && $request->has('last_date') && !empty($request->first_date) && !empty($request->last_date)) {
+            
+            $firstDate = null;
+            $lastDate = null;
+            $dateFormats = ['d-m-Y', 'Y-m-d', 'd/m/Y', 'Y/m/d', 'm-d-Y', 'm/d/Y'];
+            
+            // Try different date formats
+            foreach ($dateFormats as $format) {
+                try {
+                    $firstDate = \Carbon\Carbon::createFromFormat($format, $request->first_date);
+                    $lastDate = \Carbon\Carbon::createFromFormat($format, $request->last_date);
+                    
+                    // Validate that parsing was successful
+                    if ($firstDate && $lastDate) {
+                        $firstDate = $firstDate->startOfDay();
+                        $lastDate = $lastDate->endOfDay();
+                        break;
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+            
+            // If structured formats failed, try Carbon's generic parse
+            if (!$firstDate || !$lastDate) {
+                try {
+                    $firstDate = \Carbon\Carbon::parse($request->first_date)->startOfDay();
+                    $lastDate = \Carbon\Carbon::parse($request->last_date)->endOfDay();
+                } catch (\Exception $e) {
+                    \Log::warning('Date filter parse failed', [
+                        'first_date' => $request->first_date,
+                        'last_date' => $request->last_date,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+            
+            // Apply the date filter if dates were successfully parsed
+            if ($firstDate && $lastDate) {
+                $appointment->whereBetween('start_date_time', [$firstDate, $lastDate]);
+            }
+        }
 
          if($request->has('status') && $request->status !=null) {
             $appointment->where('status',$request->status);
@@ -127,7 +228,7 @@ class AppointmentsController extends Controller
                       });
             });
         }
-  
+
         $appointments = $appointment->orderBy('updated_at', 'desc')->paginate($perPage);
         $appointmentsCollection = AppointmentResource::collection($appointments);
 
@@ -138,11 +239,11 @@ class AppointmentsController extends Controller
         ], 200);
     }
 
-    
+
 
     public function appointmentDetails(Request $request){
 
-        $appointmentId = $request->appointment_id;  
+        $appointmentId = $request->appointment_id;
         $appointment = Appointment::with('appointmenttransaction', 'clinicservice', 'serviceRating', 'patientEncounter' ,'cliniccenter','bodyChart')->where('id',$appointmentId)->first();
 
         $appointmentDetail=null;
@@ -165,15 +266,16 @@ class AppointmentsController extends Controller
     }
 
     public function rescheduleBooking(Request $request){
-        
-        $appointment_id = $request->appointment_id;  
-        $appointment = Appointment::with('user','doctor','clinicservice')->findOrFail($appointment_id);
 
+        $appointment_id = $request->appointment_id;
+        $appointment = Appointment::with('user','doctor','clinicservice')->findOrFail($appointment_id);
+        $clinic_data = Clinics::where('id', $appointment->clinic_id)->first();
+        $receptionist = Receptionist::with('users')->where('clinic_id',$appointment->clinic_id)->first();
         $appointment->appointment_date = $request->appointment_date;
         $appointment->appointment_time = $request->appointment_time;
         $appointment->start_date_time = Carbon::createFromFormat('Y-m-d H:i', $request->appointment_date . ' ' . $request->appointment_time, setting('default_time_zone'))->setTimezone('UTC');
-        $appointment->save();   
-        
+        $appointment->save();
+
         $notification_data = [
             'id' => $appointment->id,
             'description' => $appointment->description,
@@ -189,9 +291,12 @@ class AppointmentsController extends Controller
             'appointment_date_and_time' => $appointment->start_date_time->format('Y-m-d H:i'),
             'latitude' =>  null,
             'longitude' => null,
+            'vendor_id' => $clinic_data->vendor_id,
+            'receptionist_id' => $clinic_data->receptionist->receptionist_id ?? $receptionist->receptionist_id ?? null,
+            'receptionist_name' => isset($receptionist) ? $receptionist->users->first_name.' '.$receptionist->users->last_name : 'unknown',
         ];
         $this->sendNotificationOnBookingUpdate('reschedule_appointment', $notification_data);
-      
+
         return response()->json([
             'status' => true,
             'message' => __('appointment.update_appointment'),
@@ -200,7 +305,7 @@ class AppointmentsController extends Controller
 
     public function getRevenuechartData(Request $request)
     {
- 
+
         $user = auth()->user();
         $userid = $user->id;
 
@@ -244,17 +349,15 @@ class AppointmentsController extends Controller
             "Nov", "Dec"
         ];
 
-        
+
         $firstWeek = Carbon::now()->startOfMonth()->week;
 
         $monthlyWeekTotals = Appointment::CheckMultivendor()->selectRaw('YEAR(start_date_time) as year, MONTH(start_date_time) as month, WEEK(start_date_time) as week, COALESCE(SUM(total_amount), 0) as total_amount')
                 ->where('status', 'checkout')
                 ->whereYear('start_date_time', $currentYear)
                 ->whereMonth('start_date_time', $currentMonth)
-                ->groupBy('year', 'month', 'week')
-                ->orderBy('year')
-                ->orderBy('month')
-                ->orderBy('week')
+                ->groupByRaw('YEAR(start_date_time), MONTH(start_date_time), WEEK(start_date_time)')
+                ->orderByRaw('YEAR(start_date_time), MONTH(start_date_time), WEEK(start_date_time)')
                 ->get();
 
         if (auth()->user()->hasRole('vendor')) {
@@ -264,10 +367,8 @@ class AppointmentsController extends Controller
                     ->selectRaw('YEAR(appointments.start_date_time) as year, MONTH(appointments.start_date_time) as month, WEEK(appointments.start_date_time) as week, COALESCE(SUM(commission_earnings.commission_amount), 0) as total_amount')
                     ->whereYear('appointments.start_date_time', $currentYear)
                     ->whereMonth('appointments.start_date_time', $currentMonth)
-                    ->groupBy('year', 'month', 'week')
-                    ->orderBy('year')
-                    ->orderBy('month')
-                    ->orderBy('week')
+                    ->groupByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time), WEEK(appointments.start_date_time)')
+                    ->orderByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time), WEEK(appointments.start_date_time)')
                     ->get();
         }
 
@@ -301,8 +402,8 @@ class AppointmentsController extends Controller
                 ->whereYear('start_date_time', $currentYear)
                 ->whereMonth('start_date_time', $currentMonth)
                 ->whereBetween('start_date_time', [$currentWeekStartDate, $currentWeekStartDate->copy()->addDays(6)])
-                ->groupBy('day')
-                ->orderBy('day')
+                ->groupBy(DB::raw('DAY(start_date_time)'))
+                ->orderBy(DB::raw('DAY(start_date_time)'))
                 ->get();
 
         if (auth()->user()->hasRole('vendor')) {
@@ -314,8 +415,8 @@ class AppointmentsController extends Controller
                     ->whereYear('appointments.start_date_time', $currentYear)
                     ->whereMonth('appointments.start_date_time', $currentMonth)
                     ->whereBetween('appointments.start_date_time', [$currentWeekStartDate, $currentWeekStartDate->copy()->addDays(6)])
-                    ->groupBy('day')
-                    ->orderBy('day')
+                    ->groupBy(DB::raw('DAY(appointments.start_date_time)'))
+                    ->orderBy(DB::raw('DAY(appointments.start_date_time)'))
                     ->get();
         }
 

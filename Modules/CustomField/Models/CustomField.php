@@ -64,7 +64,7 @@ class CustomField extends BaseModel
                 }
 
                 if ($customField->type == 'file') {
-                    return $finalData ? '<a href="'.asset_url_local_s3('custom_fields/'.$finalData->value).'" target="__blank" class="text-dark-grey">'.__('app.storageSetting.viewFile').'</a>' : '--';
+                    return $finalData ? '<a href="'.asset_url_local_s3('custom_fields/'.$finalData->value).'" target="__blank" class="heading-color-grey">'.__('app.storageSetting.viewFile').'</a>' : '--';
                 }
 
                 return $finalData ? $finalData->value : '--';

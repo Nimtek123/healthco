@@ -36,6 +36,10 @@ class SocialLoginResource extends JsonResource
             'full_name' => $this->full_name,
             'profile_image' => $this->media->pluck('original_url')->first(),
             'user_role' => $this->getRoleNames() ?? [],
+            'country_id' => $this->country,
+            'state_id' => $this->state,
+            'city_id' => $this->city,
+            'postal_code' => $this->pincode,
             'media' => $this->media,
         ];
     }

@@ -7,6 +7,15 @@
 
 @push('after-styles')
 <link rel="stylesheet" href="{{ mix('modules/service/style.css') }}">
+<style>
+    .offcanvas.offcanvas-w-40 { --bs-offcanvas-width: 40vw; }
+    @media (max-width: 576px) {
+        .offcanvas.offcanvas-w-40 { --bs-offcanvas-width: 100vw; }
+    }
+    @media (min-width: 576px) and (max-width: 992px) {
+        .offcanvas.offcanvas-w-40 { --bs-offcanvas-width: 60vw; }
+    }
+</style>
 @endpush
 
 @section('content')
@@ -17,7 +26,7 @@
             auth()->user()->can('delete_clinics_service'))
             <x-backend.quick-action url="{{ route('backend.services.bulk_action') }}">
                 <div class="">
-                    <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
+                    <select name="action_type" class="select2 form-select col-12" id="quick-action-type" style="width:100%">
                         <option value="">{{ __('messages.no_action') }}</option>
                         @can('edit_clinics_service')
                         <option value="change-status">{{ __('messages.status') }}</option>
@@ -29,7 +38,7 @@
                     </select>
                 </div>
                 <div class="select-status d-none quick-action-field" id="change-status-action">
-                    <select name="status" class="form-control select2" id="status" style="width:100%">
+                    <select name="status" class="select2 form-select" id="status" style="width:100%">
                         <option value="" selected>{{ __('messages.select_status') }}</option>
                         <option value="1">{{ __('messages.active') }}</option>
                         <option value="0">{{ __('messages.inactive') }}</option>
@@ -40,7 +49,7 @@
             @endif
             <div>
                 <button type="button" class="btn btn-primary" data-modal="export">
-                    <i class="ph ph-download-simple me-1"></i> {{ __('messages.export') }}
+                    <i class="ph ph-export me-1"></i> {{ __('messages.export') }}
                 </button>
             </div>
         </div>
@@ -48,7 +57,7 @@
 
             <div>
                 <div class="datatable-filter">
-                    <select name="column_status" id="column_status" class="select2 form-control" data-filter="select" style="width: 100%">
+                    <select name="column_status" id="column_status" class="select2 form-select" data-filter="select" style="width: 100%">
                         <option value="">{{ __('messages.all') }}</option>
                         <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>
                             {{ __('messages.inactive') }}
@@ -64,11 +73,38 @@
                 <span class="input-group-text" id="addon-wrapping"><i class="fa-solid fa-magnifying-glass"></i></span>
                 <input type="text" class="form-control dt-search" placeholder="{{ __('messages.search') }}..." aria-label="Search" aria-describedby="addon-wrapping">
             </div>
-            <button class="btn btn-secondary d-flex align-items-center gap-1 btn-group" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample"><i class="ph ph-funnel"></i>{{ __('messages.advance_filter') }}</button>
-            @hasPermission('add_clinics_service')
-            <x-buttons.offcanvas target='#form-offcanvas' title="{{ __('messages.create') }} {{ __('service.singular_title') }}">
-                {{ __('messages.new') }} </x-buttons.offcanvas>
-            @endhasPermission
+            <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-secondary d-flex align-items-center gap-1 btn-group" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample">
+                    <i class="ph ph-funnel"></i>{{ __('messages.advance_filter') }}
+                </button>
+                {{-- @hasPermission('add_clinics_service')
+                <x-buttons.offcanvas target='#form-offcanvas' title="{{ __('messages.create') }} {{ __('service.singular_title') }}">
+                    {{ __('messages.new') }} </x-buttons.offcanvas>
+                @endhasPermission --}}
+                @hasPermission('add_clinics_service')
+                <button 
+                    class="btn btn-primary d-flex align-items-center gap-1" 
+                    type="button"
+                    data-bs-toggle="offcanvas" 
+                    data-bs-target="#createServiceForm" 
+                    aria-controls="createServiceForm"
+                >
+                    <i class="ph ph-plus-circle"></i> {{ __('messages.new') }}
+                </button>
+                @endhasPermission
+
+                <div class="offcanvas offcanvas-end offcanvas-w-40" tabindex="-1" id="createServiceForm">
+                    <div class="offcanvas-header">
+                        <h5 class="offcanvas-title">{{ __('clinic.create_service') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+                    </div>
+                    <div class="offcanvas-body">
+                        @include('clinic::backend.services.form')  
+                    </div>
+                </div>
+                
+                
+            </div>
 
         </x-slot>
     </x-backend.section-header>
@@ -76,8 +112,12 @@
     </table>
 </div>
 <div data-render="app">
-    <clinic-service-offcanvas create-title="{{ __('messages.create') }} {{ __('service.singular_title') }}" default-image="{{default_file_url()}}" edit-title="{{ __('messages.edit') }} {{ __('service.singular_title') }}" :customefield="{{ json_encode($customefield) }}">
-    </clinic-service-offcanvas>
+    {{-- <clinic-service-offcanvas create-title="{{ __('messages.create') }} {{ __('service.singular_title') }}" default-image="{{default_file_url()}}" edit-title="{{ __('messages.edit') }} {{ __('service.singular_title') }}" :customefield="{{ json_encode($customefield) }}">
+    </clinic-service-offcanvas> --}}
+
+
+
+    
     <assign-doctor-form-offcanvas></assign-doctor-form-offcanvas>
     <assign-service-provider-form-offcanvas></assign-service-provider-form-offcanvas>
     <gallery-form-offcanvas></gallery-form-offcanvas>
@@ -89,15 +129,15 @@
    
     <div class="form-group datatable-filter">
         <label class="form-label" for="price_range">{{ __('service.lbl_price') }}</label>
-        <select name="price_range" id="price_range" class="form-control select2" data-filter="select"
+        <select name="price_range" id="price_range" class="select2 form-select" data-filter="select"
             data-ajax--url="{{ route('backend.get_search_data', ['type' => 'price_range']) }}"
-            data-ajax--cache="true" placeholder="Select a price range">
+            data-ajax--cache="true" placeholder="{{ __('clinic.select_price_range') }}">
             <option value="" disabled selected>{{ __('service.all') }} {{ __('service.lbl_price') }}</option>
         </select>
     </div>
     <div class="form-group datatable-filter">
         <label class="form-label" for="column_category">{{ __('service.lbl_category') }}</label>
-        <select name="column_category" id="column_category" class="form-control select2" data-filter="select">
+        <select name="column_category" id="column_category" class="select2 form-select" data-filter="select">
             <option value="">{{ __('service.all') }} {{ __('service.lbl_category') }}</option>
             @foreach ($categories as $category)
             <option value="{{ $category->id }}" data-parent="{{ $category->parent_id }}">{{ $category->name }}</option>
@@ -106,7 +146,7 @@
     </div>
     <div class="form-group datatable-filter d-none" id="subcategory-group">
         <label class="form-label" for="column_subcategory">{{ __('service.lbl_subcategory') }}</label>
-        <select name="column_subcategory" id="column_subcategory" class="form-control select2" data-filter="select">
+        <select name="column_subcategory" id="column_subcategory" class="select2 form-select" data-filter="select">
             <option value="">{{ __('service.all') }} {{ __('service.lbl_subcategory') }}</option>
         </select>
     </div>
@@ -114,7 +154,7 @@
     @unless(auth()->user()->hasRole('doctor'))
     <div class="form-group datatable-filter">
         <label class="form-label" for="doctor">{{ __('service.lbl_doctor') }}</label>
-        <select name="doctor_id" id="doctor_id" class="form-control select2" data-filter="select">
+        <select name="doctor_id" id="doctor_id" class="select2 form-select" data-filter="select">
             <option value="">{{ __('service.all') }} {{ __('service.lbl_doctor') }}</option>
             @foreach ($doctor as $doctors)
             <option value="{{ $doctors->id }}">{{ $doctors->full_name }}</option>
@@ -125,7 +165,7 @@
     @unless(auth()->user()->hasRole('receptionist'))
     <div class="form-group datatable-filter">
         <label class="form-label" for="clinic">{{ __('service.lbl_clinic') }}</label>
-        <select name="clinic" id="clinic" class="form-control select2" data-filter="select">
+        <select name="clinic" id="clinic" class="select2 form-select" data-filter="select">
             <option value="">{{ __('service.all') }} {{ __('service.lbl_clinic') }}</option>
             @foreach ($clinic as $clinics)
             <option value="{{ $clinics->id }}">{{ $clinics->name }}</option>
@@ -137,7 +177,7 @@
         <div class="form-group datatable-filter">
             <label for="form-label">{{ __('clinic.clinic_admin') }}</label>
             <select  id="column_clinic_admin" name="column_clinic_admin" data-filter="select"
-                class="select2 form-control"
+                class="select2 form-select"
                 data-ajax--url="{{ route('backend.get_search_data', ['type' => 'clinic_admin']) }}"
                 data-ajax--cache="true">
                 <option value="">{{ __('service.all') }} {{ __('clinic.clinic_admin') }}</option>
@@ -154,6 +194,8 @@
 @push('after-styles')
 <!-- DataTables Core and Extensions -->
 <link rel="stylesheet" href="{{ asset('vendor/datatable/datatables.min.css') }}">
+<!-- Select2 CSS -->
+{{-- <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" /> --}}
 @endpush
 
 @push('after-scripts')
@@ -258,6 +300,76 @@
     ]
 
     document.addEventListener('DOMContentLoaded', (event) => {
+        // Initialize Select2 for all select elements
+        $('#quick-action-type').select2({
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+        });
+
+        $('#status').select2({
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+        });
+
+        $('#column_status').select2({
+            width: '100%',
+            minimumResultsForSearch: Infinity,
+        });
+
+        $('#price_range').select2({
+            width: '100%',
+            placeholder: "{{ __('clinic.select_price_range') }}",
+            ajax: {
+                url: "{{ route('backend.get_search_data', ['type' => 'price_range']) }}",
+                dataType: 'json',
+                delay: 250,
+                cache: true,
+                processResults: function(data) {
+                    return {
+                        results: data
+                    };
+                }
+            }
+        });
+
+        $('#column_category').select2({
+            width: '100%',
+            placeholder: "{{ __('service.all') }} {{ __('service.lbl_category') }}",
+        });
+
+        $('#column_subcategory').select2({
+            width: '100%',
+            placeholder: "{{ __('service.all') }} {{ __('service.lbl_subcategory') }}",
+        });
+
+        $('#doctor_id').select2({
+            width: '100%',
+            placeholder: "{{ __('service.all') }} {{ __('service.lbl_doctor') }}",
+        });
+
+        $('#clinic').select2({
+            width: '100%',
+            placeholder: "{{ __('service.all') }} {{ __('service.lbl_clinic') }}",
+        });
+
+        @if(multiVendor() && (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')))
+        $('#column_clinic_admin').select2({
+            width: '100%',
+            placeholder: "{{ __('service.all') }} {{ __('clinic.clinic_admin') }}",
+            ajax: {
+                url: "{{ route('backend.get_search_data', ['type' => 'clinic_admin']) }}",
+                dataType: 'json',
+                delay: 250,
+                cache: true,
+                processResults: function(data) {
+                    return {
+                        results: data
+                    };
+                }
+            }
+        });
+        @endif
+
         initDatatable({
             url: '{{ route("backend.$module_name.index_data", ["doctor_id" => $doctor_id ]) }}',
             finalColumns,
@@ -284,13 +396,13 @@
         });
 
         $('#reset-filter').on('click', function(e) {
-            $('#column_category').val('');
-            $('#column_subcategory').val('');
+            $('#column_category').val('').trigger('change');
+            $('#column_subcategory').val('').trigger('change');
             $('#service_name').val('');
-            $('#price_range').val('');
-            $('#doctor_id').val('');
-            $('#clinic').val('');
-            $('#column_clinic_admin').val('');
+            $('#price_range').val(null).trigger('change');
+            $('#doctor_id').val('').trigger('change');
+            $('#clinic').val('').trigger('change');
+            $('#column_clinic_admin').val(null).trigger('change');
 
             window.renderedDataTable.ajax.reload(null, false);
         });

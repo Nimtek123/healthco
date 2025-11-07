@@ -28,4 +28,22 @@ return [
     'select_vendors' => 'اختر البائعين',
     'select_clinic_centre' => 'اختر مركز العيادة',
     'postal_code' => 'الرمز البريدي',
+    'old_password_incorrect' => 'كلمة المرور القديمة غير صحيحة',
+    
+    // Placeholder text
+    'placeholder_first_name' => 'أدخل الاسم الأول',
+    'placeholder_last_name' => 'أدخل الاسم الأخير',
+    'placeholder_email' => 'أدخل البريد الإلكتروني',
+    'placeholder_phone_number' => 'أدخل رقم الهاتف',
+    'placeholder_password' => 'أدخل كلمة المرور',
+    'placeholder_confirm_password' => 'أدخل تأكيد كلمة المرور',
+    'placeholder_date_of_birth' => 'اختر تاريخ الميلاد',
+    'placeholder_address' => 'أدخل العنوان',
+    'placeholder_postal_code' => 'أدخل الرمز البريدي',
+    'placeholder_select_vendor' => 'اختر البائع',
+    'placeholder_select_clinic_center' => 'اختر مركز العيادة',
+    'placeholder_select_country' => 'اختر البلد',
+    'placeholder_select_state' => 'اختر الولاية',
+    'placeholder_select_city' => 'اختر المدينة',
+    'placeholder_select_gender' => 'اختر الجنس',
 ];

@@ -9,7 +9,7 @@
             @if($patient_encounter->status == 1)
                 <x-backend.quick-action url='{{ route("backend.bodychart.bodychart_bulk_action") }}'>
                     <div class="">
-                        <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
+                        <select name="action_type" class="select2 form-select col-12" id="quick-action-type" style="width:100%">
                             <option value="">{{ __('messages.no_action') }}</option>
                             <option value="delete">{{ __('messages.delete') }}</option>
                         </select>

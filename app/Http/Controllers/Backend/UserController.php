@@ -210,10 +210,11 @@ class UserController extends Controller
 
     public function update(Request $request)
     {
+        // dd($request->all());
         $user = Auth::user();
         $data = User::findOrFail($user->id);
         $request_data = $request->except('profile_image');
-        $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']);
+        // $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']);
         
         $data->update($request_data);
 

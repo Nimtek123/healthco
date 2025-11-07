@@ -73,7 +73,7 @@ class CountryController extends Controller
     {
         $term = trim($request->search);
 
-        $query = Country::query();
+        $query = Country::query()->where('status', 1);
 
         if (!empty($term)) {
             $query->where(function ($query) use ($term) {
@@ -93,9 +93,10 @@ class CountryController extends Controller
                 'currency_name' => $row->currency_name,
                 'symbol' => $row->symbol,
                 'currency_code' => $row->currency_code,
+                'dial_code' => $row->dial_code,
             ];
         });
-
+ 
         if ($request->is('api/*')) {
             return response()->json(['status' => true, 'data' => $data, 'message' => __('country_list')]);
         }
@@ -106,7 +107,7 @@ class CountryController extends Controller
 
     public function index_data(Datatables $datatable, Request $request)
     {
-        $query = Country::query();
+        $query = Country::query()->where('status', 1);
 
         $filter = $request->filter;
 

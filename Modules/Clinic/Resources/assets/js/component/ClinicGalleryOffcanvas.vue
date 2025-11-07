@@ -26,7 +26,6 @@
           </div>
         </div>
         <div class="offcanvas-footer">
-          <p class="text-center"><small>{{ $t('clinic.gallery_for_clinic') }}</small></p>
           <div class="d-grid d-sm-flex justify-content-sm-end gap-3">
             <button class="btn btn-white d-block" type="button" data-bs-dismiss="offcanvas">{{ $t('messages.close') }}</button>
             <!-- <button class="btn btn-secondary d-block">{{ $t('messages.upload') }}</button> -->

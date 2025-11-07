@@ -1,38 +1,28 @@
-(function(){
+
+
+(function () {
   "use strict";
-  $(document).on('change', '.datatable-filter [data-filter="select"]', function() {
+  $(document).on('change', '.datatable-filter [data-filter="select"]', function () {
     window.renderedDataTable.ajax.reload(null, false)
   })
 
-  $(document).on('input', '.dt-search', function() {
+  $(document).on('input', '.dt-search', function () {
     window.renderedDataTable.ajax.reload(null, false)
   })
 
-    $('.modal').on('show.bs.modal', function(event) {
-      var modal = $(this);
-      modal.find('select').select2({
-        width: '100%',
-        tags: true,  // Enable creating new options
-        createTag: function(params) {
-          return {
-            id: params.term,  // Set the ID of the new tag
-            text: params.term  // Set the text of the new tag
-          };
-        }
-      });
-    });
 
 
   const confirmSwal = async (message) => {
 
-   console.log(message);
+    console.log(message);
     return await Swal.fire({
       title: message,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#d33',
       cancelButtonColor: '#858482',
-      confirmButtonText: 'Yes',
+      confirmButtonText: window.localMessagesUpdate?.messages?.yes || 'Yes',
+      cancelButtonText: window.localMessagesUpdate?.messages?.cancel || 'Cancel',
       showClass: {
         popup: 'animate__animated animate__zoomIn'
       },
@@ -49,82 +39,86 @@
 
   const confirmDeleteSwal = async (message) => {
 
-    console.log(message.message);
-     return await Swal.fire({
-       title: message.message,
-       icon: 'question',
-       showCancelButton: true,
-       confirmButtonColor: '#d33',
-       cancelButtonColor: '#858482',
-       confirmButtonText: 'Yes',
-       showClass: {
-         popup: 'animate__animated animate__zoomIn'
-       },
-       hideClass: {
-         popup: 'animate__animated animate__zoomOut'
-       }
-     }).then((result) => {
-       return result
-     })
-   }
+    // console.log(message.message);
+    return await Swal.fire({
+      title: message.message,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#858482',
+      confirmButtonText: window.localMessagesUpdate?.messages?.yes || 'Yes',
+      cancelButtonText: window.localMessagesUpdate?.messages?.cancel || 'Cancel',
+      showClass: {
+        popup: 'animate__animated animate__zoomIn'
+      },
+      hideClass: {
+        popup: 'animate__animated animate__zoomOut'
+      }
+    }).then((result) => {
+      return result
+    })
+  }
 
-   window.confirmDeleteSwal = confirmDeleteSwal
+  window.confirmDeleteSwal = confirmDeleteSwal
 
 
-  $('#quick-action-form').on('submit', function(e) {
+  $('#quick-action-form').on('submit', function (e) {
     e.preventDefault()
     const form = $(this)
     const url = form.attr('action')
-    const message = $('[name="message_'+$('[name="action_type"]').val()+'"]').val()
-    const rowdIds = $("#datatable_wrapper .select-table-row:checked").map(function() {
-        return $(this).val();
+    const message = $('[name="message_' + $('[name="action_type"]').val() + '"]').val()
+    const rowdIds = $("#datatable_wrapper .select-table-row:checked").map(function () {
+      return $(this).val();
     }).get();
     confirmSwal(message).then((result) => {
-      if(!result.isConfirmed) return
-      callActionAjax({url: `${url}?rowIds=${rowdIds}`,body: form.serialize()})
+      if (!result.isConfirmed) return
+      callActionAjax({ url: `${url}?rowIds=${rowdIds}`, body: form.serialize() })
     })
   })
 
   // Update status on switch
-  $(document).on('change', '#datatable_wrapper .switch-status-featured', function() {
+  $(document).on('change', '#datatable_wrapper .switch-status-featured', function (e) {
+    if (!e.originalEvent) return
     let url = $(this).attr('data-url')
     let body = {
       featured: $(this).prop('checked') ? 1 : 0,
       _token: $(this).attr('data-token')
     }
-    callActionAjax({url: url, body: body})
+    callActionAjax({ url: url, body: body })
   })
 
-    // Update status on switch
-    $(document).on('change', '#datatable_wrapper .switch-status-change', function() {
-      let url = $(this).attr('data-url')
-      let body = {
-        status: $(this).prop('checked') ? 1 : 0,
-        _token: $(this).attr('data-token')
-      }
-      callActionAjax({url: url, body: body})
-    })
+  // Update status on switch
+  $(document).on('change', '#datatable_wrapper .switch-status-change', function (e) {
+    if (!e.originalEvent) return
+    let url = $(this).attr('data-url')
+    let body = {
+      status: $(this).prop('checked') ? 1 : 0,
+      _token: $(this).attr('data-token')
+    }
+    callActionAjax({ url: url, body: body })
+  })
 
 
-  $(document).on('change', '#datatable_wrapper .change-select', function() {
+  $(document).on('change', '#datatable_wrapper .change-select', function (e) {
+    if (!e.originalEvent) return
     let url = $(this).attr('data-url')
     let body = {
       value: $(this).val(),
       _token: $(this).attr('data-token')
     }
-    callActionAjax({url: url, body: body})
+    callActionAjax({ url: url, body: body })
   })
 
-  function callActionAjax ({url, body}) {
+  function callActionAjax({ url, body }) {
     $.ajax({
       type: 'POST',
       url: url,
       data: body,
-      success: function(res) {
+      success: function (res) {
         if (res.status) {
           window.successSnackbar(res.message)
           window.renderedDataTable.ajax.reload(resetActionButtons, false)
-          const event = new CustomEvent('update_quick_action', {detail: {value: true}})
+          const event = new CustomEvent('update_quick_action', { detail: { value: true } })
           document.dispatchEvent(event)
         } else {
           Swal.fire({
@@ -145,26 +139,26 @@
   }
 
   // Update status on button click
-  $(document).on('click', '#datatable_wrapper .button-status-change', function() {
+  $(document).on('click', '#datatable_wrapper .button-status-change', function () {
 
     let url = $(this).attr('data-url')
     let body = {
       status: 1,
       _token: $(this).attr('data-token')
     }
-    callActionAjax({url: url, body: body})
+    callActionAjax({ url: url, body: body })
   })
 
-  function callActionAjax ({url, body}) {
+  function callActionAjax({ url, body }) {
     $.ajax({
       type: 'POST',
       url: url,
       data: body,
-      success: function(res) {
+      success: function (res) {
         if (res.status) {
           window.successSnackbar(res.message)
           window.renderedDataTable.ajax.reload(resetActionButtons, false)
-          const event = new CustomEvent('update_quick_action', {detail: {value: true}})
+          const event = new CustomEvent('update_quick_action', { detail: { value: true } })
           document.dispatchEvent(event)
         } else {
           window.errorSnackbar(res.message)
@@ -177,21 +171,21 @@
   const dataTableRowCheck = (id) => {
     checkRow();
     if ($(".select-table-row:checked").length > 0) {
-        $("#quick-action-form").removeClass('form-disabled');
-        //if at-least one row is selected
-        document.getElementById("select-all-table").indeterminate = true;
-        $("#quick-actions").find("input, textarea, button, select").removeAttr("disabled");
+      $("#quick-action-form").removeClass('form-disabled');
+      //if at-least one row is selected
+      document.getElementById("select-all-table").indeterminate = true;
+      $("#quick-actions").find("input, textarea, button, select").removeAttr("disabled");
     } else {
-        //if no row is selected
-        document.getElementById("select-all-table").indeterminate = false;
-        $("#select-all-table").attr("checked", false);
-        resetActionButtons();
+      //if no row is selected
+      document.getElementById("select-all-table").indeterminate = false;
+      $("#select-all-table").attr("checked", false);
+      resetActionButtons();
     }
 
     if ($("#datatable-row-" + id).is(":checked")) {
-        $("#row-" + id).addClass("table-active");
+      $("#row-" + id).addClass("table-active");
     } else {
-        $("#row-" + id).removeClass("table-active");
+      $("#row-" + id).removeClass("table-active");
     }
 
   };
@@ -200,30 +194,30 @@
   const selectAllTable = (source) => {
     const checkboxes = document.getElementsByName("datatable_ids[]");
     for (var i = 0, n = checkboxes.length; i < n; i++) {
-        // if disabled property is given to checkbox, it won't select particular checkbox.
-        if (!$("#" + checkboxes[i].id).prop('disabled')){
-            checkboxes[i].checked = source.checked;
+      // if disabled property is given to checkbox, it won't select particular checkbox.
+      if (!$("#" + checkboxes[i].id).prop('disabled')) {
+        checkboxes[i].checked = source.checked;
+      }
+      if ($("#" + checkboxes[i].id).is(":checked")) {
+        $("#" + checkboxes[i].id)
+          .closest("tr")
+          .addClass("table-active");
+        $("#quick-actions")
+          .find("input, textarea, button, select")
+          .removeAttr("disabled");
+        if ($("#quick-action-type").val() == "") {
+          $("#quick-action-apply").attr("disabled", true);
         }
-        if ($("#" + checkboxes[i].id).is(":checked")) {
-            $("#" + checkboxes[i].id)
-                .closest("tr")
-                .addClass("table-active");
-            $("#quick-actions")
-                .find("input, textarea, button, select")
-                .removeAttr("disabled");
-            if ($("#quick-action-type").val() == "") {
-                $("#quick-action-apply").attr("disabled", true);
-              }
-        } else {
-            $("#" + checkboxes[i].id)
-                .closest("tr")
-                .removeClass("table-active");
-            resetActionButtons();
-        }
+      } else {
+        $("#" + checkboxes[i].id)
+          .closest("tr")
+          .removeClass("table-active");
+        resetActionButtons();
+      }
     }
 
     checkRow();
-};
+  };
 
 
   window.selectAllTable = selectAllTable
@@ -243,25 +237,25 @@
   //reset table action form elements
   const resetActionButtons = () => {
     checkRow()
-    if(document.getElementById("select-all-table") !== undefined && document.getElementById("select-all-table") !== null) {
+    if (document.getElementById("select-all-table") !== undefined && document.getElementById("select-all-table") !== null) {
       document.getElementById("select-all-table").checked = false;
       $("#quick-action-form")[0].reset();
       $("#quick-actions")
-          .find("input, textarea, button, select")
-          .attr("disabled", "disabled");
-      $("#quick-action-form").find("select").select2("destroy").select2().val(null).trigger("change")
+        .find("input, textarea, button, select")
+        .attr("disabled", "disabled");
+      $("#quick-action-form").find("select").val(null).trigger("change")
     }
   };
 
   window.resetActionButtons = resetActionButtons
 
-  const initDatatable = ({url, finalColumns, advanceFilter, drawCallback = undefined, orderColumn}) => {
+  const initDatatable = ({ url, finalColumns, advanceFilter, drawCallback = undefined, orderColumn }) => {
 
 
     const data_table_limit = $('meta[name="data_table_limit"]').attr('content');
 
 
-     // console.log("test",advanceFilter);
+    // console.log("test",advanceFilter);
     window.renderedDataTable = $('#datatable').DataTable({
       processing: true,
       serverSide: true,
@@ -276,35 +270,120 @@
       pageLength: data_table_limit,
       dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',
       ajax: {
-        "type"   : "GET",
-        "url"    : url,
-        "data"   : function( d ) {
+        "type": "GET",
+        "url": url,
+        "data": function (d) {
           d.search = {
             value: $('.dt-search').val()
           };
           d.filter = {
             column_status: $('#column_status').val()
           }
-          if(typeof advanceFilter == 'function' && advanceFilter() !== undefined) {
-            d.filter = {...d.filter,...advanceFilter()}
+          if (typeof advanceFilter == 'function' && advanceFilter() !== undefined) {
+            d.filter = { ...d.filter, ...advanceFilter() }
           }
         },
       },
 
-      drawCallback: function() {
-          if(laravel !== undefined) {
-              window.laravel.initialize();
-          }
-          $('.select2').select2();
-          if(drawCallback !== undefined && typeof drawCallback == 'function') {
-            drawCallback()
-          }
+      drawCallback: function () {
+        if (laravel !== undefined) {
+          window.laravel.initialize();
+        }
+        if (drawCallback !== undefined && typeof drawCallback == 'function') {
+          drawCallback()
+        }
       },
       columns: finalColumns,
-     });
+    });
   }
 
-  window.initDatatable = initDatatable
+  // Dynamic footer positioning based on datatable size
+  const adjustFooterPosition = () => {
+    const footer = document.querySelector('.footer');
+    const datatableWrapper = document.querySelector('#datatable_wrapper');
+    const mainContent = document.querySelector('.main-content');
+
+    if (footer && datatableWrapper && mainContent) {
+      const datatableHeight = datatableWrapper.offsetHeight;
+      const viewportHeight = window.innerHeight;
+      const headerHeight = 120; // Approximate header height
+      const footerHeight = footer.offsetHeight;
+
+      // Calculate available space for content
+      const availableSpace = viewportHeight - headerHeight - footerHeight;
+
+      if (datatableHeight < availableSpace) {
+        // If datatable is small, position footer at bottom of viewport
+        footer.style.position = 'sticky';
+        footer.style.bottom = '0';
+        footer.style.marginTop = 'auto';
+        mainContent.style.minHeight = 'calc(100vh - 120px)';
+      } else {
+        // If datatable is large, let footer follow content
+        footer.style.position = 'relative';
+        footer.style.marginTop = '20px';
+        mainContent.style.minHeight = 'auto';
+      }
+    }
+  };
+
+  // Enhanced initDatatable function with footer positioning
+  const enhancedInitDatatable = ({ url, finalColumns, advanceFilter, drawCallback = undefined, orderColumn }) => {
+    const data_table_limit = $('meta[name="data_table_limit"]').attr('content');
+
+    window.renderedDataTable = $('#datatable').DataTable({
+      processing: true,
+      serverSide: true,
+      autoWidth: false,
+      responsive: true,
+      fixedHeader: true,
+      lengthMenu: [
+        [5, 10, 15, 20, 25, 50, 100, -1],
+        [5, 10, 15, 20, 25, 50, 100, 'All'],
+      ],
+      order: orderColumn,
+      pageLength: data_table_limit,
+      dom: '<"row align-items-center"><"table-responsive my-3 mt-3 mb-2 pb-1" rt><"row align-items-center data_table_widgets" <"col-md-6" <"d-flex align-items-center flex-wrap gap-3" l i>><"col-md-6" p>><"clear">',
+      ajax: {
+        "type": "GET",
+        "url": url,
+        "data": function (d) {
+          d.search = {
+            value: $('.dt-search').val()
+          };
+          d.filter = {
+            column_status: $('#column_status').val()
+          }
+          if (typeof advanceFilter == 'function' && advanceFilter() !== undefined) {
+            d.filter = { ...d.filter, ...advanceFilter() }
+          }
+        },
+      },
+      drawCallback: function () {
+        if (laravel !== undefined) {
+          window.laravel.initialize();
+        }
+        if (drawCallback !== undefined && typeof drawCallback == 'function') {
+          drawCallback()
+        }
+        // Adjust footer position after datatable draw
+        setTimeout(adjustFooterPosition, 100);
+      },
+      columns: finalColumns,
+    });
+  };
+
+  window.initDatatable = enhancedInitDatatable;
+  window.adjustFooterPosition = adjustFooterPosition;
+
+  // Call adjustFooterPosition on window resize
+  $(window).on('resize', adjustFooterPosition);
+
+  // Call adjustFooterPosition on page load
+  $(document).ready(function () {
+    setTimeout(adjustFooterPosition, 500);
+  });
+
 
   function formatCurrency(number, noOfDecimal, decimalSeparator, thousandSeparator, currencyPosition, currencySymbol) {
     // Convert the number to a string with the desired decimal places
@@ -350,5 +429,13 @@
   }
 
   window.formatCurrency = formatCurrency
+
+  // Ensure formatCurrency is available globally with fallback
+  if (typeof window.formatCurrency === 'undefined') {
+    window.formatCurrency = formatCurrency;
+  }
+
+  // Also make it available as a global function for compatibility
+  window.currencyFormat = formatCurrency;
 
 })()

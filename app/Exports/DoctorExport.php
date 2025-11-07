@@ -82,14 +82,19 @@ class DoctorExport implements FromCollection, WithHeadings, WithEvents, WithCust
                         break;
 
                     case 'status':
-                        $selectedData[$column] = 'no';
+                        $selectedData[$column] = 'Inactive';
                         if ($row[$column]) {
-                            $selectedData[$column] = 'yes';
+                            $selectedData[$column] = 'Active';
                         }
                         break;
 
                     case 'service_providers':
                         $selectedData[$column] = implode(', ', optional($row->mainServiceProvider)->pluck('name')->toArray()) ?? '-';
+                        break;
+
+                    case 'gender':
+                        // Make first letter capital
+                        $selectedData[$column] = ucfirst(strtolower($row[$column]));
                         break;
 
                     default:
@@ -111,22 +116,11 @@ class DoctorExport implements FromCollection, WithHeadings, WithEvents, WithCust
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
-                $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($this->columns));
-
-                // Add "From Date" and "To Date" at the top
-                $sheet->setCellValue('A1', "From Date: {$this->dateRange[0]}");
-                $sheet->setCellValue('A2', "To Date: {$this->dateRange[1]}");
-
-                // Merge cells for a cleaner header
-                $sheet->mergeCells("A1:{$lastColumn}1");
-                $sheet->mergeCells("A2:{$lastColumn}2");
-
-                // Style the headers (optional)
-                $sheet->getStyle('A1:A2')->getFont()->setBold(true);
-                $sheet->getStyle('A1:A2')->getFont()->setSize(12);
-            },
+            AfterSheet::class => exportSheetHeader(
+                'Doctor List',
+                $this->columns,
+                $this->dateRange
+            ),
         ];
     }
 }

@@ -127,7 +127,7 @@
                         </div>
                         <div class="col-12 col-sm-10">
                             <div class="form-group">
-                                <select id="country-dropdown" class="form-control select2">
+                                <select id="country-dropdown" class="select2 form-select">
                                     <option value="">-- Select Service Provider --</option>
                                     @foreach ($serviceProvider as $data)
                                         <option value="{{ $data->id }}">

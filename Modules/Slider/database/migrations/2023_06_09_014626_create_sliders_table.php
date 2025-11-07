@@ -19,7 +19,7 @@ return new class extends Migration
             $table->boolean('status')->default(1);
             $table->string('link')->nullable();
             $table->string('type')->default('category');
-            $table->integer('link_id')->default(0);
+            $table->integer('link_id')->nullable();
             $table->integer('created_by')->unsigned()->nullable();
             $table->integer('updated_by')->unsigned()->nullable();
             $table->integer('deleted_by')->unsigned()->nullable();

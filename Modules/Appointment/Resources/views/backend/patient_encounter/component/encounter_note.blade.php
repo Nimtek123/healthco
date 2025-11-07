@@ -3,33 +3,59 @@
     <input type="hidden" name="encounter_id" id="notes_encounter_id" value="{{ $data['id'] }}">
     <input type="hidden" name="user_id" id="notes_user_id" value="{{ $data['user_id'] }}">
 
-    <div class="card-footer pb-0 excounter-note">
-        @if ($data['status'] == 1)
-            <div class="position-relative">
-                <textarea class="form-control h-auto" rows="1" placeholder="Enter Notes" v-model="notes" name="notes"
-                    id="notes" style="min-height: max-content"></textarea>
-                <button class="btn btn-sm btn-primary" onclick="addNotesValue()"><i
-                        class="ph ph-plus me-2"></i>{{ __('appointment.add') }}</button>
-            </div>
-        @endif
-    </div>
+    @if ($data['status'] == 0)
+        <div class="card-body">
+            @if (count($data['notesList']) > 0)
+                <ul class="list-inline m-0 p-0">
+                    @foreach ($data['notesList'] as $index => $note)
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>{{ $index + 1 }}. {{ $note->title }}</span>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="text-center py-4">
+                    <p class="text-danger mb-0">{{ __('appointment.no_notes_found') }}</p>
+                </div>
+            @endif
+        </div>
+    @else
+        <div class="card-footer pb-0 excounter-note">
+            @if ($data['status'] == 1)
+                <div class="position-relative">
+                    <textarea class="form-control h-auto" rows="1" placeholder="{{ __('appointment.enter_note') }}" v-model="notes" name="notes"
+                        id="notes" style="min-height: max-content"></textarea>
+                    <button class="btn btn-sm btn-primary" onclick="addNotesValue()"><i
+                            class="ph ph-plus me-2"></i>{{ __('appointment.add') }}</button>
+                </div>
+            @endif
+        </div>
 
-    <div class="card-body medial-history-card medial-history-notes">
-        <ul class="list-inline m-0 p-0">
-            @foreach ($data['notesList'] as $index => $note)
-                <li class="mb-3">
-                    <div class="d-flex align-items-start justify-content-between gap-1">
-                        <span>{{ $index + 1 }}. {{ $note->title }}</span>
-                        @if ($data['status'] == 1)
-                            <button class="btn p-0 text-danger" onclick="removeNotes({{ $note->id }})">
-                                <i class="ph ph-x-circle"></i>
-                            </button>
-                        @endif
-                    </div>
-                </li>
-            @endforeach
-        </ul>
-    </div>
+        <div class="card-body medial-history-card medial-history-notes">
+            @if (count($data['notesList']) > 0)
+                <ul class="list-inline m-0 p-0">
+                    @foreach ($data['notesList'] as $index => $note)
+                        <li class="mb-3">
+                            <div class="d-flex align-items-start justify-content-between gap-1">
+                                <span>{{ $index + 1 }}. {{ $note->title }}</span>
+                                @if ($data['status'] == 1)
+                                    <button class="btn p-0 text-danger" onclick="removeNotes({{ $note->id }})">
+                                        <i class="ph ph-x-circle"></i>
+                                    </button>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            @else
+                <div class="text-center py-4">
+                    <p class="text-danger mb-0">{{ __('appointment.no_notes_found') }}</p>
+                </div>
+            @endif
+        </div>
+    @endif
 
 </div>
 
@@ -59,30 +85,53 @@
                             if (response && response.status) {
                                 // Update the notes list
                                 $('#notes').val('');
-                                var listHtml = '';
-                                response.medical_histroy.forEach(function(note, index) {
-                                    listHtml += `
-                                <li class="mb-3 pb-3 border-bottom">
-                                    <div class="d-flex align-items-start justify-content-between gap-1">
-                                        <span>${index + 1}. ${note.title}</span>
-                                        <button class="btn p-0 text-danger"
-                                            onclick="removeNotes(${note.id})">
-                                            <i class="ph ph-x-circle"></i>
-                                        </button>
-                                    </div>
-                                </li>`;
-                                });
-                                $('.medial-history-notes ul').html(listHtml);
+                                updateNotesList(response.medical_histroy);
+                                
+                                // Show success message
+                                if (window.successSnackbar) {
+                                    window.successSnackbar('{{ __("appointment.note_added_successfully") }}');
+                                }
                             } else {
-                                console.log('Failed to save note.');
+                                if (window.errorSnackbar) {
+                                    window.errorSnackbar('{{ __("appointment.failed_to_save_note") }}');
+                                }
                             }
                         },
-                        error: function(error) {
-                            console.log(error);
+                        error: function(xhr, status, error) {
+                            console.error('AJAX Error:', error);
+                            if (window.errorSnackbar) {
+                                window.errorSnackbar('{{ __("appointment.error_try_again") }}');
+                            }
                         }
                     });
                 }
             };
+
+            // Define the updateNotesList function
+            function updateNotesList(medicalHistory) {
+                var listHtml = '';
+                if (medicalHistory && medicalHistory.length > 0) {
+                    medicalHistory.forEach(function(note, index) {
+                        listHtml += `
+                            <li class="mb-3">
+                                <div class="d-flex align-items-start justify-content-between gap-1">
+                                    <span>${index + 1}. ${note.title}</span>
+                                    <button class="btn p-0 text-danger"
+                                        onclick="removeNotes(${note.id})">
+                                        <i class="ph ph-x-circle"></i>
+                                    </button>
+                                </div>
+                            </li>`;
+                    });
+                    $('.medial-history-notes').html('<ul class="list-inline m-0 p-0">' + listHtml + '</ul>');
+                } else {
+                    $('.medial-history-notes').html(`
+                        <div class="text-center py-4">
+                            <p class="text-danger mb-0">{{ __('appointment.no_notes_found') }}</p>
+                        </div>
+                    `);
+                }
+            }
 
             // Define the removeNotes function globally
             window.removeNotes = function(Id) {
@@ -93,29 +142,23 @@
                         method: 'GET',
                         success: function(response) {
                             if (response && response.status) {
-                                // Update the notes list
-                                var listHtml = '';
-                                response.medical_histroy.forEach(function(note, index) {
-                                    listHtml += `
-                                <li class="mb-3 pb-3 border-bottom">
-                                    <div class="d-flex align-items-start justify-content-between gap-1">
-                                        <span>${index + 1}. ${note.title}</span>
-                                        <button class="btn p-0 text-danger"
-                                            onclick="removeNotes(${note.id})">
-                                            <i class="ph ph-x-circle"></i>
-                                        </button>
-                                    </div>
-                                </li>`;
-                                });
-                                $('.medial-history-notes ul').html(listHtml);
-
-                                console.log('Note removed successfully!');
+                                updateNotesList(response.medical_histroy);
+                                
+                                // Show success message
+                                if (window.successSnackbar) {
+                                    window.successSnackbar('{{ __("appointment.note_removed_successfully") }}');
+                                }
                             } else {
-                                console.error('Failed to remove note.');
+                                if (window.errorSnackbar) {
+                                    window.errorSnackbar('{{ __("appointment.failed_to_remove_note") }}');
+                                }
                             }
                         },
-                        error: function(error) {
-                            console.error('Error:', error);
+                        error: function(xhr, status, error) {
+                            console.error('AJAX Error:', error);
+                            if (window.errorSnackbar) {
+                                window.errorSnackbar('{{ __("appointment.error_try_again") }}');
+                            }
                         }
                     });
                 }
