@@ -43,7 +43,6 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::post('update-status/{id}', [SlidersController::class, 'update_status'])->name('update_status');
         Route::post('bulk-action', [SlidersController::class, 'bulk_action'])->name('bulk_action');
         Route::get('slider_list/{type}', [SlidersController::class, 'slider_list'])->name('slider_list');
-        Route::get('test-update/{id}', [SlidersController::class, 'testUpdate'])->name('test_update');
     });
     Route::resource('app-banners', SlidersController::class);
 

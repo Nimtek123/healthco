@@ -46,32 +46,25 @@
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-4 mb-3">
                                         <p class="mb-0">{{ __('service.title') }}:</p>
-                                        <p class="mb-0">{{ $data->appointmentdetail->clinicservice->systemservice->name ?? '--' }} </p>
+                                        <p class="mb-0">{{ $data->name ?? '--' }}</p>
                                     </div>
 
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mt-4 mb-3">
-                                        <p class="mb-0">{{ __('appointment.lbl_appitment_id') }}:</p>
-                                        <p class="mb-0">{{ $data->appointmentdetail->id ?? '--' }}</p>
+                                        <p class="mb-0">{{ __('appointment.lbl_id') }}:</p>
+                                        <p class="mb-0">{{ $data->id ?? '--' }}</p>
                                     </div>
-                                    @if (!empty($data->user) && (!empty($data->user->address) || !empty($data->user->cities?->name) || !empty($data->user->countries?->name) || !empty($data->user->pincode)))
                                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-3">
                                         <p class="mb-0">{{ __('appointment.address') }}:</p>
-                                        <div class="heading-color text-end">
-                                            {{ $data->user->address ?? '' }}
-                                            @if (!empty($data->user->address) && (!empty($data->user->cities?->name) || !empty($data->user->countries?->name) || !empty($data->user->pincode))),@endif
-                                            {{ $data->user->cities->name ?? '' }}
-                                            @if (!empty($data->user->cities?->name) && (!empty($data->user->countries?->name) || !empty($data->user->pincode))),@endif
+                                        <span class="heading-color">{{ $data->user->address ?? '' }} </span>
+                                        <span class="heading-color">{{ $data->user->cities->name ?? '' }}
                                             {{ $data->user->countries->name ?? '' }}
-                                            @if (!empty($data->user->countries?->name) && !empty($data->user->pincode)),@endif
-                                            {{ $data->user->pincode ?? '' }}
-                                        </div>
+                                            {{ $data->user->pincode ?? '' }}</span>
                                     </div>
-                                    @endif
-                         </div>
+                            </div>
                         </li>
                         <li class="item">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
-                                <p class="mb-0">{{ __('appointment.encounter_status') }}:</p>
+                                <p class="mb-0">{{ __('appointment.status') }}:</p>
                                 @if ($data->status == 1)
                                     <span class="text-success">{{ __('appointment.open') }}</span>
                                 @else
@@ -86,7 +79,7 @@
                 <div class="card encounter-temeplate">
                     <div class="card-body">
                         <h6>{{ __('appointment.select_encounter_templates') }}</h6>
-                        <select name="template_id" id="template_id" class="select2 form-select"
+                        <select name="template_id" id="template_id" class="form-control select2"
                             placeholder="{{ __('clinic.lbl_select_template') }}" data-filter="select">
                             <option value="">{{ __('clinic.lbl_select_template') }}</option>
                             @foreach ($template_data as $template)
@@ -234,15 +227,11 @@
                                         <h6 class="card-title mb-0">{{ __('appointment.other_information') }}</h6>
                                     </div>
                                     <div class="">
-                                        <textarea 
-                                            class="form-control h-auto bg-body" 
-                                            rows="3"
-                                            placeholder="{{ __('appointment.enter_other_details') }}" 
-                                            name="other_details" 
-                                            id="other_details"
-                                            style="min-height: max-content"
-                                            @if(isset($data['status']) && $data['status'] != 1) disabled @endif
-                                        >{{ old('other_details', $data['EncounterOtherDetails']['other_details'] ?? '') }}</textarea>
+                                        <textarea class="form-control h-auto bg-body" rows="3"
+                                            placeholder="{{ __('appointment.enter_other_details') }}" name="other_details" id="other_details"
+                                            style="min-height: max-content">
+                                                {{ old('other_details', $data['EncounterOtherDetails']['other_details'] ?? '') }}
+                                            </textarea>
                                     </div>
                                 </div>
 
@@ -326,10 +315,6 @@
     </div>
 
     @endsection
-
-    @push('after-styles')
-     
-    @endpush
 
     @push('after-scripts')
         <script>

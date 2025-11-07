@@ -150,7 +150,7 @@ class SettingController extends Controller
 
         $currencyData = null;
         if ($currencies->isNotEmpty()) {
-            $currency = $currencies->where('is_primary', 1)->first();
+            $currency = $currencies->first();
             $currencyData = [
                 'currency_name' => $currency->currency_name,
                 'currency_symbol' => $currency->currency_symbol,
@@ -205,7 +205,6 @@ class SettingController extends Controller
         $response['apple_login_status'] = 'false';
         $response['otp_login_status'] = 'false';
         $response['site_description'] = $settings['site_description'] ?? null;
-        $response['is_quick_booking_on'] = isset($settings['clinic']) ? (int) $settings['clinic'] : null;
         // Add locale language to the response
         $response['application_language'] = $settings['default_language'] ?? 'en';
 

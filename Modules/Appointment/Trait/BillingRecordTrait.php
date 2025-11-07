@@ -15,7 +15,6 @@ trait BillingRecordTrait
         $service_amount = optional($encounter_details->appointment)->service_amount;
         $tax_data = [];
         $taxes = json_decode(optional(optional($encounter_details->appointment)->appointmenttransaction)->tax_percentage);
-        if($taxes){
         foreach ($taxes as $tax) {
             $amount = 0;
             if ($tax->type == 'percent') {
@@ -31,7 +30,6 @@ trait BillingRecordTrait
                 'tax_type' => isset($tax->tax_type) ? $tax->tax_type : (isset($tax->tax_scope) ? $tax->tax_scope : null),
                 'amount' => (float) number_format($amount, 2),
             ];
-        }
         }
 
         $billing_record = [
@@ -57,34 +55,13 @@ trait BillingRecordTrait
     }
     public function generateBillingItem($billing_record)
     {
-        // FIXED CALCULATION FLOW: Add inclusive tax BEFORE applying discount
-        // OLD FLOW (COMMENTED): Discount → Inclusive Tax
-        // NEW FLOW: Base Price → Inclusive Tax → Discount
-        // This matches AppointmentTrait and frontend display
         
         $service_amount = optional($billing_record->clinicservice->doctor_service->firstWhere('doctor_id', $billing_record->patientencounter->doctor_id))->charges;
-        
-        // OLD CODE (COMMENTED): Discount was calculated on base price, then inclusive tax added
-        // $discount_value = ($billing_record->discount_type == 'percentage') ? ($service_amount * $billing_record->discount_value) / 100 : $billing_record->discount_value;
-        // $inclusive_tax_array = $this->calculate_inclusive_tax(optional($billing_record->clinicservice->doctor_service->firstWhere('doctor_id', $billing_record->patientencounter->doctor_id))->charges - $discount_value,$billing_record->clinicservice->inclusive_tax);
-        // $inclusive_tax_amount = $inclusive_tax_array['total_inclusive_tax'];
-        // $total_amount = $service_amount - $discount_value + $inclusive_tax_amount;
-        
-        // NEW CODE: Step 1 - Calculate inclusive tax on BASE service amount FIRST
-        $inclusive_tax_array = $this->calculate_inclusive_tax($service_amount, $billing_record->clinicservice->inclusive_tax);
+        $discount_value = ($billing_record->discount_type == 'percentage') ? ($service_amount * $billing_record->discount_value) / 100 : $billing_record->discount_value;
+        $inclusive_tax_array = $this->calculate_inclusive_tax(optional($billing_record->clinicservice->doctor_service->firstWhere('doctor_id', $billing_record->patientencounter->doctor_id))->charges - $discount_value,$billing_record->clinicservice->inclusive_tax);
         $inclusive_tax_amount = $inclusive_tax_array['total_inclusive_tax'];
-        
-        // Step 2 - Add inclusive tax to get total with tax
-        $amount_with_inclusive_tax = $service_amount + $inclusive_tax_amount;
-        
-        // Step 3 - Apply discount on (base + inclusive tax)
-        $discount_value = ($billing_record->discount_type == 'percentage') 
-            ? ($amount_with_inclusive_tax * $billing_record->discount_value) / 100 
-            : $billing_record->discount_value;
-        
-        // Step 4 - Calculate final total after discount
-        $total_amount = $amount_with_inclusive_tax - $discount_value;
-        
+        $total_amount = $service_amount - $discount_value + $inclusive_tax_amount;
+        // dd($total_amount,$inclusive_tax_amount);
         $billing_item = [
 
             'billing_id' => $billing_record->id ?? null,

@@ -18,31 +18,20 @@
 
                 @foreach ($sectionData['section_3']['service_id'] as $service_id)
                     @php
-                        // Fetch the service by ID
-                        $service = \Modules\Clinic\Models\ClinicsService::find($service_id);
+                        $service = \Modules\Clinic\Models\ClinicsService::where('id', $service_id)->first();
 
-                        if ($service) {
-                            // Calculate discount
-                            $discount_amount = 0;
-                            if ($service->discount) {
-                                if ($service->discount_type === 'percentage') {
-                                    $discount_amount = $service->charges * $service->discount_value / 100;
-                                } else {
-                                    $discount_amount = $service->discount_value;
-                                }
-                            }
-                            $discounted_price = $service->charges - $discount_amount;
 
-                       
-                            $inclusive_tax = 0;
-                            if ($service->is_inclusive_tax && $service->inclusive_tax_price > 0) {
-                            
-                                $tax_percent = $service->charges > 0 ? ($service->inclusive_tax_price / $service->charges) * 100 : 0;
-                                $inclusive_tax = round($discounted_price * $tax_percent / 100, 2);
+
+                        if (!empty($service)) {
+                            $discount_amount=0;
+                            if($service->discount){
+                                $discount_amount = ($service->discount_type == 'percentage')
+                                ? $service->charges * $service->discount_value / 100
+                                : $service->discount_value;
+
                             }
 
-                            // Set the final payable amount
-                            $service->payable_amount = $discounted_price + $inclusive_tax;
+                            $service->payable_amount = $service->charges - $discount_amount + $service->inclusive_tax_price ;
                         }
                     @endphp
                     <div class="col d-none servicecards">

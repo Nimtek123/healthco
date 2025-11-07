@@ -335,18 +335,18 @@
                                                             </h5>
                                                         @endif
 
-                                                        <div class="d-flex flex-wrap column-gap-4 row-gap-2">
+                                                        <div class="d-flex flex-wrap column-gap-5 row-gap-3">
                                                             <div
-                                                                class="d-flex align-items-center flex-wrap row-gap-1 column-gap-2">
+                                                                class="d-flex align-items-center flex-wrap row-gap-1 column-gap-3">
                                                                 <span class="font-size-14">{{__('clinic.total_appointments_done')}}:</span>
-                                                                <h6 class="m-0 fw-bold font-size-16">
+                                                                <h6 class="m-0 fw-bold font-size-14">
                                                                     {{ $total_appointment }}
                                                                 </h6>
                                                             </div>
                                                             <div
-                                                                class="d-flex align-items-center flex-wrap row-gap-1 column-gap-2">
+                                                                class="d-flex align-items-center flex-wrap row-gap-1 column-gap-3">
                                                                 <span class="font-size-14">Clinic name:</span>
-                                                                <h6 class="m-0 fw-bold font-size-16">
+                                                                <h6 class="m-0 fw-bold font-size-14">
                                                                     @if(optional($doctor_service->clinic)->id)
                                                                         <a href="{{ route('clinic-details', ['id' => $doctor_service->clinic->id]) }}">
                                                                             {{ optional($doctor_service->clinic)->name }}
@@ -439,37 +439,27 @@
                         </div>
 
                         <div class="tab-pane p-0" id="qualification-doctor">
-                            @if($doctor->doctorDocuments->count() > 0)
-                                <ul class="list-inline m-0 p-0">
-                                    @foreach ($doctor->doctorDocuments as $doctordocument)
-                                        <li
-                                            class="qualification-card section-bg rounded d-flex justify-content-between align-items-start flex-wrap gap-3">
-                                            <ul class="list-inline m-0 p-0">
-                                                <li class="font-size-14">
-                                                    <span>Degree:</span>
-                                                    <span
-                                                        class="ms-1 qualification-detail">{{ $doctordocument->degree }}</span>
-                                                </li>
-                                                <li class="mt-3 font-size-14">
-                                                    <span>University:</span>
-                                                    <span
-                                                        class="ms-1 qualification-detail">{{ $doctordocument->university }}</span>
-                                                </li>
-                                            </ul>
-                                            <span
-                                                class="badge bg-secondary-subtle rounded-pill">{{ $doctordocument->year }}</span>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <div class="text-center p-5 section-bg rounded">
-                                    <div class="mb-3">
-                                        <i class="ph ph-certificate" style="font-size: 3rem; color: #ccc;"></i>
-                                    </div>
-                                    <h5 class="text-muted mb-2">No Qualifications Available</h5>
-                                    <p class="text-muted mb-0">This doctor has no qualification uploaded yet.</p>
-                                </div>
-                            @endif
+                            <ul class="list-inline m-0 p-0">
+                                @foreach ($doctor->doctorDocuments as $doctordocument)
+                                    <li
+                                        class="qualification-card section-bg rounded d-flex justify-content-between align-items-start flex-wrap gap-3">
+                                        <ul class="list-inline m-0 p-0">
+                                            <li class="font-size-14">
+                                                <span>Degree:</span>
+                                                <span
+                                                    class="ms-1 qualification-detail">{{ $doctordocument->degree }}</span>
+                                            </li>
+                                            <li class="mt-3 font-size-14">
+                                                <span>University:</span>
+                                                <span
+                                                    class="ms-1 qualification-detail">{{ $doctordocument->university }}</span>
+                                            </li>
+                                        </ul>
+                                        <span
+                                            class="badge bg-secondary-subtle rounded-pill">{{ $doctordocument->year }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
                         </div>
                     </div>
                 </div>

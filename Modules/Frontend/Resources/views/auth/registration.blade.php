@@ -26,28 +26,10 @@
                               </div>
                             </div> -->
                             @include('frontend::components.partials.logo')
-                            <style>
-                                .auth-card-content,
-                                .auth-card-content p,
-                                .auth-card-content span,
-                                .auth-card-content a,
-                                .auth-card-content label,
-                                .auth-card-content .form-control,
-                                .auth-card-content .input-group-text {
-                                    font-size: 0.9rem;
-                                }
-                                .auth-card .btn {
-                                    font-size: 0.9rem;
-                                }
-                                .auth-card-content .invalid-feedback {
-                                    font-size: 0.9rem;
-                                }
-                            </style>
                             <div class="auth-card-content mt-3">
                                 <p class="text-danger mb-1" id="error_message"></p>
                                 <form id="registerForm" action="post" class="requires-validation" data-toggle="validator" novalidate>
                                     @csrf
-                                    <input type="hidden" name="action_type" value="register">
                                     <input type="hidden" name="user_type" id="user_type" value="user">
                                     <div class="input-group custom-input-group mb-3">
                                         <input type="text" class="form-control" placeholder="First Name"
@@ -71,7 +53,7 @@
                                     <div class="invalid-feedback text-danger w-100" id="contact_number_error">Contact
                                         Number field is required</div>
                                     <div class="invalid-feedback" id="contact_number_exists_error"
-                                        style="color: #dc3545; font-size: 0.9rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
+                                        style="color: #dc3545; font-size: 1.1rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
                                         This contact number is already registered
                                     </div>
                                         <div class="input-group custom-input-group mb-3 flex-column align-items-start">
@@ -80,11 +62,11 @@
                                             <span class="input-group-text"><i class="ph ph-envelope-simple"></i></span>
                                         </div>
                                         <div class="invalid-feedback" id="email-error"
-                                            style="color: #dc3545; font-size: 0.9rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
+                                            style="color: #dc3545; font-size: 1.1rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
                                             Invalid email format
                                         </div>
                                         <div class="invalid-feedback" id="email_exists_error"
-                                            style="color: #dc3545; font-size: 0.9rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
+                                            style="color: #dc3545; font-size: 1.1rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
                                             This email is already registered
                                         </div>
                                     </div>
@@ -108,30 +90,19 @@
                                     <div class="invalid-feedback text-danger" id="confirm_password_error">Confirm
                                         Password field is required</div>
                                     <div class="invalid-feedback" id="password_mismatch_error"
-                                            style="color: #dc3545; font-size: 0.9rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
+                                            style="color: #dc3545; font-size: 1.1rem; font-weight: 500; display: none; text-align: left; width: 100%; margin-top: 4px;">
                                             Password and Confirm Password do not match
                                         </div>
                                     <div class="d-flex my-3">
-    <div class="form-check">
-        <input class="form-check-input" type="checkbox" name="terms" id="terms" required>
-    </div>
-    <p class="m-0 font-size-14 text-body">
-        I agree to the 
-        <a class="text-decoration-underline" target="_blank"
-            href="{{ route('pages', ['slug' => 'terms-conditions']) }}">
-            {{ __('frontend.term_condition') }}
-        </a>
-        and 
-        <a class="text-decoration-underline" target="_blank"
-            href="{{ route('pages', ['slug' => 'privacy-policy']) }}">
-            {{ __('frontend.privacy_policy') }}
-        </a>
-    </p>
-</div>
-<div class="text-danger" id="terms_error" style="display:none">
-    You must accept the Terms & Conditions
-</div>
-
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" required>
+                                        </div>
+                                        <p class="m-0 font-size-14 text-body">I agree to the <a
+                                                class="text-decoration-underline" target="_blank"
+                                                href="{{ route('pages', ['slug' => 'terms-conditions']) }}"> {{ __('frontend.term_condition') }}</a>
+                                            and <a class="text-decoration-underline" target="_blank"
+                                                href="{{ route('pages', ['slug' => 'privacy-policy']) }}"> {{ __('frontend.privacy_policy') }}</a></p>
+                                    </div>
                                     <button type="submit" id="register-button" class="btn btn-secondary w-100"
                                         data-signup-text="{{ __('frontend.sign_up') }}">Sign Up</button>
                                     <div class="d-flex justify-content-center gap-1 mt-4">
@@ -229,69 +200,57 @@
                 }
             });
 
-          document.getElementById('registerForm').addEventListener('submit', function(e) {
-    const terms = document.getElementById('terms');
-    const termsError = document.getElementById('terms_error');
-    let valid = true;
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirm_password').value;
-    const mismatchError = document.getElementById('password_mismatch_error');
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                const mismatchError = document.getElementById('password_mismatch_error');
+                let valid = true;
 
-    if (password !== confirmPassword) {
-        mismatchError.style.display = 'block';
-        document.getElementById('confirm_password').classList.add('is-invalid');
-        valid = false;
-    } else {
-        mismatchError.style.display = 'none';
-        document.getElementById('confirm_password').classList.remove('is-invalid');
-    }
-    if (!terms.checked) {
-        termsError.style.display = 'block';
-        terms.classList.add('is-invalid');
-        valid = false;
-    } else {
-        termsError.style.display = 'none';
-        terms.classList.remove('is-invalid');
-    }
+                if (password !== confirmPassword) {
+                    mismatchError.style.display = 'block';
+                    document.getElementById('confirm_password').classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    mismatchError.style.display = 'none';
+                    document.getElementById('confirm_password').classList.remove('is-invalid');
+                }
 
-    if (!valid) {
-        e.preventDefault(); //  form submission
-    }
-});
+                if (!valid) {
+                    e.preventDefault(); // Prevent form submission
+                }
+            });
 
             // Function to check if email exists
-           function checkEmailExists(email) {
-                const baseUrl = document.querySelector('meta[name="base-url"]')?.getAttribute('content');
-                fetch(`${baseUrl}/api/check-email`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ email: email })
-    })
-    .then(response => response.json())
-    .then(data => {
-        const emailInput = document.querySelector('input[name="email"]');
-        const emailExistsError = document.getElementById('email_exists_error');
-        
-        if (data.status === 'error') {
-            emailInput.classList.add('is-invalid');
-            emailExistsError.style.display = 'block';
-        } else {
-            emailInput.classList.remove('is-invalid');
-            emailExistsError.style.display = 'none';
-        }
-    })
-    .catch(error => {
-        console.error('Error checking email:', error);
-    });
-}
+            function checkEmailExists(email) {
+                fetch('/api/check-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const emailInput = document.querySelector('input[name="email"]');
+                    const emailExistsError = document.getElementById('email_exists_error');
+                    
+                    if (data.status === 'error') {
+                        emailInput.classList.add('is-invalid');
+                        emailExistsError.style.display = 'block';
+                    } else {
+                        emailInput.classList.remove('is-invalid');
+                        emailExistsError.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking email:', error);
+                });
+            }
 
             // Function to check if contact number exists
             function checkContactExists(contact) {
-                const baseUrl = document.querySelector('meta[name="base-url"]')?.getAttribute('content') ;
-                fetch(`${baseUrl}/api/check-contact`, {
+                fetch('/api/check-contact', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

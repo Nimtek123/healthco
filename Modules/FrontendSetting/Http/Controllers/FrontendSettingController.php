@@ -27,11 +27,6 @@ class FrontendSettingController extends Controller
     {
         $auth_user = auth()->user();
 
-        // Restrict access to vendors
-        if ($auth_user->hasRole('vendor')) {
-            abort(403, 'Access denied. Vendors are not allowed to access frontend settings.');
-        }
-
         $pageTitle = __('messages.frontend_setting');
         $page = $request->page;
 
@@ -46,14 +41,8 @@ class FrontendSettingController extends Controller
 
     public function layoutPage(Request $request)
     {
-        $auth_user = auth()->user();
-        
-        // Restrict access to vendors
-        if ($auth_user->hasRole('vendor')) {
-            abort(403, 'Access denied. Vendors are not allowed to access frontend settings.');
-        }
-        
         $page = $request->page;
+        $auth_user = auth()->user();
         $user_id = $auth_user->id;
 
         // $settings = AppSetting::firstOrNew();
@@ -70,21 +59,9 @@ class FrontendSettingController extends Controller
                     $tabpage = 'section_1';
                     break;
                 case 'heder-menu-setting':
-                    // Include all supported toggles, defaulting to 0 when absent
-                    $keys = [
-                        'header_setting',
-                        'categories',
-                        'services',
-                        'clinics',
-                        'doctors',
-                        'appointments',
-                        'incidence',
-                        'enable_search',
-                        'enable_language',
-                        'enable_darknight_mode',
-                    ];
+                    $keys = ['header_setting', 'categories', 'services', 'clinics', 'doctors', 'appointments', 'enable_search', 'enable_language', 'enable_darknight_mode'];
                     foreach ($keys as $key) {
-                        $landing_page_data[$key] = isset($decodedata->$key) ? $decodedata->$key : 0;
+                        $landing_page_data[$key] = $decodedata->$key;
                     }
                     break;
                 case 'footer-setting':
@@ -110,14 +87,9 @@ class FrontendSettingController extends Controller
     }
     public function landingLayoutPage(Request $request)
     {
-        $auth_user = auth()->user();
-        
-        // Restrict access to vendors
-        if ($auth_user->hasRole('vendor')) {
-            abort(403, 'Access denied. Vendors are not allowed to access frontend settings.');
-        }
-        
         $tabpage = $request->tabpage;
+
+        $auth_user = auth()->user();
         $user_id = $auth_user->id;
         $user_data = User::find($user_id);
         $landing_page = FrontendSetting::where('key', $tabpage)->first();
@@ -224,13 +196,6 @@ class FrontendSettingController extends Controller
 
     public function landingpageSettingsUpdates(Request $request)
     {
-        $auth_user = auth()->user();
-        
-        // Restrict access to vendors
-        if ($auth_user->hasRole('vendor')) {
-            abort(403, 'Access denied. Vendors are not allowed to access frontend settings.');
-        }
-        
         $data = $request->all();
         $page = $request->page;
         $type = $request->type;
@@ -326,13 +291,6 @@ class FrontendSettingController extends Controller
 
     public function headingpagesettings(Request $request)
     {
-        $auth_user = auth()->user();
-        
-        // Restrict access to vendors
-        if ($auth_user->hasRole('vendor')) {
-            abort(403, 'Access denied. Vendors are not allowed to access frontend settings.');
-        }
-        
         $data = $request->all();
         $page = 'heder-menu-setting';
         $message = trans('messages.failed');
@@ -361,13 +319,6 @@ class FrontendSettingController extends Controller
 
     public function footerpagesettings(Request $request)
     {
-        $auth_user = auth()->user();
-        
-        // Restrict access to vendors
-        if ($auth_user->hasRole('vendor')) {
-            abort(403, 'Access denied. Vendors are not allowed to access frontend settings.');
-        }
-        
         $data = $request->all();
         $page = 'footer-setting';
         $message = trans('messages.failed');

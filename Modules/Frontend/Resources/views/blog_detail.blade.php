@@ -39,7 +39,7 @@
                         <a href="{{ route('blog-details', $previous_blog->id) }}"
                            class="link d-flex align-items-center gap-2">
                             <i class="ph ph-arrow-left align-middle"></i>
-                            <h5 class="m-0 heading-color">Previous Post</h5>
+                            <h5 class="m-0 text-dark">Previous Post</h5>
                         </a>
                         <div class="mt-2 pt-1 d-flex align-items-center gap-3">
                             <div class="flex-shrink-0">
@@ -57,7 +57,7 @@
                     <div class="d-flex flex-column align-items-end blog-pagination-btn active">
                         <a href="{{ route('blog-details', $next_blog->id) }}"
                            class="link d-flex align-items-center gap-2">
-                            <h5 class="m-0 heading-color">Next Post</h5>
+                            <h5 class="m-0 text-dark">Next Post</h5>
                             <i class="ph ph-arrow-right align-middle"></i>
                         </a>
                         <div class="mt-2 pt-1 d-flex align-items-center justify-content-end gap-3">

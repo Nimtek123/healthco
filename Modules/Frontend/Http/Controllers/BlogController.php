@@ -41,13 +41,6 @@ class BlogController extends Controller
     {
         $blog = Blog::with('author')->findOrFail($id);
 
-        // Increment unique view per session
-        $sessionKey = 'blog_viewed_' . $blog->id;
-        if (!session()->has($sessionKey)) {
-            $blog->increment('total_views');
-            session()->put($sessionKey, true);
-        }
-
         $previous_blog = Blog::where('id', '<', $id)->latest()->first();
 
         $next_blog = Blog::where('id', '>', $id)->oldest()->first();

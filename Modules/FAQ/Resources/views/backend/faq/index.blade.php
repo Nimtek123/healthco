@@ -9,7 +9,7 @@
                 {{-- @if(auth()->user()->can('edit_' . $module_name) || auth()->user()->can('delete_' . $module_name)) --}}
                 <x-backend.quick-action url="{{ route('backend.' . $module_name . '.bulk_action') }}">
                     <div class="">
-                        <select name="action_type" class="select2 form-select col-12" id="quick-action-type" style="width:100%">
+                        <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
                             <option value="">{{ __('messages.no_action') }}</option>
                             {{-- @can('edit_' . $module_name) --}}
                             <option value="change-status">{{ __('messages.lbl_status') }}</option>
@@ -26,7 +26,7 @@
                         </select>
                     </div>
                     <div class="select-status d-none quick-action-field" id="change-status-action">
-                        <select name="status" class="select2 form-select" id="status" style="width:100%">
+                        <select name="status" class="form-control select2" id="status" style="width:100%">
                             <option value="1" selected>{{ __('messages.active') }}</option>
                             <option value="0">{{ __('messages.inactive') }}</option>
                         </select>
@@ -40,7 +40,7 @@
             <x-slot name="toolbar">
                 <div>
                     <div class="datatable-filter">
-                        <select name="column_status" id="column_status" class="select2 form-select" data-filter="select" style="width: 100%">
+                        <select name="column_status" id="column_status" class="select2 form-control" data-filter="select" style="width: 100%">
                             <option value="">{{__('messages.all')}}</option>
                             <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>
                                 {{ __('messages.inactive') }}</option>
@@ -50,7 +50,7 @@
                     </div>
                 </div>
                 <div class="input-group flex-nowrap">
-                    <span class="input-group-text" id="addon-wrapping"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <span class="input-group-text pe-0" id="addon-wrapping"><i class="fa-solid fa-magnifying-glass"></i></span>
                     <input type="text" class="form-control dt-search" placeholder="{{__('messages.search')}}" aria-label="Search" aria-describedby="addon-wrapping">
                 </div>
 

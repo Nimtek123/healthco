@@ -8,6 +8,6 @@
     <a href="{{ route('backend.encounter-template.template-detail', ['id' => $data->id]) }}" data-type="ajax" class='btn text-info p-0 fs-5' data-bs-toggle="tooltip" title="{{ __('appointment.patient_encounter') }}"><i class="icon ph ph-squares-four align-middle"></i></a>
 
     @hasPermission('delete_encounter_template')
-    <a href="{{route("backend.encounter-template.destroy", $data->id)}}" id="delete-{{$module_name}}-{{$data->id}}" class="btn text-danger p-0 fs-5" data-type="ajax" data-method="DELETE" data-token="{{csrf_token()}}" data-bs-toggle="tooltip" title="{{__('messages.delete')}}"    data-confirm="{{ __('messages.are_you_sure?', ['form' => $data->name ?? __('Unknown'), 'module' => __('appointment.encounter_template')]) }}"><i class="ph ph-trash"></i></a>
+    <a href="{{route("backend.encounter-template.destroy", $data->id)}}" id="delete-{{$module_name}}-{{$data->id}}" class="btn text-danger p-0 fs-5" data-type="ajax" data-method="DELETE" data-token="{{csrf_token()}}" data-bs-toggle="tooltip" title="{{__('Delete')}}"    data-confirm="{{ __('messages.are_you_sure?', ['form' => $data->name ?? __('Unknown'), 'module' => __('appointment.encounter_template')]) }}"><i class="ph ph-trash"></i></a>
     @endhasPermission
 </div>

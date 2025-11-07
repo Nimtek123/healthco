@@ -26,7 +26,7 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>{{ __('Type') }} : <span class="text-danger">*</span></label>
-                        <select name="type" class="select2 form-select" id="type" data-ajax--url="{{ route('backend.notificationtemplates.ajax-list', ['type' => 'constants_key', 'data_type' => 'notification_type']) }}" data-ajax--cache="true" required disabled>
+                        <select name="type" class="form-control select2js" id="type" data-ajax--url="{{ route('backend.notificationtemplates.ajax-list', ['type' => 'constants_key', 'data_type' => 'notification_type']) }}" data-ajax--cache="true" required disabled>
                             @if (isset($data->type))
                                 <option value="{{ $data->type }}" selected>{{ $data->constant->name ?? '' }}</option>
                             @endif
@@ -37,7 +37,7 @@
                 <div class="col-md-3">
                     <div class="form-group">
                         <label>{{ __('To') }} :</label><br>
-                        <select name="to[]" id="toSelect" class="select2 form-select" data-ajax--url="{{ route('backend.notificationtemplates.ajax-list', ['type' => 'constants_key', 'data_type' => 'notification_to']) }}" data-ajax--cache="true" multiple>
+                        <select name="to[]" id="toSelect" class="form-control select2 select2-tag" data-ajax--url="{{ route('backend.notificationtemplates.ajax-list', ['type' => 'constants_key', 'data_type' => 'notification_to']) }}" data-ajax--cache="true" multiple>
                             @if (isset($data) && $data->to != null)
                                 @foreach (json_decode($data->to) as $to)
                                     <option value="{{ $to }}" selected>{{ $to }}</option>
@@ -53,7 +53,7 @@
                             $toValues = json_decode($data->to, true) ?? [];
                         @endphp
                         <label for="user_type">{{ __('messages.user_type') }} <span class="text-danger">*</span></label>
-                        <select name="defaultNotificationTemplateMap[user_type]" id="userTypeSelect" class="select2 form-select" required>
+                        <select name="defaultNotificationTemplateMap[user_type]" id="userTypeSelect" class="form-control select2js" required>
                             <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
@@ -191,9 +191,7 @@
         })(jQuery);
 
         // Initialize Select2
-        $('.select2').select2({
-            width: '100%'
-        });
+        $('.select2js').select2();
         $('.select2-tag').select2({
             tags: true,
             dropdownAutoWidth: true,

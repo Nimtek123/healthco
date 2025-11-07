@@ -29,7 +29,7 @@
                                 @endphp
 
                                 @foreach ($valueArray as $key => $value)
-                                    @if (in_array($key, ['categories', 'services', 'clinics', 'doctors', 'appointments', 'incidence']))
+                                    @if (in_array($key, ['categories', 'services', 'clinics', 'doctors', 'appointments']))
                                         <li class="nav-item list-item" data-section="{{ $key }}"
                                             draggable=true>
                                             <div class="form-group mb-0">
@@ -120,21 +120,6 @@
                                                     id="appointments"
                                                     {{ !empty($landing_page_data->appointments) ? 'checked' : '' }}>
                                                 <label class="custom-control-label" for="appointments"></label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-
-                                <li class="nav-item list-item" data-section="incidence" draggable=true>
-                                    <div class="form-group mb-0">
-                                        <div class="form-control d-flex align-items-center justify-content-between">
-                                            <label for="incidence"
-                                                class="mb-0">{{ __('messages.incidence') }}</label>
-                                            <div class="form-check form-switch m-0">
-                                                <input type="checkbox" class="form-check-input" name="incidence"
-                                                    id="incidence"
-                                                    {{ !empty($landing_page_data->incidence) ? 'checked' : '' }}>
-                                                <label class="custom-control-label" for="incidence"></label>
                                             </div>
                                         </div>
                                     </div>
@@ -244,7 +229,7 @@
     });
 
     function updateOrder() {
-        const sections = ['categories', 'services', 'clinics', 'doctors', 'appointments', 'incidence'];
+        const sections = ['categories', 'services', 'clinics', 'doctors', 'appointments'];
         const order = {};
         sections.forEach(function(section) {
             const sectionItems = Array.from(document.querySelectorAll(`.list-item[data-section="${section}"]`));

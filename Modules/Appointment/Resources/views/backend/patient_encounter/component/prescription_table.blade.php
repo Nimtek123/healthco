@@ -19,10 +19,9 @@
                         <p class="m-0">
                             {{ $prescription['name'] }}
                         </p>
-                        <div style="margin-top: 8px;"></div> <!-- Added space between name and instruction -->
-                        {{-- <p class="m-0">
+                        <p class="m-0">
                             {{ $prescription['instruction'] }}
-                        </p> --}}
+                        </p>
                     </td>
                     <td>
                         {{ $prescription['frequency'] }}
@@ -49,6 +48,7 @@
                 </tr>
             @endforeach
 
+
             @if (count($data['prescriptions']) <= 0)
                 <tr>
                     <td colspan="5">
@@ -58,21 +58,20 @@
                 </tr>
             @endif
         </tbody>
-        </table>
-        <div class="my-3"></div> <!-- Added space between table and buttons -->
-        @if (count($data['prescriptions']) > 0)
-            <button id="printButton" class="btn btn-sm btn-primary" onclick="DownloadPDF({{ $data['id'] }})">
-                <i class="ph ph-file-text me-1"></i>
-                {{ __('appointment.lbl_download') }}
-            </button>
+    </table>
+@if (count($data['prescriptions']) > 0)
+        <button id="printButton" class="btn btn-sm btn-primary" onclick="DownloadPDF({{ $data['id'] }})">
+            <i class="ph ph-file-text me-1"></i>
+            {{ __('appointment.lbl_download') }}
+        </button>
 
-            <button class="btn btn-sm btn-primary" onclick="sendPrescription(this, {{ $data['id'] }})">
-                <div class="d-inline-flex align-items-center gap-1">
-                    <i class="ph ph-paper-plane-tilt" id="send_mail"></i>
-                    {{ __('appointment.email') }}
-                </div>
-            </button>
-        @endif
+        <button class="btn btn-sm btn-primary" onclick="sendPrescription(this, {{ $data['id'] }})">
+            <div class="d-inline-flex align-items-center gap-1">
+                <i class="ph ph-paper-plane-tilt" id="send_mail"></i>
+                {{ __('appointment.email') }}
+            </div>
+        </button>
+    @endif
 
 </div>
 

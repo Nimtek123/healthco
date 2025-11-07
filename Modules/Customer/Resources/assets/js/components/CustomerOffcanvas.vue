@@ -5,31 +5,8 @@
       <div class="offcanvas-body">
         <div class="row">
           <div class="col-md-6 create-service-image">
-            <label for="" class="form-label">{{ $t('customer.lbl_profile_image') }}</label>
-            <div class="image-upload-container text-center">
-              <div class="clinic-image-preview d-flex justify-content-center align-items-center mb-2 mx-auto">
-                <img :src="profile_image || image_url || defaultImage" alt="Profile Image" class="img-fluid object-fit-cover avatar-170 rounded-circle" />
-              </div>
-              <div class="d-flex gap-2 justify-content-center">
-                <button type="button" class="btn btn-light" @click="triggerFileInput">
-                  {{ $t('clinic.upload') }}
-                </button>
-                <!-- <button type="button" class="btn btn-danger" @click="removeImage">
-                  {{ $t('messages.remove') }}
-                </button> -->
-              </div>
-              <input type="file" 
-                ref="profileInputRef" 
-                class="form-control d-none" 
-                id="file_url" 
-                name="file_url" 
-                @change="fileUpload" 
-                accept=".jpeg, .jpg, .png, .gif" 
-              />
-              <div id="file-format-error" class="text-danger mt-1 d-none"></div>
-              <span class="text-muted small">Only .jpeg, .jpg, .png files are allowed.</span>
-            </div>
-            <span class="text-danger">{{ errors.profile_image }}</span>
+            <label for="" class="form-label">{{ $t('customer.lbl_profile_image') }} </label>
+            <ImageComponent :ImageViewer="image_url" v-model="profile_image" />
           </div>
           <div class="col-md-6">
             <div class="form-group">
@@ -79,18 +56,7 @@
           <div class="col-md-6">
             <div class="form-group">
               <label class="form-label" for="date_of_birth">{{ $t('customer.lbl_date_of_birth') }}<span class="text-danger">*</span></label>
-              <flat-pickr
-                id="date_of_birth"
-                v-model="date_of_birth"
-                :config="config"
-                class="form-control"
-                :placeholder="$t('employee.date_of_birth')"
-              />
-              <span v-if="errorMessages['date_of_birth']">
-                <ul class="text-danger">
-                  <li v-for="err in errorMessages['date_of_birth']" :key="err">{{ err }}</li>
-                </ul>
-              </span>
+              <flat-pickr :placeholder="$t('employee.date_of_birth')" id="date_of_birth" :is-required="true" class="form-control" v-model="date_of_birth" :value="date_of_birth" :config="config"></flat-pickr>
               <span class="text-danger">{{ errors.date_of_birth }}</span>
             </div>
           </div>
@@ -108,10 +74,13 @@
           <div class="col-12 mt-4">
             <h5 class="mb-3">{{ $t('customer.other_details') }}</h5>
           </div>
-          <div class="col-md-12">
+          <div class="col-md-6">
             <div class="form-group">
               <label class="form-label" for="address">{{ $t('clinic.lbl_address') }}</label>
-              <textarea class="form-control" v-model="address" id="address" :placeholder="$t('clinic.lbl_address')"></textarea>
+              <div class="input-group">
+                <input class="form-control" v-model="address" id="address" :placeholder="$t('clinic.lbl_address')"/>
+                <span class="input-group-text"></span>
+              </div>
               <span v-if="errorMessages['address']">
                 <ul class="text-danger">
                   <li v-for="err in errorMessages['address']" :key="err">{{ err }}</li>
@@ -120,7 +89,7 @@
               <span class="text-danger">{{ errors.address }}</span>
             </div>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <div class="form-group">
               <label class="form-label">{{ $t('clinic.lbl_country') }}</label>
               <Multiselect id="country-list" v-model="country" :placeholder="$t('clinic.lbl_country')" :value="country" v-bind="singleSelectOption" :options="countries.options" @select="getState" class="form-group"></Multiselect>
@@ -189,12 +158,13 @@ import FormFooter from '@/vue/components/form-elements/FormFooter.vue'
 import InputField from '@/vue/components/form-elements/InputField.vue'
 import FormElement from '@/helpers/custom-field/FormElement.vue'
 import FlatPickr from 'vue-flatpickr-component'
+import ImageComponent from '@/vue/components/form-elements/imageComponent.vue'
 
 // props
 const props = defineProps({
   createTitle: { type: String, default: '' },
   editTitle: { type: String, default: '' },
-  defaultImage: { type: String, default: '/img/default.webp' },
+  defaultImage: { type: String, default: 'https://dummyimage.com/600x300/cfcfcf/000000.png' },
   customefield: { type: Array, default: () => [] },
   selectedSessionServiceProviderId: { type: Number, default: null }
 })
@@ -298,70 +268,10 @@ const defaultData = () => {
 }
 
 const image_url = ref()
-const profileInputRef = ref(null)
-
-// File upload methods
-const triggerFileInput = () => {
-  if (profileInputRef.value) {
-    profileInputRef.value.click()
-  }
-}
-
-const fileUpload = (event) => {
-  const file = event.target.files?.[0]
-  if (!file) return
-
-  // Validate file type
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
-  if (!validTypes.includes(file.type)) {
-    // Show error message
-    const errorDiv = document.getElementById('file-format-error')
-    if (errorDiv) {
-      errorDiv.textContent = 'Please select a valid image file (JPEG, JPG, PNG, GIF)'
-      errorDiv.classList.remove('d-none')
-    }
-    event.target.value = ''
-    return
-  }
-
-  // Validate file size (max 5MB)
-  const maxSize = 5 * 1024 * 1024 // 5MB in bytes
-  if (file.size > maxSize) {
-    const errorDiv = document.getElementById('file-format-error')
-    if (errorDiv) {
-      errorDiv.textContent = 'File size must be less than 5MB'
-      errorDiv.classList.remove('d-none')
-    }
-    event.target.value = ''
-    return
-  }
-
-  // Clear any previous errors
-  const errorDiv = document.getElementById('file-format-error')
-  if (errorDiv) {
-    errorDiv.classList.add('d-none')
-  }
-
-  // Create preview
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    profile_image.value = e.target.result
-    image_url.value = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
-
-const removeImage = () => {
-  profile_image.value = null
-  image_url.value = defaultImage.value
-  if (profileInputRef.value) {
-    profileInputRef.value.value = ''
-  }
-}
 
 //  Reset Form
 const setFormData = (data) => {
-  image_url.value = data.profile_image || defaultImage.value
+  image_url.value = data.profile_image
   resetForm({
     values: {
       id: data.id,
@@ -410,6 +320,7 @@ const validationSchema = yup.object({
     .string()
     .required('First name is a required field')
     .test('is-string', 'Only strings are allowed', (value) => {
+      // Regular expressions to disallow special characters and numbers
       const specialCharsRegex = /[!@#$%^&*(),.?":{}|<>\-_;'\/+=\[\]\\]/
       return !specialCharsRegex.test(value) && !numberRegex.test(value)
     }),
@@ -417,68 +328,50 @@ const validationSchema = yup.object({
     .string()
     .required('Last name is a required field')
     .test('is-string', 'Only strings are allowed', (value) => {
+      // Regular expressions to disallow special characters and numbers
       const specialCharsRegex = /[!@#$%^&*(),.?":{}|<>\-_;'\/+=\[\]\\]/
       return !specialCharsRegex.test(value) && !numberRegex.test(value)
     }),
   email: yup
     .string()
     .required('Email is a required field')
-    .test(
-      'is-string',
-      'Only alphabetic characters are allowed at the beginning',
-      (value) => !numberRegex.test(value)
-    )
+    .test('is-string', 'Only alphabetic characters are allowed at the beginning', (value) => !numberRegex.test(value))
     .matches(EMAIL_REGX, 'Must be a valid email'),
   mobile: yup
     .string()
     .required('Phone Number is a required field')
     .matches(/^(\+?\d+)?(\s?\d+)*$/, 'Phone Number must contain only digits'),
-
   password: yup
     .string()
     .test('password', 'Password is required', function (value) {
-      if (currentId.value === 0 && !value) {
+      if (currentId === 0 && !value) {
         return false
       }
       return true
     })
-    .min(8, 'Password must be 8 to 14 characters')
-    .max(14, 'Password must be 8 to 14 characters')
+    .min(8, 'Password must be at least 8 characters long')
+    .max(14, 'Password must not be more than 14 characters')
     .matches(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/,
       'Password must contain at least one uppercase, lowercase, number, and special character.'
     ),
-
   confirm_password: yup
     .string()
-    .test('confirm_password', 'confirm password is required', function (value) {
-      // On create → required
-      if (currentId.value === 0 && !value) {
+    .test('confirm_password', 'Current password is required', function (value) {
+      if (currentId === 0 && !value) {
         return false
       }
-      // On edit → optional, but must match if filled
-      if (value && value !== this.parent.password) {
-        return this.createError({ message: 'Confirm password must match the password' })
-      }
       return true
-    }),
-
-  date_of_birth: yup
-    .date()
+    })
+    .oneOf([yup.ref('password')], 'Passwords must match'),
+    date_of_birth: yup.string()
     .required('Date of Birth is required')
-    .typeError('Invalid date format')
-    .max(new Date(), 'Date of birth cannot be in the future'),
+    .typeError('Invalid date format'),
 })
-
 
 const { handleSubmit, errors, resetForm } = useForm({
-  validationSchema,
-  validateOnMount: false,
-  validateOnBlur: false,
-  validateOnChange: false,
-  validateOnInput: false
+  validationSchema
 })
-
 const { value: id } = useField('first_name')
 const { value: first_name } = useField('first_name')
 const { value: last_name } = useField('last_name')
@@ -502,14 +395,8 @@ const errorMessages = ref({})
 // phone number
 const handleInput = (phone, phoneObject) => {
   // Handle the input event
- if (phoneObject?.countryCallingCode && phoneObject?.nationalNumber) {
-    // Ensure country code starts with "+"
-    const dialCode = phoneObject.countryCallingCode.startsWith('+')
-      ? phoneObject.countryCallingCode
-      : `+${phoneObject.countryCallingCode}`;
-    mobile.value = `${dialCode} ${phoneObject.nationalNumber}`;
-  } else if (phoneObject?.formatted) {
-    mobile.value = phoneObject.formatted;
+  if (phoneObject?.formatted) {
+    mobile.value = phoneObject.formatted
   }
 }
 const IS_SUBMITED = ref(false)

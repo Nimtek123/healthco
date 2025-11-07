@@ -5,7 +5,6 @@ use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\Setting;
 use Modules\Currency\Models\Currency;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
 function randomString($length)
 {
@@ -100,7 +99,6 @@ function sendNotification($data)
                 $data['description'] = $appointment['description'];
                 $data['user_id'] = $appointment['user_id'];
                 $data['user_name'] = $appointment['user_name'] ?? '';
-                $data['patient_name'] = $appointment['user_name'] ?? '';
                 $data['doctor_id'] = $appointment['doctor_id'];
                 $data['doctor_name'] = $appointment['doctor_name'];
                 $data['appointment_id'] = $appointment['id'];
@@ -111,9 +109,6 @@ function sendNotification($data)
                 $data['notification_group'] = 'appointment';
                 $data['clinic_name'] = $appointment['clinic_name'] ?? '';
                 $data['clinic_id'] = $appointment['clinic_id'] ?? '';
-                $data['vendor_id'] = $appointment['vendor_id'] ?? '';
-                $data['receptionist_id'] = $appointment['receptionist_id'] ?? '';
-                $data['receptionist_name'] = $appointment['receptionist_name'] ?? '';
                 $data['venue_address'] = $appointment['clinic_address'] ?? '';
                 $data['admin_name'] = $data['logged_in_user_fullname'] ?? '';
                 $data['site_url'] = env('APP_URL');
@@ -150,11 +145,11 @@ function sendNotification($data)
 
                 unset($data['resend_user_data']);
             } elseif (isset($incidenceData) && $incidenceData != null) {
-                $data['title'] = isset($incidenceData['title']) ? $incidenceData['title'] : '';
-                $data['description'] = isset($incidenceData['description']) ? $incidenceData['description'] : '';
-                $data['phone'] = isset($incidenceData['phone']) ? $incidenceData['phone'] : '';
-                $data['email'] = isset($incidenceData['email']) ? $incidenceData['email'] : '';
-                $data['user_name'] = isset($incidenceData['user_name']) ? $incidenceData['user_name'] : '';
+                $data['title'] = $incidenceData['title'];
+                $data['description'] = $incidenceData['description'];
+                $data['phone'] = $incidenceData['phone'];
+                $data['email'] = $incidenceData['email'];
+                $data['user_name'] = $incidenceData['user_name'];
             }
 
             switch ($mailTo) {
@@ -227,37 +222,6 @@ function sendNotification($data)
                                 }
 
                                 $vendor->notify(new \App\Notifications\CommonNotification($data['notification_type'], $data));
-                            } catch (\Exception $e) {
-                                Log::error($e);
-                            }
-                        }
-                    }
-
-                    break;
-                case 'receptionist':
-                    if (isset($data['receptionist_id']) && $data['receptionist_id'] != '') {
-                        $data['user_type'] = 'receptionist';
-                        $receptionist = \App\Models\User::where('user_type','receptionist')->find($data['receptionist_id']);
-
-                        $data['person_id'] = $receptionist->id;
-                        if (isset($receptionist->email)) {
-                            try {
-
-                                if ($data['type'] == 'new_appointment') {
-
-                                    $data['notification_msg'] = 'New Appointment #' . $data['id'] . ' Booked by ' . $data['user_name'] . '.';
-                                } else if ($data['type'] == 'accept_appointment') {
-
-                                    $data['notification_msg'] = 'Appointment #' . $data['id'] . ' is accepted by ' . $data['doctor_name'] . '.';
-                                } else if ($data['type'] == 'cancel_appointment') {
-
-                                    $data['notification_msg'] = 'Appointment #' . $data['id'] . ' is cancelled by ' . $data['user_name'] . '.';
-                                } else if ($data['type'] == 'reschedule_appointment') {
-
-                                    $data['notification_msg'] = 'Appointment #' . $data['id'] . ' is rescheduled by ' . $data['user_name'] . '.';
-                                }
-
-                                $receptionist->notify(new \App\Notifications\CommonNotification($data['notification_type'], $data));
                             } catch (\Exception $e) {
                                 Log::error($e);
                             }
@@ -831,49 +795,22 @@ if (!function_exists('module_exist')) {
     }
 }
 
-// function storeMediaFile($module, $files, $key = 'file_url')
-// {
-
-//     $module->clearMediaCollection($key);
-
-//     if (is_array($files)) {
-//         foreach ($files as $file) {
-//             if (!empty($file)) {
-//                 $module->addMedia($file)->toMediaCollection($key);
-//             }
-//         }
-//     } else {
-//         $module->clearMediaCollection($key);
-//         $mediaItems = $module->addMedia($files)->toMediaCollection($key);
-//     }
-// }
-
 function storeMediaFile($module, $files, $key = 'file_url')
 {
+
     $module->clearMediaCollection($key);
-
-    $handleMediaUpload = function ($file) use ($module, $key) {
-        if (!empty($file)) {
-            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $extension = $file->getClientOriginalExtension();
-            $fileName = $originalName . '.' . $extension;
-
-            $module->addMedia($file)
-                ->usingFileName($fileName)
-                ->toMediaCollection($key);
-        }
-    };
 
     if (is_array($files)) {
         foreach ($files as $file) {
-            $handleMediaUpload($file);
+            if (!empty($file)) {
+                $module->addMedia($file)->toMediaCollection($key);
+            }
         }
     } else {
-        $handleMediaUpload($files);
+        $module->clearMediaCollection($key);
+        $mediaItems = $module->addMedia($files)->toMediaCollection($key);
     }
 }
-
-
 function getCustomizationSetting($name, $key = 'customization_json')
 {
     $settingObject = setting($key);
@@ -904,30 +841,42 @@ function str_slug($title, $separator = '-', $language = 'en')
 
 function formatCurrency($number, $noOfDecimal, $decimalSeparator, $thousandSeparator, $currencyPosition, $currencySymbol)
 {
-    // Format number with specified decimals
-    $formattedNumber = number_format($number, $noOfDecimal, $decimalSeparator, $thousandSeparator);
+    // Convert the number to a string with the desired decimal places
+    $formattedNumber = number_format($number, $noOfDecimal, '.', '');
 
+    // Split the number into integer and decimal parts
+    $parts = explode('.', $formattedNumber);
+    $integerPart = $parts[0];
+    $decimalPart = isset($parts[1]) ? $parts[1] : '';
+
+    // Add thousand separators to the integer part
+    $integerPart = number_format($integerPart, 0, '', $thousandSeparator);
+
+    // Construct the final formatted currency string
     $currencyString = '';
 
-    switch ($currencyPosition) {
-        case 'left':
-            $currencyString = $currencySymbol . $formattedNumber;
-            break;
+    if ($currencyPosition == 'left' || $currencyPosition == 'left_with_space') {
+        $currencyString .= $currencySymbol;
+        if ($currencyPosition == 'left_with_space') {
+            $currencyString .= ' ';
+        }
+        $currencyString .= $integerPart;
+        // Add decimal part and decimal separator if applicable
+        if ($noOfDecimal > 0) {
+            $currencyString .= $decimalSeparator . $decimalPart;
+        }
+    }
 
-        case 'left_with_space':
-            $currencyString = $currencySymbol . ' ' . $formattedNumber;
-            break;
-
-        case 'right':
-            $currencyString = $formattedNumber . $currencySymbol;
-            break;
-
-        case 'right_with_space':
-            $currencyString = $formattedNumber . ' ' . $currencySymbol;
-            break;
-
-        default:
-            $currencyString = $currencySymbol . $formattedNumber;
+    if ($currencyPosition == 'right' || $currencyPosition == 'right_with_space') {
+        // Add decimal part and decimal separator if applicable
+        $currencyString .= $integerPart;
+        if ($noOfDecimal > 0) {
+            $currencyString .= $integerPart . $decimalSeparator . $decimalPart;
+        }
+        if ($currencyPosition == 'right_with_space') {
+            $currencyString .= ' ';
+        }
+        $currencyString .= $currencySymbol;
     }
 
     return $currencyString;
@@ -2027,15 +1976,7 @@ function GetcurrentCurrency()
     return $currency_code;
 }
 
-function GetCurrencySymbol()
-{
-    $currency = Currency::where('is_primary', 1)->first();
-    // $currency_code = $currency ? strtolower($currency->currency_symbol) : '$';
-    return [
-        'code' => $currency?->currency_code ?? 'USD', // e.g., DZD
-        'symbol' => $currency?->currency_symbol ?? '$', // e.g., د.ج
-    ];
-}
+
 
 function DateFormate($date)
 {
@@ -2049,128 +1990,4 @@ function DateFormate($date)
     $newDate = $datetime->format(setting('date_formate') ?? 'Y-m-d');
 
     return $newDate;
-}
-
-if (!function_exists('exportSheetHeader')) {
-    /**
- * Get localized payment status text
- *
- * @param int $status Payment status value (0, 1, 2, etc.)
- * @param string $locale Optional locale override
- * @return string Localized payment status text
- */
-if (!function_exists('getLocalizedPaymentStatus')) {
-    function getLocalizedPaymentStatus($status, $locale = null)
-    {
-        $locale = $locale ?: app()->getLocale();
-
-        // Define payment status mapping
-        $statusMap = [
-            0 => 'payment_status_pending',
-            1 => 'payment_status_paid',
-            2 => 'payment_status_failed',
-            3 => 'payment_status_refunded',
-            4 => 'payment_status_partially_paid',
-            5 => 'payment_status_advance_paid',
-        ];
-
-        $translationKey = $statusMap[$status] ?? 'payment_status_pending';
-
-        return __("appointment.{$translationKey}", [], $locale);
-    }
-}
-
-/**
- * Get all payment statuses with localized names
- *
- * @param string $locale Optional locale override
- * @return array Array of payment statuses with localized names
- */
-if (!function_exists('getLocalizedPaymentStatuses')) {
-    function getLocalizedPaymentStatuses($locale = null)
-    {
-        $locale = $locale ?: app()->getLocale();
-
-        $statuses = [
-            ['value' => 0, 'name' => getLocalizedPaymentStatus(0, $locale)],
-            ['value' => 1, 'name' => getLocalizedPaymentStatus(1, $locale)],
-            ['value' => 2, 'name' => getLocalizedPaymentStatus(2, $locale)],
-            ['value' => 3, 'name' => getLocalizedPaymentStatus(3, $locale)],
-            ['value' => 4, 'name' => getLocalizedPaymentStatus(4, $locale)],
-            ['value' => 5, 'name' => getLocalizedPaymentStatus(5, $locale)],
-        ];
-
-        return $statuses;
-    }
-}
-
-function exportSheetHeader($moduleName, $columns, $dateRange)
-    {
-        return function ($event) use ($moduleName, $columns, $dateRange) {
-            $sheet = $event->sheet->getDelegate();
-            $lastColumn = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($columns));
-
-            // Logo logic - simplified for better compatibility with ODS/XLS
-            $logoSetting = \App\Models\Setting::where('name', 'logo')->first();
-            $logoPath = $logoSetting ? $logoSetting->val : null;
-
-            if ($logoPath) {
-                try {
-                    $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
-                $drawing->setName('Logo');
-                $drawing->setDescription('Logo');
-
-                if (str_starts_with($logoPath, url('/storage'))) {
-                    $publicStoragePath = str_replace(
-                        url('/storage'),
-                        storage_path('app/public'),
-                        $logoPath
-                    );
-                    if (file_exists($publicStoragePath)) {
-                        $drawing->setPath($publicStoragePath);
-                    }
-                } elseif (filter_var($logoPath, FILTER_VALIDATE_URL)) {
-                    $logoContent = @file_get_contents($logoPath);
-                    if ($logoContent !== false) {
-                        $tmpLogo = sys_get_temp_dir() . '/logo_' . uniqid() . '.png';
-                        file_put_contents($tmpLogo, $logoContent);
-                        $drawing->setPath($tmpLogo);
-                    }
-                } else {
-                    $fullPath = public_path($logoPath);
-                    if (file_exists($fullPath)) {
-                        $drawing->setPath($fullPath);
-                    }
-                }
-
-                    if ($drawing->getPath() && file_exists($drawing->getPath())) {
-                    $drawing->setHeight(40);
-                    $drawing->setCoordinates('A1');
-                    $drawing->setWorksheet($sheet);
-                    }
-                } catch (\Exception $e) {
-                    // Skip logo if there's an error to prevent export failure
-                    \Log::warning('Logo export failed: ' . $e->getMessage());
-                }
-            }
-
-            // Adjust row height for logo and text
-            $sheet->getRowDimension(1)->setRowHeight(45);
-            $sheet->getRowDimension(2)->setRowHeight(25);
-
-            // Module name
-            $sheet->setCellValue('B1', $moduleName);
-            $sheet->mergeCells("B1:{$lastColumn}1");
-            $sheet->getStyle("B1:{$lastColumn}1")->getFont()->setBold(true)->setSize(14);
-            $sheet->getStyle("B1:{$lastColumn}1")->getAlignment()->setVertical('center')->setHorizontal('center');
-
-            // Date range
-            if (!empty($dateRange) && count($dateRange) === 2) {
-                $sheet->setCellValue('A2', "From Date: {$dateRange[0]}   |   To Date: {$dateRange[1]}");
-                $sheet->mergeCells("A2:{$lastColumn}2");
-                $sheet->getStyle("A2:{$lastColumn}2")->getFont()->setBold(true)->setSize(12);
-                $sheet->getStyle("A2:{$lastColumn}2")->getAlignment()->setVertical('center')->setHorizontal('center');
-            }
-        };
-    }
 }

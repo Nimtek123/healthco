@@ -191,12 +191,9 @@
                 url: '{{ route('doctor.index_data') }}',
                 finalColumns,
                 advanceFilter: () => ({
-                    filter: {
-                        clinic_id: clinicFilter.val(),
-                        service_id: serviceFilter.val(),
-                        rating: ratingFilter.val(),
-                    },
-                    search: searchInput.value
+                    clinic_id: clinicFilter.val(),
+                    service_id: serviceFilter.val(),
+                    rating: ratingFilter.val(),
                 }),
                 onLoadStart: () => {
                     shimmerLoader.classList.remove('d-none');
@@ -210,13 +207,6 @@
                     processing: '',
                 }
             });
-
-            searchInput.addEventListener('keyup', function () {
-                if (window.renderedDataTable) {
-                    window.renderedDataTable.search(this.value).draw();
-                }
-            });
-
 
             updateSelectedFilters();
         });

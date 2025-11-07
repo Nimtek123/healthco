@@ -1,19 +1,20 @@
-@if (
+@if(
     $appointment->status == 'cancelled' &&
-        optional($appointment->appointmenttransaction)->payment_status != 0 &&
-        optional($appointment->appointmenttransaction)->transaction_type != 'cash')
+    optional($appointment->appointmenttransaction)->payment_status != 0 &&
+    optional($appointment->appointmenttransaction)->transaction_type != 'cash'
+)
     @php
         $refundAmount = $appointment->getRefundAmount();
     @endphp
 
     <div class="d-flex justify-content-between align-items-center px-4 py-2 rounded"
-        style="background-color: {{ $refundAmount >= 0 ? '#e6f4ea' : '#fdecea' }};">
+         style="background-color: {{ $refundAmount >= 0 ? '#e6f4ea' : '#fdecea' }};">
 
         <span class="fw-semibold {{ $refundAmount >= 0 ? 'text-success' : 'text-danger' }}">
             {{ $refundAmount >= 0 ? __('frontend.refund_completed') : __('frontend.wallet_deducted') }}
         </span>
 
-        <span class="fw-semibold heading-color">
+        <span class="fw-semibold text-dark">
             {{ \Currency::format(abs($refundAmount)) }}
         </span>
     </div>
@@ -21,9 +22,10 @@
 <li class="appointments-card section-bg rounded p-5">
     <div class="d-flex justify-content-between align-items-center gap-5 flex-wrap">
         <div class="appointments-badge d-flex column-gap-5 row-gap-2 flex-wrap rounded-pill bg-primary-subtle">
-            <span class="appointments-detail">{{ DateFormate($appointment->appointment_date) }}</span>
-            <span class="appointments-detail">
-                {{ \Carbon\Carbon::parse($appointment->appointment_time)->format(setting('time_formate') ?? 'h:i A') }}</span>
+            <span
+                class="appointments-detail">{{ DateFormate($appointment->appointment_date) }}</span>
+            <span
+                class="appointments-detail">  {{ \Carbon\Carbon::parse($appointment->appointment_time)->format(setting('time_formate') ?? 'h:i A') }}</span>
         </div>
         <ul class="list-inline m-0 appointments-meta d-flex column-gap-4 row-gap-3 align-items-center flex-wrap">
             <li>
@@ -34,23 +36,22 @@
             </li>
             @if (optional($appointment->clinicservice)->is_video_consultancy)
                 <li>
-                    <a class="appointments-videocall"
-                        href="{{ $appointment->join_video_link ?? $appointment->meet_link }}">
+                    <a class="appointments-videocall">
                         <i class="ph ph-video-camera align-middle"></i></a>
                 </li>
             @endif
         </ul>
     </div>
     <div class="mt-3">
-        @php
-            $serviceId = optional($appointment->clinicservice)->id;
-        @endphp
+     @php
+    $serviceId = optional($appointment->clinicservice)->id;
+@endphp
 
-        @if ($serviceId)
-            <a href="{{ route('service-details', ['id' => $serviceId]) }}">
-                <!-- Link content here -->
-            </a>
-        @endif
+@if($serviceId)
+    <a href="{{ route('service-details', ['id' => $serviceId]) }}">
+        <!-- Link content here -->
+    </a>
+@endif
         <h5 class="mb-0">{{ optional($appointment->clinicservice)->name }}</h5></a>
     </div>
     <div class="appointments-card-content border-top border-bottom">
@@ -83,13 +84,14 @@
                         </p>
                     </div>
                     <div class="col-md-7">
-                        <h6
-                            class="mb-0
-                            @if ($appointment->status === 'cancelled') text-danger
+                        <h6 class="mb-0
+                            @if($appointment->status === 'cancelled')
+                                text-danger
                             @elseif($appointment->status === 'checkout')
                                 text-success
                             @else
-                                text-muted @endif
+                                text-muted
+                            @endif
                         ">
                             {{ \Illuminate\Support\Str::title(str_replace('_', ' ', $appointment->status === 'checkout' ? 'Complete' : $appointment->status)) }}
                         </h6>
@@ -101,7 +103,7 @@
                     <div class="col-md-7">
                         <h6 class="mb-0">
 
-                            {{ getDisplayName($appointment->doctor) }}
+                             {{getDisplayName($appointment->doctor)}}
 
                             <!-- {{ optional($appointment->doctor)->first_name . ' ' . optional($appointment->doctor)->last_name }} -->
                         </h6>
@@ -119,8 +121,7 @@
                         $total_amount = 0;
                         if ($appointment->patientEncounter != null) {
                             if (!empty(optional($appointment->patientEncounter->billingrecord)->final_total_amount)) {
-                                $total_amount = optional($appointment->patientEncounter->billingrecord)
-                                    ->final_total_amount;
+                                $total_amount = optional($appointment->patientEncounter->billingrecord)->final_total_amount;
                             } else {
                                 $total_amount = $appointment->total_amount;
                             }
@@ -138,33 +139,27 @@
                     </div>
                     <div class="col-md-7">
                         <h6 class="mb-0 text-danger">
-                            @php
-                                $transaction = optional($appointment->appointmenttransaction);
-                                $isCancelled = $appointment->status == 'cancelled';
-                                $isFullyPaid = $transaction->payment_status == 1;
-                                $isAdvancePaid =
-                                    $appointment->advance_paid_amount > 0 && $transaction->advance_payment_status == 1;
-                            @endphp
-
-                            {{-- Cancelled Cases --}}
-                            @if ($isCancelled)
-                                @if ($isFullyPaid)
-                                    <span class="text-success">{{ __('frontend.payment_refunded') }}</span>
-                                @elseif($isAdvancePaid)
+                            @if($appointment->appointmenttransaction && $appointment->appointmenttransaction->payment_status)
+                                @if($appointment->status == 'cancelled')
+                                    @if($appointment->advance_paid_amount > 0)
+                                        <span class="text-warning">{{ __('frontend.advance_refunded') }}
+                                        </span>
+                                    @else
+                                        <span class="text-success">{{ __('frontend.payment_refunded') }}
+                                        </span>
+                                    @endif
+                                @else
+                                    <span class="text-success">Paid</span>
+                                @endif
+                            @elseif($appointment->advance_paid_amount > 0)
+                                @if($appointment->status == 'cancelled')
                                     <span class="text-warning">{{ __('frontend.advance_refunded') }}</span>
                                 @else
-                                    <span class="text-danger">{{ __('frontend.cancelled') }}</span>
+                                    <span class="text-success">{{ __('frontend.advance_paid') }}
+                                    </span>
                                 @endif
-
-                                {{-- Active or Completed Cases --}}
                             @else
-                                @if ($isFullyPaid)
-                                    <span class="text-success">{{ __('frontend.paid') }}</span>
-                                @elseif($isAdvancePaid)
-                                    <span class="text-info">{{ __('frontend.advance_paid') }}</span>
-                                @else
-                                    <span class="text-danger">{{ __('frontend.pending') }}</span>
-                                @endif
+                                {{ optional($appointment->appointmenttransaction)->payment_status ? 'Paid' : 'Pending' }}
                             @endif
                         </h6>
                     </div>
@@ -173,35 +168,33 @@
         </div>
     </div>
     <div class="mt-3">
-        @if ($appointment->otherPatient)
+        @if($appointment->otherPatient)
             <div class="d-flex align-items-center gap-2">
                 <span class="font-size-14">{{ __('frontend.booked_for') }}</span>
                 <div class="d-flex align-items-center">
                     <img src="{{ optional($appointment->otherPatient)->profile_image ?: asset('images/default-avatar.png') }}"
-                        class="rounded-circle me-2" alt="{{ optional($appointment->otherPatient)->first_name }}"
-                        style="width: 32px; height: 32px; object-fit: cover;">
-                    <span class="fw-medium">{{ optional($appointment->otherPatient)->first_name }}
-                        {{ optional($appointment->otherPatient)->last_name }}</span>
+                         class="rounded-circle me-2"
+                         alt="{{ optional($appointment->otherPatient)->first_name }}"
+                         style="width: 32px; height: 32px; object-fit: cover;">
+                    <span class="fw-medium">{{ optional($appointment->otherPatient)->first_name }} {{ optional($appointment->otherPatient)->last_name }}</span>
                 </div>
             </div>
         @endif
     </div>
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-5 mt-5">
         <div class="d-flex align-items-center flex-wrap gap-4">
-            @if ($appointment->status == 'pending' && optional($appointment->appointmenttransaction)->transaction_type == 'cash')
+            @if ($appointment->status == 'pending' && $appointment->appointmenttransaction->transaction_type == 'cash' )
                 <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#cancel-appointment"
-                    data-appointment-id="{{ $appointment->id }}" data-charge="0">{{ __('frontend.cancel') }}
+                    data-appointment-id="{{ $appointment->id }}" data-charge="0" >{{ __('frontend.cancel') }}
                 </button>
             @elseif($appointment->status == 'pending' || $appointment->status == 'confirmed')
                 <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#cancel-appointment"
-                    data-appointment-id="{{ $appointment->id }}"
-                    data-charge="{{ $appointment->getCancellationCharges() }}">{{ __('frontend.cancel') }}
+                    data-appointment-id="{{ $appointment->id }}" data-charge="{{ $appointment->getCancellationCharges() }}">{{ __('frontend.cancel') }}
                 </button>
             @endif
             @if ($appointment->status == 'checkout' ?? $appointment->status == 'check_in')
                 <button data-bs-toggle="modal" data-bs-target="#encounter-details-view-{{ $appointment->id }}"
-                    class="btn btn-secondary"><i
-                        class="ph ph-gauge align-middle me-2"></i>{{ __('frontend.encounter') }}
+                    class="btn btn-secondary"><i class="ph ph-gauge align-middle me-2"></i>{{ __('frontend.encounter') }}
                 </button>
             @endif
         </div>
@@ -209,17 +202,17 @@
             <a href="{{ route('appointment-details', ['id' => $appointment->id]) }}"
                 class="btn-link text-secondary fw-semibold font-size-14">{{ __('frontend.view_detail') }}
             </a>
-            @php
-                $serviceRating = optional($appointment->clinicservice)->serviceRating;
-            @endphp
+@php
+    $serviceRating = optional($appointment->clinicservice)->serviceRating;
+@endphp
 
-            @if (!is_null($serviceRating) && $serviceRating->isEmpty() && $appointment->status == 'checkout')
-                <button class="btn btn-light" data-bs-toggle="modal"
-                    data-service-id="{{ optional($appointment->clinicservice)->id }}"
-                    data-doctor-id="{{ optional($appointment->doctor)->id }}" data-bs-target="#review-service">
-                    <i class="ph-fill ph-star text-warning me-2"></i>{{ __('frontend.rate_us') }}
-                </button>
-            @endif
+@if (!is_null($serviceRating) && $serviceRating->isEmpty() && $appointment->status == 'checkout')
+    <button class="btn btn-light" data-bs-toggle="modal"
+        data-service-id="{{ optional($appointment->clinicservice)->id }}"
+        data-doctor-id="{{ optional($appointment->doctor)->id }}" data-bs-target="#review-service">
+        <i class="ph-fill ph-star text-warning me-2"></i>{{ __('frontend.rate_us') }}
+    </button>
+@endif
         </div>
     </div>
 </li>
@@ -248,7 +241,7 @@
                                     <p class="mb-0 font-size-14">{{ __('frontend.doctor_name') }}
                                     </p>
                                     <span
-                                        class="encounter-desc font-size-14 fw-bold">{{ getDisplayName($appointment->doctor) }}</span>
+                                        class="encounter-desc font-size-14 fw-bold">{{ getDisplayName($appointment->doctor)}}</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <p class="mb-0 font-size-14">{{ __('frontend.clinic_name') }}
@@ -278,7 +271,7 @@
                     @endphp
 
                     <div class="encounter-box mt-5">
-                        <a class="d-flex gap-4 mb-2 encounter-list  justify-content-between"
+                        <a class="d-flex gap-4 mb-2 encounter-list"
                             href="#problem-{{ $appointment->id }}" data-bs-toggle="collapse">
                             <p class="mb-0 h6">Problem</p>
                             <i class="ph ph-caret-down"></i>
@@ -327,24 +320,24 @@
                     </div>
                     <div class="encounter-box mt-5">
                         <a class="d-flex justify-content-between gap-3 mb-2 encounter-list"
-                            href="#medical-report-{{ $appointment->id }}" data-bs-toggle="collapse">
+                           href="#medical-report-{{ $appointment->id }}" data-bs-toggle="collapse">
                             <p class="mb-0 h6">Medical Report</p>
                             <i class="ph ph-caret-down"></i>
                         </a>
                         <div id="medical-report-{{ $appointment->id }}" class="collapse encounter-inner-box rounded">
                             @if ($appointment->media->isNotEmpty())
-                                @foreach ($appointment->media as $media)
-                                    <a href="{{ asset($media->getUrl()) }}" download class="btn btn-primary">
-                                        Download Report
-                                    </a>
-                                @endforeach
+                                    @foreach ($appointment->media as $media)
+                                            <a href="{{ asset($media->getUrl()) }}" download class="btn btn-primary">
+                                            Download Report
+                                            </a>
+                                    @endforeach
                             @elseif (!$medical_report || !$medical_report->file_url)
                                 <p class="font-size-12 mb-0 text-danger text-center">No medical report found</p>
                             @endif
 
                             @if ($medical_report && $medical_report->file_url)
                                 <a href="{{ asset($medical_report->file_url) }}" download class="btn btn-primary">
-                                    Download Report
+                                  Download Report
                                 </a>
                             @endif
                         </div>
@@ -356,27 +349,24 @@
                             <i class="ph ph-caret-down"></i>
                         </a>
                         <div id="body_chart-{{ $appointment->id }}" class="collapse  encounter-inner-box rounded">
-                            @if ($bodychart->isNotEmpty())
-                                <div class="d-flex flex-wrap gap-3">
-                                    @foreach ($bodychart as $chart)
-                                        @foreach ($chart->media as $media)
-                                            <!-- Iterate through the media collection -->
-                                            <div class="body-chart-content text-center">
-                                                <div class="image mb-2">
-                                                    <img src="{{ asset($media->getUrl()) }}"
-                                                        alt="{{ $media->name }}" class="img-fluid" width="100"
-                                                        height="100">
-                                                </div>
-                                                <a href="{{ asset($media->getUrl()) }}" download>
-                                                    Download
-                                                </a>
+                        @if ($bodychart->isNotEmpty())
+                            <div class="d-flex flex-wrap gap-3">
+                                @foreach ($bodychart as $chart)
+                                    @foreach ($chart->media as $media) <!-- Iterate through the media collection -->
+                                        <div class="body-chart-content text-center">
+                                            <div class="image mb-2">
+                                                <img src="{{ asset($media->getUrl()) }}" alt="{{ $media->name }}" class="img-fluid" width="100" height="100">
                                             </div>
-                                        @endforeach
+                                            <a href="{{ asset($media->getUrl()) }}" download >
+                                                Download
+                                            </a>
+                                        </div>
                                     @endforeach
-                                </div>
-                            @else
-                                <p class="font-size-12 mb-0 text-danger text-center">No report found</p>
-                            @endif
+                                @endforeach
+                          </div>
+                        @else
+                            <p class="font-size-12 mb-0 text-danger text-center">No report found</p>
+                        @endif
                         </div>
                     </div>
                     <div class="encounter-box mt-5">
@@ -401,8 +391,7 @@
                                                 </div>
                                                 <div class="col-md-6 mt-md-0 mt-4">
                                                     <span class="font-size-14 mb-2">Days:</span>
-                                                    <h6 class="font-size-14 mb-0">{{ $prescription->duration }} Days
-                                                    </h6>
+                                                    <h6 class="font-size-14 mb-0">{{ $prescription->duration }} Days</h6>
                                                 </div>
                                             </div>
                                         </div>
@@ -414,15 +403,16 @@
                         </div>
 
 
-                        <div class="encounter-box mt-5">
-                            <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#prescription"
-                                data-bs-toggle="collapse">
-                                <p class="mb-0 h6">{{ __('frontend.soap') }}
-                                </p>
-                                <i class="ph ph-caret-down"></i>
-                            </a>
-                            <div id="prescription" class="collapse  encounter-inner-box rounded">
-                                @if ($soap)
+                    <div class="encounter-box mt-5">
+                        <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#prescription"
+                            data-bs-toggle="collapse">
+                            <p class="mb-0 h6">{{ __('frontend.soap') }}
+                            </p>
+                            <i class="ph ph-caret-down"></i>
+                        </a>
+                        <div id="prescription" class="collapse  encounter-inner-box rounded">
+                            @if($soap)
+
                                     <div class="border-top mb-3">
                                         <div class="row">
                                             <div class="col-md-6 ">
@@ -440,30 +430,30 @@
                                             </div>
 
                                             <div class="col-md-6 ">
-                                                <h6 class="font-size-14">{{ __('frontend.assessment') }}
-                                                </h6>
+                                            <h6 class="font-size-14">{{ __('frontend.assessment') }}
+                                            </h6>
                                                 <span class="font-size-14 mb-2">
-                                                    {{ $soap->assessment }}
+                                                    {{$soap->assessment}}
                                                 </span>
 
                                             </div>
                                             <div class="col-md-6 ">
-                                                <h6 class="font-size-14">{{ __('frontend.plan') }}
-                                                </h6>
+                                            <h6 class="font-size-14">{{ __('frontend.plan') }}
+                                            </h6>
                                                 <span class="font-size-14 mb-2">
-                                                    {{ $soap->plan }}
+                                                  {{$soap->plan}}
                                                 </span>
 
                                             </div>
                                         </div>
                                     </div>
-                                @else
-                                    <p class="font-size-12 mb-0 text-danger text-center">
-                                        {{ __('frontend.no_soap_found') }}
-                                    </p>
-                                @endif
-                            </div>
+
+                            @else
+                                <p class="font-size-12 mb-0 text-danger text-center">{{ __('frontend.no_soap_found') }}
+                                </p>
+                            @endif
                         </div>
+                    </div>
 
 
                     </div>

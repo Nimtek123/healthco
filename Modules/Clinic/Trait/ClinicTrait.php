@@ -84,27 +84,25 @@ trait ClinicTrait
 
     public function inclusiveTaxPrice($request_data)
     {
-       
          $request_data['inclusive_tax'] = null;
          $request_data['inclusive_tax_price'] = 0;
          $request_data['service_inclusive_tax_price'] = 0;
          
         if (isset($request_data['is_inclusive_tax']) && $request_data['is_inclusive_tax'] == 1) {
             $taxes = Tax::where('module_type', 'services')->where('tax_type', 'inclusive')->where('status', 1)->get();
-// dd($request_data['charges']);
+
             $total_tax = $taxes->sum(function ($tax) use ($request_data) {
                 $taxvalue = (float) $tax->value;
-                
                 return $tax->type === 'percent'
-                    ? round($request_data['charges'] * $taxvalue / 100, 2)
+                    ? round($request_data['service_discount_price'] * $taxvalue / 100, 2)
                     : $taxvalue;
             });
             
             $request_data['inclusive_tax'] = $taxes;
-            $request_data['inclusive_tax_price'] = $total_tax;
-            $request_data['service_inclusive_tax_price'] = ($request_data['charges'] + $total_tax);
+            $request_data['inclusive_tax_price'] = round($total_tax, 2);
+            $request_data['service_inclusive_tax_price'] = round($request_data['service_discount_price'] + $total_tax, 2);
         }
- 
+
         return $request_data;
     }
  

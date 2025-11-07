@@ -51,7 +51,7 @@ class UserController extends Controller
     public function editProfile()
     {
         $user = Auth::user();
-    $countries = Country::where('status', 1)->select('id', 'name', 'dial_code')->get();
+        $countries = Country::select('id', 'name', 'dial_code')->get();
 
         return view('frontend::edit_profile', compact('user', 'countries'));
     }
@@ -428,13 +428,7 @@ class UserController extends Controller
                 $request->session()->put('otp_sent', '');
 
                 $request->session()->put('loginEmail', '');
-                $intended = session()->pull('url.intended');
-                if ($request->filled('redirect_to')) {
-                    return redirect()->to($request->input('redirect_to'));
-                }
-                if ($intended) {
-                    return redirect()->to($intended);
-                }
+                // ✅ Redirect to homepage with authenticated session
                 return redirect()->route('frontend.index');
             } else {
                 // $errors['one_time_password'] = 'Invalid One Time Password';
@@ -463,13 +457,7 @@ class UserController extends Controller
             $user->save();
             Auth::login($user);
 
-            $intended = session()->pull('url.intended');
-            if ($request->filled('redirect_to')) {
-                return redirect()->to($request->input('redirect_to'));
-            }
-            if ($intended) {
-                return redirect()->to($intended);
-            }
+            // ✅ Redirect to homepage with authenticated session
             return redirect()->route('frontend.index');
         } else {
             self::destroy($request);
@@ -482,11 +470,7 @@ class UserController extends Controller
     public function redirectToGoogle()
     {
 
-        // return Socialite::driver('google')->redirect();
-        return Socialite::driver('google')
-        ->with(['prompt' => 'select_account'])
-        ->stateless()
-        ->redirect();
+        return Socialite::driver('google')->redirect();
     }
 
     // Handle Google Callback
@@ -521,36 +505,34 @@ class UserController extends Controller
 
                 $request->session()->regenerate();
 
-                // $user->createOrUpdateProfileWithAvatar();
+                $user->createOrUpdateProfileWithAvatar();
 
                 $user->assignRole($data['user_type']);
 
                 $user->save();
             }
-            if ($user->login_type !== 'google') {
-                return redirect('/user-login')->with('error', 'This account was not created using Google login.');
+
+            if ($user->login_type == 'google') {
+                $current_device = $request->has('device_id') ? $request->device_id : $request->getClientIp();
+                $response = $this->CheckDeviceLimit($user, $current_device);
+
+                if (isset($response['error'])) {
+                    return Redirect::to('/user-login')->with('error', $response['error']);
+                }
+
+                $this->setDevice($user, $request);
+                $user1 = Auth::login($user);
+            } else {
+                $user = Auth::user();
+                Auth::logout();
+                $this->removeDevice($user, $request);
+                return Redirect::to('/user-login')->with('error', 'Something went wrong! During login');
             }
 
-            // Log the user in
-            Auth::login($user, true);
-            Artisan::call('cache:clear');
-            Artisan::call('config:clear');
-            Artisan::call('view:clear');
-            Artisan::call('config:cache');
-            Artisan::call('route:clear');
-            // Redirect based on user role or intended URL
-            if (session()->has('url.intended')) {
-                return redirect()->intended();
-            }
-
-            // Example: redirect to dashboard if normal user
-            if ($user->hasRole('user')) {
-                return redirect()->route('frontend.index'); // your dashboard/home route
-            }
-            return redirect()->route('frontend.index');
-        }catch (\Exception $e) {
-                return Redirect::to('/frontend.index')->with('error', 'Something went wrong!');
-            }
+            return redirect()->intended('/'); // Redirect to intended page
+        } catch (\Exception $e) {
+            return Redirect::to('/user-login')->with('error', 'Something went wrong!');
+        }
     }
     public function destroy(Request $request)
     {

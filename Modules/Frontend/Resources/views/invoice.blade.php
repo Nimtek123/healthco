@@ -357,9 +357,9 @@
                                     <tr>
                                         <th colspan="6" class="text-right">{{ __('messages.discount') }}     
                                        ( @if($transaction['final_discount_type'] === 'percentage')
-                                            <span class="heading-color">{{ $transaction['final_discount_value'] ?? '--' }}%</span>
+                                            <span class="text-dark">{{ $transaction['final_discount_value'] ?? '--' }}%</span>
                                             @else
-                                            <span class="heading-color">{{ Currency::format($transaction['final_discount_value']) ?? '--' }}</span>
+                                            <span class="text-dark">{{ Currency::format($transaction['final_discount_value']) ?? '--' }}</span>
                                             @endif
                                         )
 

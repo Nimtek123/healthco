@@ -10,7 +10,7 @@
                 <label class="form-label m-0" for="category-discount">{{ __('appointment.lbl_service') }}
                     <span class="text-danger">*</span></label>
                     <div class="">
-                        <select id="service_id" name="service_id" class="select2 form-select"
+                        <select id="service_id" name="service_id" class="form-control select2"
                             placeholder="{{ __('appointment.select_service') }}" data-filter="select">
                             <option value="">{{ __('appointment.select_service') }}</option>
 
@@ -128,19 +128,12 @@
                                 // console.log(serviceDetails.data.service_price_data.final_inclusive_amount);
                               if (serviceDetails && serviceDetails.data) {
                                 
-                                    // FIXED: doctor_charge_with_discount now already includes:
-                                    // (base_charge + inclusive_tax - discount)
-                                    // So we don't need to add final_inclusive_amount again
-                                    
-                                    // OLD CODE (COMMENTED): Was adding inclusive tax twice
-                                    // $('#charges').val(serviceDetails.data.service_price_data.doctor_charge_with_discount + serviceDetails.data.service_price_data.final_inclusive_amount );
-                                    // var total = (serviceDetails.data.service_price_data.doctor_charge_with_discount + serviceDetails.data.service_price_data.final_inclusive_amount) * 1;
-                                    
-                                    // NEW CODE: Use doctor_charge_with_discount directly (already has inclusive tax and discount applied)
-                                    $('#charges').val(serviceDetails.data.service_price_data.doctor_charge_with_discount);
+
+                                    // Fallback to use `charges` if `doctor_service` is not available
+                                    $('#charges').val(serviceDetails.data.service_price_data.doctor_charge_with_discount + serviceDetails.data.service_price_data.final_inclusive_amount );
                                     $('#service_amount').val(serviceDetails.data.doctor_service[0].charges);
                                     $('#quantity').val(1);
-                                    var total = serviceDetails.data.service_price_data.doctor_charge_with_discount * 1;
+                                    var total = (serviceDetails.data.service_price_data.doctor_charge_with_discount + serviceDetails.data.service_price_data.final_inclusive_amount) * 1;
                                     $('#total').val(total.toFixed(2));
                                     $('#discount_value').val(serviceDetails.data
                                     .discount_value);
@@ -260,17 +253,9 @@
                                 .service_total);
                             $('#total_tax_amount').val(response.service_details.total_tax);
                             $('#total_amount').val(response.service_details.total_amount);
-                            $('#final_total_amount').val(response.service_details.total_amount);
 
-                            // Check if discount is enabled and recalculate based on new service total
-                            const isDiscountEnabled = document.getElementById('category-discount').checked;
-                            if (isDiscountEnabled) {
-                                // Recalculate discount with current form values
-                                updateDiscount();
-                            } else {
-                                // No discount enabled, just update the display
-                                $('#discount_amount').text(currencyFormat(0));
-                            }
+                            $('#discount_amount').text(currencyFormat(response.service_details.final_discount_amount));
+
 
                         } else {
 

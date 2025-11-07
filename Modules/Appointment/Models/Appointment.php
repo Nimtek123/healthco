@@ -35,7 +35,7 @@ class Appointment extends BaseModel
 
     const CUSTOM_FIELD_MODEL = 'Modules\Appointment\Models\Appointment';
 
-    protected $fillable = ['status', 'start_date_time', 'user_id','otherpatient_id', 'clinic_id', 'doctor_id', 'appointment_extra_info', 'appointment_date', 'appointment_time', 'service_id', 'total_amount', 'service_amount', 'service_price', 'duration', 'advance_payment_amount', 'advance_paid_amount', 'is_quick_booking','start_video_link','join_video_link','meet_link','cancellation_charge','cancellation_charge_amount','cancellation_type','reason'];
+    protected $fillable = ['status', 'start_date_time', 'user_id','otherpatient_id', 'clinic_id', 'doctor_id', 'appointment_extra_info', 'appointment_date', 'appointment_time', 'service_id', 'total_amount', 'service_amount', 'service_price', 'duration', 'advance_payment_amount', 'advance_paid_amount'];
 
     protected $appends = ['file_url'];
 
@@ -45,7 +45,6 @@ class Appointment extends BaseModel
         'service_id' => 'integer',
         'doctor_id' => 'integer',
         'otherpatient_id' => 'integer',
-        'is_quick_booking' => 'integer',
     ];
     /**
      * Create a new factory instance for the model.
@@ -276,7 +275,7 @@ class Appointment extends BaseModel
         $payment_status = optional($this->appointmenttransaction)->payment_status;
         $cancellation_charge_amount = $this->cancellation_charge_amount ?? 0;
 
-        if($payment_status == 0 || $advance_paid_amount > 0) { // Unpaid
+        if($payment_status == 0) { // Unpaid
            
         return $advance_paid_amount - $cancellation_charge_amount; // refund
           

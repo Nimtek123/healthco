@@ -19,14 +19,7 @@
     <div class="clinics-content mb-3">
         <div class="d-flex align-items-center gap-2 mb-2">
             <i class="ph ph-map-pin-line align-middle font-size-18"></i>
-            <a 
-                href="https://www.google.com/maps/search/?api=1&query={{ urlencode(optional($clinic)->address) }}" 
-                target="_blank" 
-                class="m-0 font-size-14 text-decoration-underline"
-                title="Open in Google Maps"
-            >
-                {{ optional($clinic)->address }}
-            </a>
+            <p class="m-0 font-size-14">{{ optional($clinic)->address }}</p>
         </div>
         <div class="d-flex align-items-center gap-2">
             <i class="ph ph-phone-call font-size-18"></i>

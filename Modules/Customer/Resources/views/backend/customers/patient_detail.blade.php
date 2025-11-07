@@ -3,6 +3,11 @@
   {{ __($module_title) }}
 @endsection
 
+@push('after-styles')
+<link rel="stylesheet" href="{{ mix('modules/constant/style.css') }}">
+<link rel="stylesheet" href="{{ asset('vendor/datatable/datatables.min.css') }}">
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-4">
     <h4>{{$data['patientInfo']['name']}}  {{ __('customer.overview') }}</h4>
@@ -267,82 +272,116 @@
 
      <!-- Add Other Patient Modal -->
      <div class="modal fade" id="addOtherPatientModal" tabindex="-1" aria-labelledby="addOtherPatientLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="addOtherPatientLabel">{{ __('customer.add_new_patient') }}</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addPatientForm">
-                        @csrf
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <img id="add-patient-preview" src="{{ default_file_url() }}" class="img-fluid avatar avatar-120 avatar-rounded mb-2" />
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <input type="file" class="form-control d-none" id="add-patient-profile" name="profile_image" accept=".jpeg, .jpg, .png, .gif" />
-                                        <label class="btn btn-info" for="add-patient-profile">{{ __('messages.upload') }}</label>
-                                        <input type="button" class="btn btn-danger" id="add-patient-remove-image" value="{{ __('settings.remove') }}" />
-                                    </div>
-                                    <span class="text-danger" id="add_profile_image_error"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label for="first_name" class="form-label">{{ __('customer.lbl_first_name') }}</label><span class="required-star text-danger">*</span>
-                                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="{{ __('clinic.lbl_first_name') }}">
-                                    <span class="error text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="last_name" class="form-label">{{ __('customer.lbl_last_name') }}</label><span class="required-star text-danger">*</span>
-                                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="{{ __('clinic.lbl_last_name') }}">
-                                    <span class="error text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="dob" class="form-label">{{ __('customer.lbl_date_of_birth') }}</label><span class="required-star text-danger">*</span>
-                                    <input type="text" class="form-control flatpickr-dob" id="dob" name="dob" placeholder="{{ __('customer.select_date_of_birth') }}" readonly>
-                                    <span class="error text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="contactNumber" class="form-label">{{ __('customer.lbl_phone_number') }}</label><span class="required-star text-danger">*</span>
-                                    <input type="tel" class="form-control phone-input" id="contactNumber" name="contactNumber" placeholder="{{ __('employee.lbl_phone_number_placeholder') }}">
-                                    <span class="error text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">{{ __('customer.lbl_gender') }}</label>
-                                    <div class="d-flex gap-2">
-                                        <input type="radio" class="btn-check" name="gender" id="male" value="Male" autocomplete="off" />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="male">{{ __('customer.male') }}</label>
-                                        <input type="radio" class="btn-check" name="gender" id="female" value="Female" autocomplete="off" />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="female">{{ __('customer.female') }}</label>
-                                        <input type="radio" class="btn-check" name="gender" id="other" value="Other" autocomplete="off" />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="other">{{ __('customer.other') }}</label>
-                                    </div>
-                                    <span class="error text-danger gender-error"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">{{ __('customer.relation') }}</label>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <input type="radio" class="btn-check" name="relation" id="parents" value="Parents" autocomplete="off" />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="parents">{{ __('customer.parents') }}</label>
-                                        <input type="radio" class="btn-check" name="relation" id="siblings" value="Siblings" autocomplete="off" />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="siblings">{{ __('customer.siblings') }}</label>
-                                        <input type="radio" class="btn-check" name="relation" id="spouse" value="Spouse" autocomplete="off" />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="spouse">{{ __('customer.spouse') }}</label>
-                                        <input type="radio" class="btn-check" name="relation" id="others" value="Others" autocomplete="off" />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="others">{{ __('customer.other') }}</label>
-                                    </div>
-                                    <span class="error text-danger relation-error"></span>
-                                </div>
-                            </div>
+                <form id="addPatientForm">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addOtherPatientLabel">{{ __('customer.add_new_patient') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="first_name" class="form-label">{{ __('customer.lbl_first_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="text" class="form-control" id="first_name" name="first_name"      placeholder="{{ __('clinic.lbl_first_name') }}">
+                            <span class="error text-danger"></span>
+
                         </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('customer.close') }}</button>
-                    <button type="button" class="btn btn-primary" id="add-patient-submit-btn">{{ __('customer.save_patient') }}</button>
-                </div>
+                        <div class="mb-3">
+                            <label for="last_name" class="form-label">{{ __('customer.lbl_last_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="text" class="form-control" id="last_name" name="last_name"      placeholder="{{ __('clinic.lbl_last_name') }}">
+                            <span class="error text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dob" class="form-label">{{ __('customer.lbl_date_of_birth') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="date" class="form-control" id="dob" name="dob"     placeholder="{{ __('customer.select_date_of_birth') }}">
+                            <span class="error text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactNumber" class="form-label">{{ __('customer.lbl_phone_number') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="text" class="form-control" id="contactNumber" name="contactNumber"   placeholder="{{ __('employee.lbl_phone_number_placeholder') }}">
+                            <span class="error text-danger"></span>
+                        </div>
+                        {{-- <div class="mb-3">
+                            <label  class="form-label">{{ __('customer.lbl_gender') }}</label>
+                            <div class="d-flex gap-3">
+                              <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="male" value="Male" v-model="gender">
+                                <label class="form-check-label" for="male">{{ __('customer.male') }}</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="female" value="Female" v-model="gender">
+                                <label class="form-check-label" for="female">{{ __('customer.female') }}</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="other" value="Other" v-model="gender">
+                                <label class="form-check-label" for="other">{{ __('customer.other') }}</label>
+                              </div>
+                            </div>
+                            <span class="error text-danger gender-error"></span>
+                          </div> --}}
+
+                        <div class="mb-3 gender-wrapper">
+                            <label class="form-label">
+                                {{ __('customer.lbl_gender') }}
+                                <span class="required-star text-danger" style="display: none;">*</span>
+                            </label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="male" value="Male" v-model="gender">
+                                    <label class="form-check-label" for="male">{{ __('customer.male') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="female" value="Female" v-model="gender">
+                                    <label class="form-check-label" for="female">{{ __('customer.female') }}</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="gender" id="other" value="Other" v-model="gender">
+                                    <label class="form-check-label" for="other">{{ __('customer.other') }}</label>
+                                </div>
+                            </div>
+                            <span class="error text-danger gender-error"></span>
+                        </div>
+
+
+                        {{-- <div class="mb-3">
+                            <label class="form-label">{{ __('customer.relation') }}</label>
+                            <select class="form-select" id="relation" name="relation" v-model="relation">
+                            <option value="">{{__('messages.select_relation')}}</option>
+                              <option value="Parents">{{ __('customer.parents') }}</option>
+                              <option value="Siblings">{{ __('customer.siblings') }}</option>
+                              <option value="Spouse">{{ __('customer.spouse') }}</option>
+                              <option value="Others">{{ __('customer.other') }}</option>
+                            </select>
+                            <span class="error text-danger"></span>
+                          </div> --}}
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                {{ __('customer.relation') }}
+                                <span class="required-star text-danger" style="display: none;">*</span>
+                            </label>
+                            <select class="form-select" id="relation" name="relation" v-model="relation">
+                                <option value="">{{ __('messages.select_relation') }}</option>
+                                <option value="Parents">{{ __('customer.parents') }}</option>
+                                <option value="Siblings">{{ __('customer.siblings') }}</option>
+                                <option value="Spouse">{{ __('customer.spouse') }}</option>
+                                <option value="Others">{{ __('customer.other') }}</option>
+                            </select>
+                            <span class="error text-danger"></span>
+                        </div>
+
+
+                          <div class="mb-3">
+                            <label for="profile_image" class="form-label">{{ __('customer.lbl_profile_image') }}</label>
+                            <input type="file" class="form-control" id="profile_image" name="profile_image">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('customer.close') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('customer.save_patient') }}</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -350,7 +389,7 @@
     @if ($otherPatients->isNotEmpty())
     @foreach ($otherPatients as $otherPatient)
     <div class="modal fade" id="editModal_{{ $otherPatient->id }}" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <form action="{{ route('backend.customers.otherPatient.update', $otherPatient->id) }}"
                         method="POST"
@@ -365,66 +404,86 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="text-center">
-                                    <img id="edit-patient-preview-{{ $otherPatient->id }}" src="{{ $otherPatient->getFirstMediaUrl('profile_image') ? asset($otherPatient->getFirstMediaUrl('profile_image')) : default_user_avatar() }}" class="img-fluid avatar avatar-120 avatar-rounded mb-2" />
-                                    <div class="d-flex align-items-center justify-content-center gap-2">
-                                        <input type="file" class="form-control d-none" id="profile_image_{{ $otherPatient->id }}" name="profile_image" accept=".jpeg, .jpg, .png, .gif" />
-                                        <label class="btn btn-info" for="profile_image_{{ $otherPatient->id }}">{{ __('messages.upload') }}</label>
-                                        <input type="button" class="btn btn-danger" id="edit-patient-remove-image-{{ $otherPatient->id }}" value="{{ __('settings.remove') }}" />
-                                    </div>
-                                    <span class="text-danger" id="edit_profile_image_error_{{ $otherPatient->id }}"></span>
-                                </div>
+                        <div class="mb-3">
+                            <label for="first_name_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_first_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="text"
+                                class="form-control"
+                                id="first_name_{{ $otherPatient->id }}"
+                                name="first_name"
+                                value="{{ $otherPatient->first_name }}"
+                                placeholder="{{ __('clinic.lbl_first_name') }}">
+                                <span class="error text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="last_name_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_last_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="text"
+                                class="form-control"
+                                id="last_name_{{ $otherPatient->id }}"
+                                name="last_name"
+                                value="{{ $otherPatient->last_name }}"
+                                placeholder="{{ __('clinic.lbl_last_name') }}">
+                                <span class="error text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="dob_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_date_of_birth') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="date"
+                                class="form-control"
+                                id="dob_{{ $otherPatient->id }}"
+                                name="dob"
+                                value="{{ $otherPatient->dob }}"
+                                placeholder="{{ __('customer.select_date_of_birth') }}">
+                                <span class="error text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="contactNumber_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_phone_number') }}</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <input type="text"
+                                class="form-control"
+                                id="contactNumber_{{ $otherPatient->id }}"
+                                name="contactNumber"
+                                value="{{ $otherPatient->contactNumber }}"
+                                placeholder="{{ __('employee.lbl_phone_number_placeholder') }}">
+                                <span class="error text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Gender</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <div class="d-flex gap-3">
+                              <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="male_{{ $otherPatient->id }}" value="Male" {{ $otherPatient->gender == 'Male' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="male_{{ $otherPatient->id }}">{{ __('messages.male') }}</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="female_{{ $otherPatient->id }}" value="Female" {{ $otherPatient->gender == 'Female' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="female_{{ $otherPatient->id }}">{{ __('customer.female') }}</label>
+                              </div>
+                              <div class="form-check">
+                                <input class="form-check-input" type="radio" name="gender" id="other_{{ $otherPatient->id }}" value="Other" {{ $otherPatient->gender == 'Other' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="other_{{ $otherPatient->id }}">{{ __('customer.other') }}</label>
+                              </div>
                             </div>
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label for="first_name_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_first_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
-                                    <input type="text" class="form-control" id="first_name_{{ $otherPatient->id }}" name="first_name" value="{{ $otherPatient->first_name }}" placeholder="{{ __('clinic.lbl_first_name') }}">
-                                    <span class="error text-danger"></span>
+                            <span class="error text-danger gender-error"></span>
+                          </div>
+                          <div class="mb-3">
+                            <label class="form-label">Relation</label><span class="required-star text-danger" style="display:none;">*</span>
+                            <select class="form-select" name="relation">
+                                <option value="Parents" {{ $otherPatient->relation == 'Parents' ? 'selected' : '' }}>{{ __('customer.parents') }}</option>
+                                <option value="Siblings" {{ $otherPatient->relation == 'Siblings' ? 'selected' : '' }}>{{ __('customer.siblings') }}</option>
+                                <option value="Spouse" {{ $otherPatient->relation == 'Spouse' ? 'selected' : '' }}>{{ __('customer.spouse') }}</option>
+                                <option value="Others" {{ $otherPatient->relation == 'Others' ? 'selected' : '' }}>{{ __('customer.other') }}</option>
+                            </select>
+                            <span class="error text-danger"></span>
+                          </div>
+                          <div class="mb-3">
+                            <label for="profile_image_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_profile_image') }}</label>
+                            <input type="file" class="form-control" id="profile_image_{{ $otherPatient->id }}" name="profile_image">
+                            @if ($otherPatient->getFirstMediaUrl('profile_image'))
+                                <div class="mt-2">
+                                    <strong>Current Image:</strong><br>
+                                    <img src="{{ $otherPatient->getFirstMediaUrl('profile_image') }}" alt="Profile Image" width="100">
                                 </div>
-                                <div class="mb-3">
-                                    <label for="last_name_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_last_name') }}</label><span class="required-star text-danger" style="display:none;">*</span>
-                                    <input type="text" class="form-control" id="last_name_{{ $otherPatient->id }}" name="last_name" value="{{ $otherPatient->last_name }}" placeholder="{{ __('clinic.lbl_last_name') }}">
-                                    <span class="error text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="dob_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_date_of_birth') }}</label><span class="required-star text-danger" style="display:none;">*</span>
-                                    <input type="text" class="form-control flatpickr-dob" id="dob_{{ $otherPatient->id }}" name="dob" value="{{ $otherPatient->dob }}" placeholder="{{ __('customer.select_date_of_birth') }}" readonly>
-                                    <span class="error text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="contactNumber_{{ $otherPatient->id }}" class="form-label">{{ __('customer.lbl_phone_number') }}</label><span class="required-star text-danger" style="display:none;">*</span>
-                                    <input type="tel" class="form-control intl-tel-input" id="contactNumber_{{ $otherPatient->id }}" name="contactNumber" value="{{ $otherPatient->contactNumber }}" placeholder="{{ __('employee.lbl_phone_number_placeholder') }}">
-                                    <span class="error text-danger"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">{{ __('customer.lbl_gender') }}</label><span class="required-star text-danger" style="display:none;">*</span>
-                                    <div class="d-flex gap-2">
-                                        <input type="radio" class="btn-check" name="gender" id="male_{{ $otherPatient->id }}" value="Male" autocomplete="off" {{ $otherPatient->gender == 'Male' ? 'checked' : '' }} />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="male_{{ $otherPatient->id }}">{{ __('customer.male') }}</label>
-                                        <input type="radio" class="btn-check" name="gender" id="female_{{ $otherPatient->id }}" value="Female" autocomplete="off" {{ $otherPatient->gender == 'Female' ? 'checked' : '' }} />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="female_{{ $otherPatient->id }}">{{ __('customer.female') }}</label>
-                                        <input type="radio" class="btn-check" name="gender" id="other_{{ $otherPatient->id }}" value="Other" autocomplete="off" {{ $otherPatient->gender == 'Other' ? 'checked' : '' }} />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="other_{{ $otherPatient->id }}">{{ __('customer.other') }}</label>
-                                    </div>
-                                    <span class="error text-danger gender-error"></span>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">{{ __('customer.relation') }}</label><span class="required-star text-danger" style="display:none;">*</span>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <input type="radio" class="btn-check" name="relation" id="parents_{{ $otherPatient->id }}" value="Parents" autocomplete="off" {{ $otherPatient->relation == 'Parents' ? 'checked' : '' }} />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="parents_{{ $otherPatient->id }}">{{ __('customer.parents') }}</label>
-                                        <input type="radio" class="btn-check" name="relation" id="siblings_{{ $otherPatient->id }}" value="Siblings" autocomplete="off" {{ $otherPatient->relation == 'Siblings' ? 'checked' : '' }} />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="siblings_{{ $otherPatient->id }}">{{ __('customer.siblings') }}</label>
-                                        <input type="radio" class="btn-check" name="relation" id="spouse_{{ $otherPatient->id }}" value="Spouse" autocomplete="off" {{ $otherPatient->relation == 'Spouse' ? 'checked' : '' }} />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="spouse_{{ $otherPatient->id }}">{{ __('customer.spouse') }}</label>
-                                        <input type="radio" class="btn-check" name="relation" id="others_{{ $otherPatient->id }}" value="Others" autocomplete="off" {{ $otherPatient->relation == 'Others' ? 'checked' : '' }} />
-                                        <label class="btn btn-outline-primary rounded-pill px-4" for="others_{{ $otherPatient->id }}">{{ __('customer.other') }}</label>
-                                    </div>
-                                    <span class="error text-danger relation-error"></span>
-                                </div>
-                            </div>
+                            @endif
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -445,45 +504,8 @@
 <script src="{{ asset('js/form-offcanvas/index.js') }}" defer></script>
 <script src="{{ asset('js/form-modal/index.js') }}" defer></script>
 <script type="text/javascript" src="{{ asset('vendor/datatable/datatables.min.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/intlTelInput.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-// Initialize Select2 for relation selects with proper dropdown parent in modals
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.jQuery && window.jQuery.fn.select2) {
-        // Add Patient modal
-        var addModal = jQuery('#addOtherPatientModal');
-        addModal.on('shown.bs.modal', function () {
-            var $select = addModal.find('select#relation.select2');
-            if ($select.length) {
-                if ($select.hasClass('select2-hidden-accessible')) {
-                    $select.select2('destroy');
-                }
-                $select.select2({
-                    width: '100%',
-                    dropdownParent: addModal
-                });
-            }
-        });
-
-        // Edit modals
-        jQuery('[id^="editModal_"]').on('shown.bs.modal', function () {
-            var $modal = jQuery(this);
-            var $select = $modal.find('select[name="relation"].select2');
-            if ($select.length) {
-                if ($select.hasClass('select2-hidden-accessible')) {
-                    $select.select2('destroy');
-                }
-                $select.select2({
-                    width: '100%',
-                    dropdownParent: $modal
-                });
-            }
-        });
-    }
-});
-
   document.addEventListener("DOMContentLoaded", function () {
     const overviewBtn = document.getElementById('overview-btn');
     const detailsBtn = document.getElementById('details-btn');
@@ -524,63 +546,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlSegments = window.location.pathname.split('/');
     const userId = urlSegments[urlSegments.length - 1]; // Get last part of the URL
 
-    // Image upload functionality
-    const profileImageInput = document.getElementById('add-patient-profile');
-    const profileImagePreview = document.getElementById('add-patient-preview');
-    const removeImageBtn = document.getElementById('add-patient-remove-image');
-
-    if (profileImageInput && profileImagePreview) {
-        profileImageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profileImagePreview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    if (removeImageBtn && profileImagePreview) {
-        removeImageBtn.addEventListener('click', function() {
-            profileImagePreview.src = "{{ default_file_url() }}";
-            if (profileImageInput) {
-                profileImageInput.value = '';
-            }
-        });
-    }
-    function formatIntlWithSpace(inputEl, itiInstance) {
-        if (!inputEl || !itiInstance) return inputEl ? inputEl.value : '';
-        try {
-            var dial = (itiInstance.getSelectedCountryData && itiInstance.getSelectedCountryData().dialCode) || '';
-            var full = (itiInstance.getNumber && typeof itiInstance.getNumber === 'function') ? itiInstance.getNumber() : '';
-            // if we have a full number from plugin, normalize to digits then reinsert space
-            if (full && typeof full === 'string') {
-                var digits = full.replace(/\D/g, '');
-                if (dial && digits.startsWith(dial)) {
-                    var rest = digits.slice(dial.length);
-                    return rest ? '+' + dial + ' ' + rest : '+' + dial;
-                }
-                // if full doesn't contain dial, try to use selected dial and remaining digits
-                if (dial) {
-                    var remaining = digits;
-                    return remaining ? '+' + dial + ' ' + remaining : '+' + dial;
-                }
-                return full;
-            }
-            // fallback: build from input value and selected dial
-            var raw = (inputEl.value || '').replace(/\D/g, '');
-            if (dial && raw) {
-                if (raw.startsWith(dial)) raw = raw.slice(dial.length);
-                return '+' + dial + (raw ? ' ' + raw : '');
-            }
-        } catch (e) {}
-        return inputEl.value || '';
-    }
-
     // Add event listener to handle form submission
-    document.getElementById('add-patient-submit-btn').addEventListener('click', function(e) {
+    form.addEventListener("submit", function (e) {
         e.preventDefault();
 
         // Clear previous error messages
@@ -591,14 +558,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const dob = form.querySelector('[name="dob"]');
         const contactNumber = form.querySelector('[name="contactNumber"]');
         const gender = form.querySelector('[name="gender"]:checked');
-        const relation = form.querySelector('[name="relation"]:checked');
+        const relation = form.querySelector('[name="relation"]');
 
         // Reset validation if there are missing fields
-        if (!firstName.value.trim() || !lastName.value.trim() || !dob.value.trim() || !contactNumber.value.trim() || !gender || !relation) {
+        if (!firstName.value.trim() || !lastName.value.trim() || !dob.value.trim() || !contactNumber.value.trim() || !gender || !relation.value.trim()) {
             if (!firstName.value.trim()) {
                 const container = firstName.closest('.mb-3');
                 container.querySelector('.error').textContent = 'First Name field is required.';
-
+                container.querySelector('.required-star').style.display = 'inline';
             } else {
                 const container = firstName.closest('.mb-3');
                 container.querySelector('.error').textContent = '';
@@ -608,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!lastName.value.trim()) {
                 const container = lastName.closest('.mb-3');
                 container.querySelector('.error').textContent = 'Last Name field is required.';
-
+                container.querySelector('.required-star').style.display = 'inline';
             } else {
                 const container = lastName.closest('.mb-3');
                 container.querySelector('.error').textContent = '';
@@ -618,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!dob.value.trim()) {
                 const container = dob.closest('.mb-3');
                 container.querySelector('.error').textContent = 'Date of Birth field is required.';
-
+                container.querySelector('.required-star').style.display = 'inline';
             } else {
                 const container = dob.closest('.mb-3');
                 container.querySelector('.error').textContent = '';
@@ -628,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!contactNumber.value.trim()) {
                 const container = contactNumber.closest('.mb-3');
                 container.querySelector('.error').textContent = 'Phone Number field is required.';
-
+                container.querySelector('.required-star').style.display = 'inline';
             } else {
                 const container = contactNumber.closest('.mb-3');
                 container.querySelector('.error').textContent = '';
@@ -636,42 +603,34 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (!gender) {
-                const genderContainer = form.querySelector('.mb-3 .gender-error').closest('.mb-3');
+                const genderContainer = form.querySelector('.gender-wrapper');
                 const genderError = genderContainer.querySelector('.gender-error');
+                const genderStar = genderContainer.querySelector('.required-star');
                 genderError.textContent = 'Gender field is required.';
-
+                genderStar.style.display = 'inline';
             } else {
-                const genderContainer = form.querySelector('.mb-3 .gender-error').closest('.mb-3');
+                const genderContainer = form.querySelector('.gender-wrapper');
                 const genderError = genderContainer.querySelector('.gender-error');
+                const genderStar = genderContainer.querySelector('.required-star');
                 genderError.textContent = '';
+                genderStar.style.display = 'none';
             }
 
-            if (!relation) {
-                const relationContainer = form.querySelector('.mb-3 .relation-error').closest('.mb-3');
-                const relationError = relationContainer.querySelector('.relation-error');
-                relationError.textContent = 'Relation field is required.';
-
+            if (!relation.value.trim()) {
+                const container = relation.closest('.mb-3');
+                container.querySelector('.error').textContent = 'Relation field is required.';
+                container.querySelector('.required-star').style.display = 'inline';
             } else {
-                const relationContainer = form.querySelector('.mb-3 .relation-error').closest('.mb-3');
-                const relationError = relationContainer.querySelector('.relation-error');
-                relationError.textContent = '';
+                const container = relation.closest('.mb-3');
+                container.querySelector('.error').textContent = '';
+                container.querySelector('.required-star').style.display = 'none';
             }
 
             return; // Stop form submission if validation fails
         }
 
-    // Proceed with form submission if all fields are valid
-    // Ensure we submit E.164 (or prefixed dial code)
-    try {
-        if (window.intlTelInputGlobals && contactNumber) {
-            const itiInstance = window.intlTelInputGlobals.getInstance(contactNumber);
-            if (itiInstance) {
-                contactNumber.value = formatIntlWithSpace(contactNumber, itiInstance);
-            }
-        } 
-    } catch (err) {}
-
-    const formData = new FormData(form);
+        // Proceed with form submission if all fields are valid
+        const formData = new FormData(form);
         formData.append("user_id", userId); // Pass extracted ID as user_id
 
         fetch("{{ route('backend.appointment.other_patient') }}", {
@@ -703,10 +662,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Hide the red required asterisk
         form.querySelectorAll(".required-star").forEach(el => el.style.display = 'none');
-
-        // Reset form
-        form.reset();
-        profileImagePreview.src = "{{ default_file_url() }}";
     });
 });
 
@@ -846,35 +801,35 @@ document.addEventListener('DOMContentLoaded', function() {
         // First Name
         if (!firstName.value.trim()) {
             firstName.insertAdjacentHTML('afterend', '<small class="text-danger error">First Name is required.</small>');
-
+            form.querySelector(`#first_name_${patientId}`).closest('.mb-3').querySelector('.required-star').style.display = 'inline';
             hasError = true;
         }
 
         // Last Name
         if (!lastName.value.trim()) {
             lastName.insertAdjacentHTML('afterend', '<small class="text-danger error">Last Name is required.</small>');
-
+            form.querySelector(`#last_name_${patientId}`).closest('.mb-3').querySelector('.required-star').style.display = 'inline';
             hasError = true;
         }
 
         // DOB
         if (!dob.value.trim()) {
             dob.insertAdjacentHTML('afterend', '<small class="text-danger error">Date of Birth is required.</small>');
-
+            form.querySelector(`#dob_${patientId}`).closest('.mb-3').querySelector('.required-star').style.display = 'inline';
             hasError = true;
         }
 
         // Contact
         if (!contactNumber.value.trim()) {
             contactNumber.insertAdjacentHTML('afterend', '<small class="text-danger error">Phone Number is required.</small>');
-
+            form.querySelector(`#contactNumber_${patientId}`).closest('.mb-3').querySelector('.required-star').style.display = 'inline';
             hasError = true;
         }
 
         // Gender
         if (!gender) {
             const genderWrapper = form.querySelector('.mb-3 .required-star').closest('.mb-3');
-
+            genderWrapper.querySelector('.required-star').style.display = 'inline';
             form.querySelector('.gender-error').innerText = 'Gender is required.';
             hasError = true;
         }
@@ -882,21 +837,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Relation
         if (!relation.value.trim()) {
             relation.insertAdjacentHTML('afterend', '<small class="text-danger error">Relation is required.</small>');
-
+            form.querySelector('[name="relation"]').closest('.mb-3').querySelector('.required-star').style.display = 'inline';
             hasError = true;
         }
 
         if (hasError) return;
-
-        // Normalize phone once more on submit (E.164 or prefixed)
-         try {
-            if (window.intlTelInputGlobals && contactNumber) {
-                const itiInstance = window.intlTelInputGlobals.getInstance(contactNumber);
-                if (itiInstance) {
-                    contactNumber.value = formatIntlWithSpace(contactNumber, itiInstance);
-                }
-            }
-        } catch (err) {}
 
         const formData = new FormData(form);
         const actionUrl = form.getAttribute("action");
@@ -930,113 +875,6 @@ document.addEventListener('DOMContentLoaded', function() {
         form.querySelectorAll(".error").forEach(el => el.remove());
         form.querySelectorAll(".required-star").forEach(el => el.style.display = "none");
     });
-});
-
-// Initialize Flatpickr for DOB fields
-document.addEventListener("DOMContentLoaded", function () {
-    // Initialize Flatpickr for the main DOB field in Add Patient modal
-    const dobInput = document.getElementById('dob');
-    if (dobInput) {
-        flatpickr(dobInput, {
-            dateFormat: "Y-m-d",
-            maxDate: "today",
-            allowInput: false,
-            clickOpens: true,
-            placeholder: "Select date of birth"
-        });
-    }
-
-    // Initialize Flatpickr for all edit modal DOB fields
-    document.querySelectorAll('.flatpickr-dob').forEach(function(input) {
-        if (input.id !== 'dob') { // Skip the main DOB field as it's already initialized
-            flatpickr(input, {
-                dateFormat: "Y-m-d",
-                maxDate: "today",
-                allowInput: false,
-                clickOpens: true,
-                placeholder: "Select date of birth"
-            });
-        }
-    });
-
-    // Initialize International Telephone Input for phone number fields
-    function initializePhoneInputs() {
-        const phoneInputs = document.querySelectorAll('.phone-input, .intl-tel-input'); // ✅ include both
-        phoneInputs.forEach(function(input) {
-            if (input.getAttribute('data-initialized') === 'true') {
-                return;
-            }
-
-            const iti = intlTelInput(input, {
-                initialCountry: "in", // Default; will auto-correct from existing value below
-                preferredCountries: ["in", "us", "gb", "au", "ca"],
-                separateDialCode: true,   // ✅ show +91 separately
-                autoPlaceholder: "aggressive",
-                nationalMode: false,
-                utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js"
-            });
-
-            input.setAttribute('data-initialized', 'true');
-
-            // If an existing value includes a country code, set selection from it
-            try {
-                const existing = (input.value || '').trim();
-                if (existing) {
-                    // Try direct set; plugin will infer country
-                    iti.setNumber(existing);
-                }
-            } catch (e) {}
-
-            function updateFullNumber() {
-                const countryData = iti.getSelectedCountryData();
-                const dialCode = countryData.dialCode;
-
-                // Remove any existing +countrycode and spaces
-                let number = input.value.replace(/^\+\d+\s*/, '').trim();
-
-                // Now format with the new one
-                const formattedNumber = `+${dialCode} ${number}`;
-                input.value = formattedNumber;
-            }
-
-            input.addEventListener("countrychange", updateFullNumber);
-            input.addEventListener("blur", updateFullNumber);
-        });
-    }
-
-    // Initialize immediately
-    initializePhoneInputs();
-
-    // Re-initialize when modals are shown
-    document.addEventListener('shown.bs.modal', function () {
-        setTimeout(initializePhoneInputs, 100);
-    });
-
-    // Image preview/remove for edit modals
-    document.querySelectorAll('input[type="file"][id^="profile_image_"]').forEach(function(fileInput){
-        const idSuffix = fileInput.id.replace('profile_image_', '');
-        const preview = document.getElementById(`edit-patient-preview-${idSuffix}`);
-        const removeBtn = document.getElementById(`edit-patient-remove-image-${idSuffix}`);
-        if (fileInput && preview) {
-            fileInput.addEventListener('change', function(e){
-                const file = e.target.files && e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(ev){
-                    preview.src = ev.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-        if (removeBtn && preview) {
-            removeBtn.addEventListener('click', function(){
-                // Reset to default avatar; file input cleared
-                preview.src = "{{ default_user_avatar() }}";
-                fileInput.value = '';
-            });
-        }
-    });
-
 });
 
 </script>

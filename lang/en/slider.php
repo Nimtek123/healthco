@@ -12,6 +12,4 @@ return [
     'lbl_action' => 'Action',
     'create_title' => 'Create App Banner',
     'edit_title' => 'Edit App Banner',
-    'slider_created_successfully' => 'App Banner created successfully!',
-    'slider_updated_successfully' => 'App Banner updated successfully!',
 ];

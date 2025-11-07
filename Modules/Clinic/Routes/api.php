@@ -17,11 +17,11 @@ use Modules\Clinic\Http\Controllers\API\DoctorController;
 
 Route::get('get-service-list', [ClinicesController::class, 'ServiceList']);
 Route::get('get-doctor-list', [DoctorController::class, 'DoctorList']);
-Route::get('get-category-list', [ClinicesController::class, 'CategoryList']);
-Route::get('get-clinic-list', [ClinicesController::class, 'ClinicList']);
-Route::get('get-clinic-gallery', [ClinicesController::class, 'ClinicGallery']);
+Route::get('get-category-list', [ClinicesController::class, 'CategoryList']);  
+Route::get('get-clinic-list', [ClinicesController::class, 'ClinicList']);    
+Route::get('get-clinic-gallery', [ClinicesController::class, 'ClinicGallery']);   
 Route::get('get-system-service', [ClinicesController::class, 'SystemServiceList']);
-Route::get('get-service-details', [ClinicesController::class, 'ServiceList']);
+Route::get('get-service-details', [ClinicesController::class, 'ServiceList']); 
 Route::get('get-clinic-details', [ClinicesController::class, 'ClinicList']);
 Route::get('get-doctor-details', [DoctorController::class, 'DoctorList']);
 Route::get('get-rating', [DoctorController::class, 'getRating']);
@@ -29,28 +29,28 @@ Route::get('get-rating', [DoctorController::class, 'getRating']);
 Route::get('get-time-slots', [Modules\Clinic\Http\Controllers\DoctorController::class, 'availableSlot']);
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
-
+    
     Route::get('get-categories', [ClinicesController::class, 'CategoryList']);
     Route::post('save-clinic-category', [Modules\Clinic\Http\Controllers\ClinicsCategoryController::class, 'store']);
     Route::post('update-clinic-category/{id}', [Modules\Clinic\Http\Controllers\ClinicsCategoryController::class, 'update']);
     Route::post('delete-clinic-category/{id}', [Modules\Clinic\Http\Controllers\ClinicsCategoryController::class, 'destroy']);
-
+  
     Route::get('get-services', [ClinicesController::class, 'ServiceList']);
     Route::post('save-clinic-service', [Modules\Clinic\Http\Controllers\ClinicsServiceController::class, 'store']);
     Route::post('update-clinic-service/{id}', [Modules\Clinic\Http\Controllers\ClinicsServiceController::class, 'update']);
     Route::post('delete-clinic-service/{id}', [Modules\Clinic\Http\Controllers\ClinicsServiceController::class, 'destroy']);
     Route::get('service-detail', [Modules\Clinic\Http\Controllers\ClinicsServiceController::class, 'ServiceDetails']);
 
-    Route::get('get-clinics', [ClinicesController::class, 'ClinicList']);
+    Route::get('get-clinics', [ClinicesController::class, 'ClinicList']); 
 
     Route::post('save-clinic', [Modules\Clinic\Http\Controllers\ClinicesController::class, 'store']);
     Route::post('update-clinic/{id}', [Modules\Clinic\Http\Controllers\ClinicesController::class, 'update']);
     Route::post('delete-clinic/{id}', [Modules\Clinic\Http\Controllers\ClinicesController::class, 'destroy']);
     Route::get('clinic-session', [ClinicesController::class, 'clinicSession']);
-
+    
 
     Route::post('save-clinic-gallery', [ClinicesController::class, 'uploadGalleryImages']);
-
+    
     Route::post('save-clinic-session', [Modules\Clinic\Http\Controllers\ClinicSessionController::class, 'store']);
     Route::get('get-clinic-session-list', [ClinicesController::class, 'clinicSessionList']);
 
@@ -65,9 +65,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('doctor-commission-list', [DoctorController::class, 'doctorCommissionList']);
     Route::get('doctor-payout-history', [DoctorController::class, 'doctorPayoutHistory']);
     Route::get('doctor-session', [DoctorController::class, 'doctorSession']);
-    Route::post('assign-doctor', [DoctorController::class, 'assignDoctor']);
-    Route::post('assign-doctor-service', [DoctorController::class, 'assignDoctorService']);
-
+    Route::post('assign-doctor', [DoctorController::class, 'assignDoctor']); 
+    
 
     Route::post('save-rating', [DoctorController::class, 'saveRating'])->name('save-rating');
     Route::post('delete-rating', [DoctorController::class, 'deleteRating'])->name('delete-rating');

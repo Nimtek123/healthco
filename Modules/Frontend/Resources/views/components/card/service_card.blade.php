@@ -1,7 +1,7 @@
 <div class="services-card p-3 rounded">
     <div class="position-relative">
         <a href="{{ route('service-details', ['id' => $service->id]) }}" class="services-img">
-            <img src="{{ $service->file_url }}" alt="services-image" class="w-100 object-cover">
+            <img src="{{ $service->file_url }}" alt="services-image" class="w-100 rounded object-cover">
         </a>
         <div class="d-flex position-absolute gap-3 align-items-center service-meta">
             @if ($service->is_video_consultancy)
@@ -24,29 +24,21 @@
         <div class="service-price d-flex align-items-center gap-4">
         @if ($service->discount)
             <div class="d-flex align-items-center gap-2">
-                @if(isset($service->payable_amount))
-                    <span class="text-secondary fw-bold">{{ Currency::format($service->payable_amount) }}</span>
-                    <del>{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</del>
-                @else
-                    <span class="text-secondary fw-bold">{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</span>
-                    <del>{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</del>
-                @endif
+                <span class="text-secondary fw-bold">{{ Currency::format($service->payable_amount) }}</span>
+                <del>{{ Currency::format($service->charges) }}</del>
             </div>
             <div class="service-offer text-success fw-bold">
                 {{ $service->discount_type == 'percentage' ? $service->discount_value . '%' : Currency::format($service->discount_value) }}
                 off
             </div>
         @else
-            @if($service->inclusive_tax_price > 0)
-                <span class="text-secondary fw-bold">{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</span>
-            @else
-                <span class="text-secondary fw-bold">{{ Currency::format($service->charges) }}</span>
-            @endif
+            <span class="text-secondary fw-bold">{{ Currency::format($service->payable_amount) }}</span>
         @endif
 
         </div>
 
-        @if($service->inclusive_tax_price > 0)
+        @if($service->inclusive_tax_price >0 )
+
         <div>
             <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
         </div>
@@ -67,5 +59,5 @@
     </div>
     <a href="{{ route('booking', ['id' => $service->id]) }}" class="btn btn-primary-subtle w-100">{{ __('frontend.book_now') }}
     </a>
-</div>
 
+</div>

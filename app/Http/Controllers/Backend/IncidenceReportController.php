@@ -48,37 +48,27 @@ class IncidenceReportController extends Controller
      * @return Response
      */
 
-   public function index(Request $request)
-{
-    $filter = [
-        'status' => $request->status,
-    ];
+    public function index(Request $request)
+    {
+        $filter = [
+            'status' => $request->status,
+        ];
 
-    $module_action = '';
-    $columns = CustomFieldGroup::columnJsonValues(new Appointment());
-    $customefield = CustomField::exportCustomFields(new Appointment());
+        $module_action = '';
+        $columns = CustomFieldGroup::columnJsonValues(new Appointment());
+        $customefield = CustomField::exportCustomFields(new Appointment());
 
-    $export_import = true;
-    $export_columns = [
-        [
-            'value' => 'name',
-            'text' => ' Name',
-        ]
-    ];
-    $export_url = route('backend.incidence.export');
+        $export_import = true;
+        $export_columns = [
+            [
+                'value' => 'name',
+                'text' => ' Name',
+            ]
+        ];
+        $export_url = route('backend.incidence.export');
 
-    $data = Incidence::first(); 
-    return view('backend.incidence.index_datatable', compact(
-        'module_action',
-        'filter',
-        'columns',
-        'customefield',
-        'export_import',
-        'export_columns',
-        'export_url',
-        'data'
-    ));
-}
+        return view('backend.incidence.index_datatable', compact('module_action', 'filter', 'columns', 'customefield', 'export_import', 'export_columns', 'export_url'));
+    }
 
 
 
@@ -157,14 +147,7 @@ class IncidenceReportController extends Controller
                     return $data->updated_at->isoFormat('llll');
                 }
             })
-            ->editColumn('description', function ($data) {
-                $maxLength = 50; 
-                $fullDescription = e($data->description);
-                $shortDescription = Str::limit($fullDescription, $maxLength);
-
-                return '<span title="' . $fullDescription . '">' . $shortDescription . '</span>';
-            })
-            ->rawColumns(['status', 'check', 'action', 'image','description'])
+            ->rawColumns(['status', 'check', 'action', 'image'])
             ->orderColumns(['id'], '-:column $1');
         return $datatable->toJson();
     }

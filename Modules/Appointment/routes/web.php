@@ -8,11 +8,6 @@ use Modules\Appointment\Http\Controllers\Backend\EncounterTemplateController;
 use Modules\Appointment\Http\Controllers\Backend\BillingRecordController;
 use Modules\Appointment\Http\Controllers\Backend\ProblemsController;
 use Modules\Appointment\Http\Controllers\Backend\ObservationController;
-use Modules\Clinic\Http\Controllers\ClinicsServiceController;
-use Modules\Clinic\Http\Controllers\ClinicesController;
-use Modules\Customer\Http\Controllers\Backend\CustomersController;
-use Modules\Tax\Http\Controllers\Backend\TaxesController;
-use Modules\Clinic\Http\Controllers\DoctorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -58,16 +53,12 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::post('save-payment', [AppointmentsController::class, 'savePayment'])->name('save_payment');
         Route::post('other-patient', [AppointmentsController::class, 'otherpatient'])->name('other_patient');
         Route::get('other-patientlist', [AppointmentsController::class, 'otherpatientlist'])->name('other_patientlist');
-
-       
         // Route::post('/update-status/{id}', [AppointmentsController::class, 'updateStatus'])->name('updateStatus');
     });
     Route::resource("appointment", AppointmentsController::class);
 
 
     Route::group(['prefix' => 'appointments', 'as' => 'appointments.'], function () {
-
-
         Route::get("index_list", [ClinicAppointmentController::class, 'index_list'])->name("index_list");
         Route::get("index_data", [ClinicAppointmentController::class, 'index_data'])->name("index_data");
         Route::get('export', [ClinicAppointmentController::class, 'export'])->name('export');
@@ -93,24 +84,6 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::post('import', [ClinicAppointmentController::class, 'import'])->name('import');
         Route::get('download-sample/{type}', [ClinicAppointmentController::class, 'downloadSample'])->name('download-sample');
 
-        // Direct routes for new appointment form
-        Route::get('doctor/index_list', [DoctorController::class, 'index_list'])->name('doctor.index_list');
-        Route::get('services/index_list', [ClinicsServiceController::class, 'index_list'])->name('services.index_list');
-        Route::get('clinics/index_list', [ClinicesController::class, 'index_list'])->name('clinics.index_list');
-        Route::get('customers/index_list', [CustomersController::class, 'index_list'])->name('customers.index_list');
-        Route::get('tax/index_list', [TaxesController::class, 'index_list'])->name('tax.index_list');
-        Route::get('services/service-price', [ClinicsServiceController::class, 'service_price'])->name('services.service_price');
-        Route::get('doctor/get-available-slot', [DoctorController::class, 'availableSlot'])->name('doctor.availableSlot');
-        
-        // Keep existing clinicAppointmentDetail routes for backward compatibility
-        Route::get('clinicAppointmentDetail/services/index_list', [ClinicsServiceController::class, 'index_list'])->name("clinicAppointmentDetail.services.index_list");
-        Route::get('clinicAppointmentDetail/clinics/index_list', [ClinicesController::class, 'index_list'])->name('clinicAppointmentDetail.clinics.index_list');
-        Route::get('clinicAppointmentDetail/customers/index_list', [CustomersController::class, 'index_list'])->name('clinicAppointmentDetail.customers.index_list');
-        Route::get('clinicAppointmentDetail/tax/index_list', [TaxesController::class, 'index_list'])->name('clinicAppointmentDetail.tax.index_list');
-        Route::get('clinicAppointmentDetail/appointment/other-patientlist', [AppointmentsController::class, 'otherpatientlist'])->name('other_patientlist');
-        Route::get('clinicAppointmentDetail/doctor/index_list', [DoctorController::class, 'index_list'])->name('clinicAppointmentDetail.doctor.index_list');
-        Route::get('clinicAppointmentDetail/services/service-price', [ClinicsServiceController::class, 'service_price'])->name('clinicAppointmentDetail.services.service_price');
-        Route::get('clinicAppointmentDetail/doctor/get-available-slot', [DoctorController::class, 'availableSlot'])->name('clinicAppointmentDetail.doctor.availableSlot');
     });
 
     Route::group(['prefix' => 'bodychart', 'as' => 'bodychart.'], function () {
@@ -129,14 +102,6 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::get('editbodychartview/{id}', [ClinicAppointmentController::class, 'editbodychartview'])->name("editbodychartview");
         Route::post('bodychart-bulk-action', [ClinicAppointmentController::class, 'bodychart_bulk_action'])->name('bodychart_bulk_action');
         Route::get('get-bodychart-details/{id}', [ClinicAppointmentController::class, 'getBodychartDetail'])->name('get_bodychart_details');
-        Route::get('bodychart_form/services/index_list', [ClinicsServiceController::class, 'index_list'])->name("index_list");
-        Route::get('bodychart_form/clinics/index_list', [ClinicesController::class, 'index_list'])->name('index_list');
-        Route::get('bodychart_form/customers/index_list', [CustomersController::class, 'index_list'])->name('index_list');
-        Route::get('bodychart_form/tax/index_list', [TaxesController::class, 'index_list'])->name('index_list');
-        Route::get('bodychart_form/appointment/other-patientlist', [AppointmentsController::class, 'otherpatientlist'])->name('other_patientlist');
-        Route::get('bodychart_form/doctor/index_list', [DoctorController::class, 'index_list'])->name('index_list');
-        Route::get('bodychart_form/services/service-price', [ClinicsServiceController::class, 'service_price'])->name('service_price');
-        Route::get('bodychart_form/doctor/get-available-slot', [DoctorController::class, 'availableSlot'])->name('availableSlot');
     });
     Route::get('google_connect', [AppointmentsController::class, 'joinGoogleMeet'])->name('google_connect');
     Route::get('zoom_connect', [AppointmentsController::class, 'joinZoomMeet'])->name('zoom_connect');
@@ -175,15 +140,7 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
 
 
         Route::get('encounter-detail-page/{id}', [PatientEncounterController::class, 'EncouterDetailPage'])->name('encounter-detail-page');
-        
-        Route::get('encounter-detail-page/services/index_list', [ClinicsServiceController::class, 'index_list'])->name("index_list");
-        Route::get('encounter-detail-page/clinics/index_list', [ClinicesController::class, 'index_list'])->name('index_list');
-        Route::get('encounter-detail-page/customers/index_list', [CustomersController::class, 'index_list'])->name('index_list');
-        Route::get('encounter-detail-page/tax/index_list', [TaxesController::class, 'index_list'])->name('index_list');
-        Route::get('encounter-detail-page/appointment/other-patientlist', [AppointmentsController::class, 'otherpatientlist'])->name('other_patientlist');
-        Route::get('encounter-detail-page/doctor/index_list', [DoctorController::class, 'index_list'])->name('index_list');
-        Route::get('encounter-detail-page/services/service-price', [ClinicsServiceController::class, 'service_price'])->name('service_price');
-        Route::get('encounter-detail-page/doctor/get-available-slot', [DoctorController::class, 'availableSlot'])->name('availableSlot');
+
 
         Route::get('get-template-data/{id}', [PatientEncounterController::class, 'getTemplateData'])->name('get-template-data');
         Route::post('bulk-action', [PatientEncounterController::class, 'bulk_action'])->name('bulk_action');
@@ -198,9 +155,6 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         // Route::get('print_encounter_bill_detail' ,   [PatientEncounterController::class,'printEncounterBillDetail']);
         // Route::get('encounter_extra_clinical_detail_fields' ,   [PatientEncounterController::class,'encounterExtraClinicalDetailFields']);
     });
-
-       
-
     Route::resource("encounter", PatientEncounterController::class);
 
 

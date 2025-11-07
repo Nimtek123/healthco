@@ -41,7 +41,7 @@
                                     @if ($iteam['discount_type'] == 'fixed')
                                         <span>{{ Currency::format($iteam['discount_value']) }}</span>
                                     @else
-                                        <span>({{ $iteam['discount_value'] }}%) </span>
+                                        <span>{{ $iteam['discount_value'] }}(%) </span>
                                     @endif
                                 @endif
                             </p>
@@ -155,18 +155,7 @@
                         $('#total_service_amount').val(response.service_details.service_total);
                         $('#total_tax_amount').val(response.service_details.total_tax);
                         $('#total_amount').val(response.service_details.total_amount);
-                        $('#final_total_amount').val(response.service_details.total_amount);
-                        
-                        // Check if discount is enabled and recalculate based on new service total
-                        const isDiscountEnabled = document.getElementById('category-discount').checked;
-                        if (isDiscountEnabled) {
-                            // Recalculate discount with current form values
-                            updateDiscount();
-                        } else {
-                            // No discount enabled, just update the display
-                            $('#discount_amount').text(currencyFormat(0));
-                        }
-                        
+                        $('#discount_amount').text(currencyFormat(response.service_details.final_discount_amount));
                         // After updating the service list, recheck the count
                         const updatedCount = checkServiceCount();
 

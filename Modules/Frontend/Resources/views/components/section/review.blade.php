@@ -50,7 +50,7 @@
                                 </div>
 
                                 <div class="mt-5">
-                                    <textarea class="form-control" placeholder="Share your experience to help others make informed healthcare decisions." rows="4" id="reviewTextarea"></textarea>
+                                    <textarea class="form-control" placeholder="Share your experience! Your feedback helps others make informed decisions about their healthcare." rows="4" id="reviewTextarea"></textarea>
                                 </div>
 
                                 <div class="mt-5 pt-2">

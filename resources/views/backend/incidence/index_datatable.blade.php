@@ -8,14 +8,14 @@
         <div class="d-flex flex-wrap gap-3">
             <x-backend.quick-action url="{{ route('backend.incidence.bulk_action') }}">
                 <div class="">
-                    <select name="action_type" class="select2 form-select col-12" id="quick-action-type"
+                    <select name="action_type" class="form-control select2 col-12" id="quick-action-type"
                         style="width:100%">
                         <option value="">{{ __('messages.no_action') }}</option>
                         <option value="change-status">{{ __('messages.status') }}</option>
                     </select>
                 </div>
                 <div class="select-status d-none quick-action-field" id="change-status-action">
-                    <select name="status" class="select2 form-select" id="status" style="width:100%">
+                    <select name="status" class="form-control select2" id="status" style="width:100%">
                         <option value="" selected>{{ __('messages.select_status') }}</option>
                         <option value="1">{{ __('messages.lbl_open') }}</option>
                         <option value="2">{{ __('messages.lbl_closed') }}</option>
@@ -28,7 +28,7 @@
 
             <div>
                 <div class="datatable-filter">
-                    <select name="column_status" id="column_status" class="select2 form-select"
+                    <select name="column_status" id="column_status" class="select2 form-control"
                         data-filter="select" style="width: 100%">
                         <option value="">{{ __('messages.all') }}</option>
                         <option value="1">{{ __('messages.lbl_open') }}</option>
@@ -95,13 +95,13 @@
                         </div>
                     </div>
                 </div>
-                @if($data->incident_type==1)
+
                 <div class="d-flex align-items-center justify-content-end">
                     <x-buttons.create title="">
                         {{__('messages.lbl_reply')}}
                     </x-buttons.create>
                 </div>
-                @endif
+
                 {{ html()->form()->close() }}
             </div>
         </div>
@@ -110,21 +110,6 @@
         <button type="button" class="btn btn-secondary" onclick="replyPopupClose()" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary">Save changes</button>
       </div> -->
-    </div>
-  </div>
-</div>
-
-<!-- Modal for Description -->
-<div class="modal fade" id="descriptionModal" tabindex="-1" aria-labelledby="descriptionModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-break" id="descriptionModalLabel"></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div id="descriptionModalBody" class="text-break" style="white-space: pre-line;"></div>
-      </div>
     </div>
   </div>
 </div>
@@ -261,61 +246,10 @@
                 }
             }
         });
-
-        // ✅ Initialize Select2 on page load
-        $('.select2').select2({
-            width: '100%'
-        });
-
-        // ✅ Re-initialize Select2 after DataTable redraw
-        $(document).on('draw.dt', '#datatable', function () {
-            $('.select2').select2({
-                width: '100%'
-            });
-        });
-
-        // ✅ Handle Select2 change events for incidence status updates
-        $(document).on('select2:select', '.change-select', function (e) {
-            let url = $(this).attr('data-url');
-            let body = {
-                value: $(this).val(),
-                _token: $(this).attr('data-token')
-            };
-            
-            $.ajax({
-                type: 'POST',
-                url: url,
-                data: body,
-                success: function(res) {
-                    if (res.status) {
-                        window.successSnackbar(res.message);
-                        $('#datatable').DataTable().ajax.reload();
-                    } else {
-                        Swal.fire({
-                            title: 'Error',
-                            text: res.message,
-                            icon: "error",
-                            showClass: {
-                                popup: 'animate__animated animate__zoomIn'
-                            },
-                            hideClass: {
-                                popup: 'animate__animated animate__zoomOut'
-                            }
-                        });
-                    }
-                },
-                error: function() {
-                    Swal.fire({
-                        title: 'Error',
-                        text: 'Something went wrong.',
-                        icon: "error"
-                    });
-                }
-            });
-        });
     })
 
     window.setPreview = function(fileUrl) {
+        // Open the file in a new tab or show a preview modal
         window.open(fileUrl, '_blank');
     }
     function resetQuickAction () {
@@ -345,43 +279,63 @@
 </script>
 
 <script>
+    // function replyPopup(id)
+    // {
+    //     $('#incidence_id').val(id);
+    //     $("#exampleModal").modal('show');
+    //     // if(id != "")
+    //     // {
+    //     //     var url = "{{ route('backend.backups.logs.view', ':id') }}";
+    //     //     url = url.replace(':id', id);
+
+    //     //     $.ajax({
+    //     //         url: url,
+    //     //         type: 'GET',
+    //     //         headers: {
+    //     //             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    //     //         },
+    //     //         success: function(response) {
+    //     //             // $('#view-data').html(response);
+    //     //             $("#exampleModal").modal('show');
+    //     //         },
+    //     //         error: function(response) {
+    //     //             alert('error');
+    //     //         }
+    //     //     });
+    //     // }
+    // }
+
     function replyPopup(id)
-    {
-        $('#incidence_id').val(id);
-        $('textarea[name="Reply"]').val('');
+{
+    $('#incidence_id').val(id);
 
-        var url = "{{ route('backend.incidence.getReply', ':id') }}";
-        url = url.replace(':id', id);
+    // Clear previous reply
+    $('textarea[name="Reply"]').val('');
 
-        $.ajax({
-            url: url,
-            type: 'GET',
-            success: function(response) {
-                if (response.reply) {
-                    $('textarea[name="Reply"]').val(response.reply);
-                }
-                $("#exampleModal").modal('show');
-            },
-            error: function() {
-                alert('Something went wrong while fetching reply.');
-                $("#exampleModal").modal('show');
+    var url = "{{ route('backend.incidence.getReply', ':id') }}";
+    url = url.replace(':id', id);
+
+    // Fetch the existing reply via AJAX
+    $.ajax({
+        url: url,
+        type: 'GET',
+        success: function(response) {
+            if (response.reply) {
+                $('textarea[name="Reply"]').val(response.reply);
             }
-        });
-    }
+            $("#exampleModal").modal('show');
+        },
+        error: function() {
+            alert('Something went wrong while fetching reply.');
+            $("#exampleModal").modal('show'); // still open modal
+        }
+    });
+}
+
 
     function replyPopupClose()
     {
         $("#exampleModal").modal('hide');
     }
-
-    $(document).on('click', '.view-description', function () {
-        const title = $(this).data('title');
-        const description = $(this).data('description');
-
-        $('#descriptionModalLabel').text(title);
-        $('#descriptionModalBody').text(description);
-        $('#descriptionModal').modal('show');
-    });
 </script>
 @endpush
-

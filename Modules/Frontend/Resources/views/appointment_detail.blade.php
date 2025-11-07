@@ -76,18 +76,18 @@
                                             <div class="text-start">
                                                 <h6 class="m-0">
 
-                                                {{getDisplayName($appointment->doctor)}}
+                                                  {{getDisplayName($appointment->doctor)}}
 
                                                 </h6>
-                                            @php
-                                                $doctorEmail = optional($appointment->doctor)->email;
-                                            @endphp
+                                              @php
+                                                  $doctorEmail = optional($appointment->doctor)->email;
+                                              @endphp
 
-                                            @if ($doctorEmail)
-                                                <a href="mailto:{{ $doctorEmail }}">{{ $doctorEmail }}</a>
-                                            @else
-                                                <span>-</span>
-                                            @endif
+                                              @if ($doctorEmail)
+                                                  <a href="mailto:{{ $doctorEmail }}">{{ $doctorEmail }}</a>
+                                              @else
+                                                  <span>-</span>
+                                              @endif
                                             </div>
                                         </div>
                                     @endif
@@ -105,14 +105,10 @@
                                     </div>
                                     <div class="col-md-4 mt-md-0 mt-2">
                                         <span class="font-size-14">{{ __('frontend.booking_status') }}</span>
-                                        @php
-                                            $status = $appointment->status;
-                                            $statusText = $status === 'checkout' ? 'Complete' : \Illuminate\Support\Str::title(str_replace('_', ' ', $status));
-                                            $statusClass = $status === 'cancelled' ? 'text-danger' : ($status === 'pending' ? 'text-danger' : 'text-success');
-                                        @endphp
-                                        <h6 class="mb-0 {{ $statusClass }}">
-                                            {{ $statusText }}
+                                        <h6 class="mb-0 {{ $appointment->status === 'cancelled' ? 'text-danger' : 'text-success' }}">
+                                            {{ $appointment->status === 'checkout' ? 'Complete' : \Illuminate\Support\Str::title(str_replace('_', ' ', $appointment->status)) }}
                                         </h6>
+
                                     </div>
                                     <div class="col-md-4 mt-md-0 mt-2">
                                         <span class="font-size-14">{{ __('frontend.payment_status') }}</span>
@@ -135,7 +131,7 @@
                                                         </span>
                                                     @endif
                                                 @endif
-                                            @elseif($advancePaid && optional($appointment->appointmenttransaction)->advance_payment_status == 1)
+                                            @elseif($advancePaid)
                                                 @if($appointment->status == 'cancelled')
                                                     <span class="text-warning">{{ __('frontend.advance_refunded') }}
                                                     </span>
@@ -192,23 +188,11 @@
                                             </div>
                                         @endif
                                     </div>
-                                    <div class="col-md-4 mt-md-0 mt-2">
-                                        <span class="font-size-14">{{ __('frontend.payment_type') }}</span>
-                                        <h6 class="mb-0">
-                                            @if($appointment->appointmenttransaction && $appointment->appointmenttransaction->transaction_type)
-                                                <span class="text-primary">{{ ucfirst($appointment->appointmenttransaction->transaction_type) }}</span>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </h6>
-                                    </div>
                                 </div>
                             </div>
 
                         </div>
                     </div>
-
-                
 
                     <div class="mt-5 pt-3">
                         <h6 class="font-size-18">{{ __('frontend.service_detail') }}
@@ -225,39 +209,50 @@
                                     <div class="row">
                                         <div class="">
                                             <div class="d-flex align-items-center">
-                                                <div>
-                                                    <a href="{{ route('service-details', ['id' => optional($appointment->clinicservice)->id]) }}">
-                                                        <b>{{ optional($appointment->clinicservice)->name ?? '-' }}</b>
-                                                    </a>
-                                                    <div class="mt-2">
-                                                        {{ optional($appointment->clinicservice)->description ?? ' ' }}
-                                                    </div>
-                                                </div>
+                                                <span>
+                                                <a href="{{ route('service-details', ['id' => optional($appointment->clinicservice)->id]) }}">
+                                                    <b>{{ optional($appointment->clinicservice)->name ?? '-' }}</b></a>
+                                                    {{ optional($appointment->clinicservice)->description ?? ' ' }}
+                                                </span>
                                             </div>
                                             @php
-                                                $inclusive_tax_price = optional($appointment->appointmenttransaction)->inclusive_tax_price ?? 0;
-                                                $original_price = $appointment->service_price + $inclusive_tax_price;
-                                                
-                                                if (optional($appointment->appointmenttransaction)->discount_value > 0) {
-                                                    if (optional($appointment->appointmenttransaction)->discount_type === 'percentage') {
-                                                        $discount_amount = $original_price * (optional($appointment->appointmenttransaction)->discount_value / 100);
-                                                    } else {
-                                                        $discount_amount = optional($appointment->appointmenttransaction)->discount_value;
-                                                    }
-                                                    $final_price = $original_price - $discount_amount;
+                                                if (
+                                                    optional($appointment->appointmenttransaction)->discount_type === 'percentage'
+                                                ) {
+                                                    $payable_Amount =
+                                                        $appointment->service_price -
+                                                        $appointment->service_price *
+                                                            (optional($appointment->appointmenttransaction)->discount_value / 100);
                                                 } else {
-                                                    $final_price = $original_price;
+                                                    $payable_Amount =
+                                                        $appointment->service_price -
+                                                        optional($appointment->appointmenttransaction)->discount_value;
                                                 }
+                                                    $total_tax = 0;
+                                                    $sub_total = $payable_Amount + $appointment->appointmenttransaction->inclusive_tax_price;
+                                                    $inclusive_tax_data = json_decode($appointment->appointmenttransaction->inclusive_tax, true); // decode tax details
                                             @endphp
                                             @if (optional($appointment->appointmenttransaction)->discount_value > 0)
                                             <div class="d-flex align-items-center gap-2">
                                                 <h6 class="mb-0">
-                                                    {{ Currency::format($final_price) }}
-                                                    <span class="text-success ms-2">
-                                                        ({{ optional($appointment->appointmenttransaction)->discount_value }}{{ optional($appointment->appointmenttransaction)->discount_type === 'percentage' ? '%' : '' }} off)
-                                                    </span>
+                                                    {{ Currency::format($sub_total) }}
+
+                                                    <span class="text-primary">
+
+                                                    @if (optional($appointment->appointmenttransaction)->discount_type === 'percentage')
+                                                        (<span>{{ optional($appointment->appointmenttransaction)->discount_value ?? '--' }}%
+                                                            </<span> off)
+                                                        @else
+                                                            (<span>{{ Currency::format(optional($appointment->appointmenttransaction)->discount_value) ?? '--' }}
+                                                                </<span> off)
+
+                                                    @endif
+
+                                            </span>
+
                                                 </h6>
-                                                <del class="text-muted">{{ Currency::format($original_price) }}</del>
+                                                <del>{{ Currency::format($appointment->service_price) }}</del>
+
                                             </div>
                                             {{-- @if($appointment->appointmenttransaction->inclusive_tax_price != null && $appointment->patientEncounter == null)
                                                     @php
@@ -300,9 +295,9 @@
 
                                             @else
                                                 <h6 class="mb-0">
-                                                    {{ Currency::format($final_price) }}</h6>
+                                                    {{ Currency::format($appointment->service_amount) }}</h6>
                                             @endif
-                                            @if(optional($appointment->appointmenttransaction)->inclusive_tax_price != null && $appointment->patientEncounter == null)
+                                            @if($appointment->appointmenttransaction->inclusive_tax_price != null && $appointment->patientEncounter == null)
 
                                                     <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
                                                 @endif
@@ -324,70 +319,57 @@
                                             <div class="d-flex align-items-center gap-2">
                                                 <span><b>{{ optional($billingItem->clinicservice)->name }}</b>
                                                     {{ optional($billingItem->clinicservice)->description ?? ' ' }}</span>
+
                                             </div>
                                             @php
-                                                // Simple billing item calculation
-                                                $quantity = $billingItem->quantity ?? 1;
-                                                $service_price = $billingItem->service_amount;
-                                                $inclusive_tax = $billingItem->inclusive_tax_amount ?? 0;
-                                                
-                                                // Service total with tax per unit
-                                                $price_per_unit = $service_price + $inclusive_tax;
-                                                
-                                                // Total for this item (quantity × price per unit)
-                                                $item_total = $price_per_unit * $quantity;
-                                                
-                                                // Apply discount if any
-                                                $discount = 0;
-                                                if ($billingItem->discount_value > 0) {
-                                                    if ($billingItem->discount_type === 'percentage') {
-                                                        $discount = $item_total * ($billingItem->discount_value / 100);
-                                                    } else {
-                                                        $discount = $billingItem->discount_value;
-                                                    }
+                                                if ($billingItem->discount_type === 'percentage') {
+                                                    $payable_Amount =
+                                                        $billingItem->service_amount -
+                                                        $billingItem->service_amount * ($billingItem->discount_value / 100);
+                                                } else {
+                                                    $payable_Amount = $billingItem->service_amount - $billingItem->discount_value;
                                                 }
-                                                
-                                                $final_total = $item_total - $discount;
+
                                             @endphp
-                                            
                                             @if ($billingItem->discount_value > 0)
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <h6 class="mb-0">
-                                                        <span class="fw-normal">
-                                                            {{ Currency::format($price_per_unit) }}
-                                                            <span class="text-muted">×</span>
-                                                            {{ $quantity }}
-                                                            <span class="mx-1">=</span>
-                                                        </span>
-                                                        <span class="text-primary fw-bold">{{ Currency::format($final_total) }}</span>
-                                                        <span>
-                                                            @if ($billingItem->discount_type === 'percentage')
-                                                                (<span>{{ $billingItem->discount_value ?? '--' }}%</span> off)
-                                                            @else
-                                                                (<span>{{ Currency::format($billingItem->discount_value) ?? '--' }}</span> off)
-                                                            @endif
-                                                            @if($billingItem->inclusive_tax_amount > 0)
-                                                                <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
-                                                            @endif
-                                                        </span>
-                                                    </h6>
-                                                    <del>{{ Currency::format($item_total) }}</del>
-                                                </div>
-                                            @else
+
+                                            <div class="d-flex align-items-center gap-2">
                                                 <h6 class="mb-0">
-                                                    <span class="fw-normal">
-                                                        {{ Currency::format($price_per_unit) }}
-                                                        <span class="text-muted">×</span>
-                                                        {{ $quantity }}
-                                                        <span class="mx-1">=</span>
-                                                    </span>
-                                                    <span class="text-primary fw-bold">{{ Currency::format($final_total) }}</span>
-                                                    @if($billingItem->inclusive_tax_amount > 0)
-                                                        <small class="text-secondary">
-                                                            <i>{{ __('messages.lbl_with_inclusive_tax') }}</i>
-                                                        </small>
+                                                    <span class="fw-normal">{{ Currency::format($billingItem->total_amount) }} *
+                                                        {{ $billingItem->quantity }} = </span>
+                                                        {{ Currency::format($billingItem->total_amount * $billingItem->quantity) }}
+
+
+                                            <span>
+
+                                                    @if ($billingItem->discount_type === 'percentage')
+                                                        (<span>{{ $billingItem->discount_value ?? '--' }}%</<span> off)
+
+                                                        @else
+                                                            (<span>{{ Currency::format($billingItem->discount_value) ?? '--' }}
+                                                                </<span> off)
+
                                                     @endif
+                                                    @if($billingItem->inclusive_tax_amount > 0)
+                                                        <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
+                                                    @endif
+
+                                            </span>
+
+
                                                 </h6>
+
+
+                                                <del>{{ Currency::format($billingItem->service_amount * $billingItem->quantity) }}</del>
+                                            </div>
+                                            @else
+                                                <h6 class="mb-0"> <span
+                                                        class="fw-normal">{{ Currency::format($billingItem->total_amount) }} *
+                                                        {{ $billingItem->quantity }} = </span>
+                                                    {{ Currency::format($billingItem->total_amount * $billingItem->quantity) }}
+                                                    @if($billingItem->inclusive_tax_amount > 0)
+                                                <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small></h6>
+                                            @endif
                                             @endif
 
                                             {{-- @if (!empty($billingItem->clinicservice->inclusive_tax_price))
@@ -444,31 +426,6 @@
                             @endif
                         </div>
                     </div>
-                    @if($appointment->status === 'cancelled')
-                    <div class="mt-5 pt-3">
-                        <h6 class="font-size-18">{{ __('frontend.cancel_reason') }}
-                        </h6>
-                        <div class="section-bg payment-box rounded">
-                            <div class="d-flex align-items-md-center bg-body p-4 rounded flex-md-row flex-column gap-3">
-                                <div class="detail-box">
-                                    <h6 class="mb-0">
-                                        {{ $appointment->reason }}
-                                    </h6>
-                                </div> 
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                    {{-- medical_history --}}
-                    @if($appointment->appointment_extra_info)
-                    <div class="mt-5 pt-3">
-                        <h6 class="font-size-18">{{ __('appointment.lbl_medical_history') }}
-                        </h6>
-                        <div class="section-bg payment-box rounded">
-                            <p class="mb-0">{{ $appointment->appointment_extra_info }}</p>
-                        </div>
-                    </div>
-                    @endif
                     <!-- Medical Reports Card Grid -->
                     @if(isset($medical_reports) && $medical_reports->count())
                     <div class="container my-5">
@@ -564,53 +521,63 @@
                 </div>
 
                 @php
-                    // Calculate service total from billing items (includes all services added in encounter)
-                    $service_total_amount = 0;
-                    
-                    if ($appointment->patientEncounter !== null && optional($appointment->patientEncounter->billingrecord)->billingItem) {
-                        // For encounters: Sum all billing items (original service + encounter-added services)
-                        foreach ($appointment->patientEncounter->billingrecord->billingItem as $item) {
-                            $service_total_amount += $item->total_amount;
-                        }
-                    } else {
-                        // For direct appointment without encounter
-                        $service_total_amount = $appointment->service_price + (optional($appointment->appointmenttransaction)->inclusive_tax_price ?? 0);
-                    }
+                    $service_total_amount = 0; // Initialize outside the loop
+                    $total_tax = 0;
                 @endphp
+                @if ($appointment->patientEncounter !== null)
+                @foreach (optional(optional($appointment->patientEncounter)->billingrecord)->billingItem as $item)
+                        @php
+                            $quantity = $item->quantity ?? 1;
 
-                @php
-                    // Get transaction and tax data
-                    $transaction = $appointment->appointmenttransaction ? $appointment->appointmenttransaction : null;
-                    $discount_amount = 0;
+                            $service_total_amount += $item->total_amount; // Sum up service amounts
+                            if($quantity > 1) {
+                                if (isset($item->inclusive_tax_amount) && $item->inclusive_tax_amount > 0) {
+                                    $service_total_amount += $item->inclusive_tax_amount *  $quantity;
+                                }
 
-                    if ($appointment->patientEncounter !== null) {
-                        // For patient encounters, use billing record
-                        $transaction = optional($appointment->patientEncounter)->billingrecord;
-                        
-                        if ($transaction && $transaction['final_discount'] == 1) {
-                            if ($transaction['final_discount_type'] == 'percentage') {
-                                $discount_amount = $service_total_amount * ($transaction['final_discount_value'] / 100);
-                            } else {
-                                $discount_amount = $transaction['final_discount_value'];
+                                if (!empty($item->discount_type)) {
+                                    if ($item->discount_type === 'fixed') {
+                                        $service_total_amount -= $item->discount_value * $quantity;
+                                    } elseif ($item->discount_type === 'percentage') {
+                                        $service_total_amount -= ($item->total_amount * $item->discount_value / 100);
+                                    }
+                                }
                             }
-                        }
-                        
-                        // Get tax data from billing record
-                        $taxData = json_decode(optional($transaction)->tax_data, true)
-                            ?: json_decode(optional($transaction)->tax_percentage, true)
-                            ?: [];
-                    } else {
-                        // For direct appointments, get exclusive taxes
-                        if ($appointment->appointmenttransaction == null) {
-                            $taxData = Modules\Tax\Models\Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('status', 1)->where('tax_type', 'exclusive')->get();
-                        } else {
-                            $taxData = json_decode(optional($transaction)->tax_percentage, true) ?: [];
-                        }
+                        @endphp
+                    @endforeach
+                @endif
+
+                <?php
+                    $transaction = $appointment->appointmenttransaction ? $appointment->appointmenttransaction : null;
+                    if ($transaction != null) {
+                        $tax = json_decode(optional($transaction)->tax_percentage, true);
                     }
-                    
-                    // Set $tax variable for compatibility with existing code
-                    $tax = $taxData;
-                @endphp
+                    $total_amount = 0;
+                    $discount_amount = 0;
+                    if ($appointment->patientEncounter !== null) {
+                        $transaction = optional($appointment->patientEncounter)->billingrecord ? optional($appointment->patientEncounter)->billingrecord : null;
+                        if ($transaction['final_discount_type'] == 'percentage') {
+                            $discount_amount = $service_total_amount * ($transaction['final_discount_value'] / 100);
+                        } else {
+                            $discount_amount = $transaction['final_discount_value'];
+                        }
+                        if ($transaction != null) {
+                            foreach (optional(optional($appointment->patientEncounter)->billingrecord)->billingItem as $billingItem) {
+                                $total_amount += $billingItem->total_amount;
+                            }
+
+                            $tax = json_decode(optional($transaction)->tax_data, true);
+                        }
+                        $sub_total = $service_total_amount - $discount_amount;
+                    } else {
+                        $sub_total = $appointment->service_amount;
+                    }
+
+                    if ($appointment->appointmenttransaction == null) {
+                        $tax = Modules\Tax\Models\Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('status', 1)->get();
+                    }
+
+                ?>
 
                 <div class="col-lg-4 mt-lg-0 mt-5">
                     <h6 class="pb-1">{{ __('frontend.payment_details') }}</h6>
@@ -621,7 +588,6 @@
                     )
                     @php
                             $refundAmount = $appointment->getRefundAmount(); // Assumes this returns positive or negative amount
-                            
                     @endphp
                     <div class="payment-box section-bg rounded">
                         <div class="mb-4">
@@ -637,19 +603,19 @@
                             </h6>
 
                             <div class="row mb-2">
-                            <div class="col-6 text-muted">{{ __('earning.lbl_payment_method') }}</div>
-                            <div class="col-6 text-end text-primary">{{ __('messages.wallet') }}</div>
+                              <div class="col-6 text-muted">{{ __('earning.lbl_payment_method') }}</div>
+                              <div class="col-6 text-end text-primary">{{ __('messages.wallet') }}</div>
                             </div>
 
                             <div class="row mb-2">
-                            <div class="col-6 text-muted">{{ __('clinic.price') }}</div>
-                            <div class="col-6 text-end">{{ \Currency::format($appointment->total_amount) }}</div>
+                              <div class="col-6 text-muted">{{ __('clinic.price') }}</div>
+                              <div class="col-6 text-end">{{ \Currency::format($appointment->total_amount) }}</div>
                             </div>
                             @if ($appointment->advance_paid_amount !=0 )
                             <div class="row mb-2">
                                 <div class="col-6 text-muted">{{ __('messages.advanced_payment') }} </div>
                                 <div class="col-6 text-end">{{ \Currency::format($appointment->advance_paid_amount) }}</div>
-                            </div>
+                              </div>
                             @endif
 
                             @if($appointment->cancellation_charge_amount != 0)
@@ -673,161 +639,89 @@
                                 <div class="d-flex justify-content-between align-items-center px-4 py-2 rounded"
                                 style="background-color: {{ $refundAmount >= 0 ? '#e6f4ea' : '#fdecea' }};">
 
-                            <span class="fw-semibold {{ $refundAmount >= 0 ? 'text-success' : 'text-danger' }}">
-                                {{ $refundAmount >= 0 ? __('messages.refund_amount') : __('frontend.wallet_deducted') }}
-                            </span>
+                               <span class="fw-semibold {{ $refundAmount >= 0 ? 'text-success' : 'text-danger' }}">
+                                   {{ $refundAmount >= 0 ? __('messages.refund_amount') : __('frontend.wallet_deducted') }}
+                               </span>
 
-                            <span class="fw-semibold heading-color">
-                                {{ \Currency::format(abs($refundAmount)) }}
-                            </span>
-                        </div>
+                               <span class="fw-semibold text-dark">
+                                   {{ \Currency::format(abs($refundAmount)) }}
+                               </span>
+                           </div>
                             </div>
-                        </div>
+                          </div>
                     </div>
                     @endif
                     <hr>
                     <div class="payment-box section-bg rounded">
-                        @php
-                            // STEP 1: Service Total = Service Price + Inclusive Tax (includes all billing items)
-                            $service_total = $service_total_amount;
-
-                            // STEP 2: Calculate Discount
-                            $discount_amount = 0;
-                            $discount_percent = 0;
-                            $discount_type = '';
-
-                            // Use correct billing record for patient encounter / direct appointment
-                            if ($appointment->patientEncounter !== null && $transaction && ($transaction['final_discount'] ?? null) == 1) {
-                                // Patient encounter discount
-                                $discount_percent = $transaction['final_discount_value'] ?? 0;
-                                $discount_type = $transaction['final_discount_type'] ?? 'percentage';
-                                if ($discount_type === 'percentage') {
-                                    $discount_amount = $service_total * ($discount_percent / 100);
-                                } else {
-                                    $discount_amount = $discount_percent;
-                                }
-                            } elseif (
-                                optional($appointment->appointmenttransaction)->discount_value > 0
-                            ) {
-                                // Direct appointment discount
-                                $discount_percent = optional($appointment->appointmenttransaction)->discount_value;
-                                $discount_type = optional($appointment->appointmenttransaction)->discount_type ?? 'percentage';
-
-                                if ($discount_type === 'percentage') {
-                                    $discount_amount = $service_total * ($discount_percent / 100);
-                                } else {
-                                    $discount_amount = $discount_percent;
-                                }
-                            }
-
-                            // STEP 3: Sub Total = Service Total - Discount
-                            $sub_total = $service_total - $discount_amount;
-                        @endphp
-                        {{-- frontend side appoitment detials calulation --}}
-                        <!-- STEP 1: Service Total -->
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-                            <span>
-                                {{ __('appointment.service_total') }}
-                                @if ($appointment->patientEncounter !== null || optional($appointment->appointmenttransaction)->inclusive_tax_price > 0)
-                                    <span class="text-danger small">({{ __('messages.lbl_with_inclusive_tax') }})</span>
-                                @endif
-                            </span>
-                            <span class="text-primary fw-bold">{{ Currency::format($service_total) }}</span>
-                        </div>
-
-                        <!-- STEP 2: Discount (if any) -->
-                        @if ($discount_amount > 0)
-                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-                                <span>{{ __('messages.discount') }}(
-                                    @if ($discount_type === 'percentage')
-                                        <span class="text-success">{{ $discount_percent ?? '--' }}%</span>
-                                    @else
-                                        <span class="text-success">{{ Currency::format($discount_percent) ?? '--' }}</span>
-                                    @endif
-                                    )
-                                </span>
-                                <span class="text-success fw-bold">- {{ Currency::format($discount_amount) ?? '--' }}</span>
-                            </div>
-                        @endif
-
-                        <!-- STEP 3: Sub Total -->
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-                            <span>{{ __('messages.sub_total') }}</span>
-                            <span class="text-dark fw-bold">{{ Currency::format($sub_total) }}</span>
-                        </div>
-
-                        <!-- STEP 4: Taxes (calculated on Sub Total) -->
-                        @php
-                            $total_tax = 0;
-                            // Calculate total tax first
-                            if (!empty($tax)) {
-                                foreach ($tax as $t) {
-                                    if (!($appointment->is_quick_booking == 1 && strpos(strtolower($t['title']), 'vat') !== false)) {
-                                        $tax_value = $t['value'] ?? 0;
-                                        $tax_type = $t['type'] ?? 'percentage';
-                                        
-                                        if ($tax_type == 'fixed') {
-                                            $tax_amount = $tax_value;
-                                        } else {
-                                            $tax_amount = ($sub_total * $tax_value) / 100;
-                                        }
-                                        $total_tax += $tax_amount;
-                                    }
-                                }
-                            }
-                        @endphp
-                        @if (!empty($tax) && $total_tax > 0)
-                            <!-- Total Tax with Expandable Breakdown -->
-                            <div class="mb-3">
-                                <div class="d-flex flex-wrap align-items-center justify-content-between tax-total-line" style="cursor: pointer;" onclick="toggleTaxBreakdown()">
-                                    <span>{{ __('frontend.total_tax') }}</span>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <i class="ph ph-caret-up text-danger" id="taxArrow" style="transition: transform 0.3s ease;"></i>
-                                        <span class="text-danger fw-bold" id="totalTaxDisplay">{{ Currency::format($total_tax) }}</span>
-                                    </div>
+                        @if ($transaction !== null)
+                            @if ($appointment->patientEncounter !== null)
+                                <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between mb-2 pb-1">
+                                    <p class="mb-0 font-size-14">{{ __('messages.total') }} </p>
+                                    <h6 class="mb-0 font-size-14">{{ Currency::format($service_total_amount) ?? '--' }}</h6>
                                 </div>
-                                
-                                <!-- Collapsible Tax Breakdown -->
-                                <div id="taxBreakdown" class="tax-breakdown-container" style="display: none; margin-top: 10px;">
-                                    <div class="bg-light rounded p-3" style="border: 1px solid #e9ecef;">
-                                        @foreach ($tax as $t)
-                                            {{-- Skip VAT tax calculation for quick bookings --}}
-                                            @if(!($appointment->is_quick_booking == 1 && strpos(strtolower($t['title']), 'vat') !== false))
-                                                @php
-                                                    $tax_name = $t['title'] ?? $t['name'] ?? 'Tax';
-                                                    $tax_value = $t['value'] ?? 0;
-                                                    $tax_type = $t['type'] ?? 'percentage';
-                                                    
-                                                    // Calculate tax on sub total
-                                                    if ($tax_type == 'fixed') {
-                                                        $tax_amount = $tax_value;
-                                                    } else {
-                                                        $tax_amount = ($sub_total * $tax_value) / 100;
-                                                    }
-                                                @endphp
-                                                <div class="d-flex justify-content-between align-items-center mb-2 text-muted">
-                                                    <span>
-                                                        @if ($tax_type == 'fixed')
-                                                            {{ $tax_name }}
-                                                        @else
-                                                            {{ $tax_name }} ({{ $tax_value }}%)
-                                                        @endif
-                                                    </span>
-                                                    <span>{{ Currency::format($tax_amount) }}</span>
-                                                </div>
+                                <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between mb-2 pb-1">
+                                    <p class="mb-0 font-size-14">{{ __('messages.discount') }}
+                                        ( <span class="text-success">
+                                            @if ($transaction->final_discount_type === 'percentage')
+                                                {{ $transaction->final_discount_value ?? '--' }}%
+                                            @else
+                                                {{ Currency::format($transaction->final_discount_value) ?? '--' }}
                                             @endif
-                                        @endforeach
-                                    </div>
+                                        </span>)
+                                    </span>
+                                    </p>
+                                    <h6 class="mb-0 font-size-14 text-success">- {{ Currency::format($discount_amount) ?? '--' }}</h6>
                                 </div>
-                            </div>
-                        @elseif (!empty($tax))
-                            <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
-                                <span>{{ __('messages.no_tax') }}</span>
-                                <span class="heading-color">{{ Currency::format(0) }}</span>
-                            </div>
+                                <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between mb-2 pb-1">
+                                    <p class="mb-0 font-size-14">{{ __('frontend.sub_total') }}</p>
+                                    <h6 class="mb-0 font-size-14">{{ Currency::format($sub_total) ?? '--' }}</h6>
+                                </div>
+                            @endif
+
+                            @if ($appointment->patientEncounter == null)
+                                <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between mb-2 pb-1">
+                                    <p class="mb-0 font-size-14">{{ __('messages.total') }}
+                                        @if ($appointment->appointmenttransaction && $appointment->appointmenttransaction->inclusive_tax_price > 0)
+                                        <small class="text-secondary"><i>{{ __('messages.lbl_with_inclusive_tax') }}</i></small>
+                                        @endif</p>
+                                    <h6 class="mb-0 font-size-14">{{ Currency::format($sub_total) ?? '--' }}</h6>
+                                </div>
+                            @endif
                         @endif
 
-                    <!-- <div class="modal fade " id="taxDetailsModal" tabindex="-1" aria-labelledby="taxDetailsModalLabel"
+                        @foreach ($tax as $t)
+                            @if ($t['type'] == 'percent')
+                                <li class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom">
+                                    {{-- <span>{{ $t['title'] }} ({{ $t['value'] }}%)</span> --}}
+                                    <?php
+                                    $tax_amount = ($sub_total * $t['value']) / 100;
+                                    if ($sub_total > 0) {
+                                        $tax_amount = ($sub_total * $t['value']) / 100;
+                                    }
+                                    $total_tax += $tax_amount;
+                                    ?>
+                                    {{-- <span class="text-primary">{{ Currency::format($tax_amount) }}</span> --}}
+                                </li>
+                            @elseif($t['type'] == 'fixed')
+                                @php $total_tax += $t['value']; @endphp
+                                {{-- <li class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom">
+                                    <span>{{ $t['title'] }}</span>
+                                    <span class="text-primary">{{ Currency::format($t['value']) }}</span>
+                                </li> --}}
+                            @endif
+                        @endforeach
+
+                        <div class="d-flex align-items-center gap-3 mt-3 flex-wrap justify-content-between mb-2 pb-1">
+                            <p class="mb-0 font-size-14">{{ __('appointment.tax') }}</p>
+                            <div class="d-flex align-items-center gap-2">
+
+                               <i class="ph ph-info align-middle" data-bs-toggle="modal" data-bs-target="#taxDetailsModal" style="cursor: pointer;"></i>
+
+                                <h6 class="mb-0 font-size-14 text-secondary">{{ Currency::format($total_tax) ?? '--' }}</h6>
+                            </div>
+                        </div>
+
+                      <!-- <div class="modal fade " id="taxDetailsModal" tabindex="-1" aria-labelledby="taxDetailsModalLabel"
                         aria-hidden="true">
                         <div class="modal-dialog modal-sm">
                             <div class="modal-content">
@@ -847,17 +741,17 @@
                                                 }
                                             @endphp
                                             <li>
-                                            <strong>
-                                                {{ $tax['title'] }}
-                                                @if($tax['type'] == 'percent')
-                                                    ({{ $tax['value'] }}%)
-                                                @endif
-                                                :
-                                            </strong>
-                                            <span id="{{ strtolower(str_replace(' ', '', $tax['title'])) }}">
-                                                {{ Currency::format($tax_amount) ?? '--' }}
-                                            </span>
-                                        </li>
+                                               <strong>
+                                                   {{ $tax['title'] }}
+                                                   @if($tax['type'] == 'percent')
+                                                       ({{ $tax['value'] }}%)
+                                                   @endif
+                                                   :
+                                               </strong>
+                                               <span id="{{ strtolower(str_replace(' ', '', $tax['title'])) }}">
+                                                   {{ Currency::format($tax_amount) ?? '--' }}
+                                               </span>
+                                           </li>
 
                                         @endforeach
                                     </ul>
@@ -873,103 +767,85 @@
 
 
                     <div class="modal" id="taxDetailsModal">
-            <div class="modal-dialog modal-dialog-centered modal-md">
-            <div class="modal-content section-bg position-relative rounded">
-                <div class="modal-body modal-body-inner">
-                    <div class="close-modal-btn" data-bs-dismiss="modal">
-                        <i class="ph ph-x align-middle"></i>
-                    </div>
-                    <h5 class="mb-3" id="taxDetailsModalLabel">{{ __('frontend.tax_detail') }}</h5>
-                    </strong></p>
-                    <ul id="taxBreakdownList" class="p-0 mb-3 list-inline">
+               <div class="modal-dialog modal-dialog-centered modal-md">
+               <div class="modal-content section-bg position-relative rounded">
+                   <div class="modal-body modal-body-inner">
+                       <div class="close-modal-btn" data-bs-dismiss="modal">
+                           <i class="ph ph-x align-middle"></i>
+                       </div>
+                       <h5 class="mb-3" id="taxDetailsModalLabel">{{ __('frontend.tax_detail') }}</h5>
+                       </strong></p>
+                       <ul id="taxBreakdownList" class="p-0 mb-3 list-inline">
 
-                    @foreach($tax_percentage as $tax)
-                                                @php
-                                                    if ($tax['type'] == 'percent' && $sub_total > 0) {
-                                                        $tax_amount = ($sub_total * $tax['value']) / 100;
-                                                    } else {
-                                                        $tax_amount = $tax['value'];
-                                                    }
-                                                @endphp
-                                                {{-- Hide VAT tax for quick bookings --}}
-                                                @if(!($appointment->is_quick_booking == 1 && strpos(strtolower($tax['title']), 'vat') !== false))
-                                                <li class=" d-flex justify-content-between gap-3">
-                                                    <strong>
-                                                        {{ $tax['title'] }}
-                                                        @if($tax['type'] == 'percent')
-                                                            ({{ $tax['value'] }}%)
-                                                        @endif
+                       @foreach($tax_percentage as $tax)
+                                                   @php
+                                                       if ($tax['type'] == 'percent' && $sub_total > 0) {
+                                                           $tax_amount = ($sub_total * $tax['value']) / 100;
+                                                       } else {
+                                                           $tax_amount = $tax['value'];
+                                                       }
+                                                   @endphp
+                                                   <li class=" d-flex justify-content-between gap-3">
+                                                      <strong>
+                                                          {{ $tax['title'] }}
+                                                          @if($tax['type'] == 'percent')
+                                                              ({{ $tax['value'] }}%)
+                                                          @endif
 
-                                                    </strong>
-                                                    <span id="{{ strtolower(str_replace(' ', '', $tax['title'])) }}">
-                                                        {{ Currency::format($tax_amount) ?? '--' }}
-                                                    </span>
-                                                </li>
-                                                @endif
+                                                      </strong>
+                                                      <span id="{{ strtolower(str_replace(' ', '', $tax['title'])) }}">
+                                                          {{ Currency::format($tax_amount) ?? '--' }}
+                                                      </span>
+                                                  </li>
 
-                                            @endforeach
-                    </ul>
-                    <p class="mb-0 mt-3 d-flex flex-wrap justify-content-between gap-3"><strong>{{ __('frontend.total_tax') }}
-                    </strong> <span id="totalTaxAmount" class="fw-bold text-secondary">{{ Currency::format($total_tax) ?? '--' }}</span></p>
-                </div>
-                </div>
-            </div>
+                                               @endforeach
+                       </ul>
+                       <p class="mb-0 mt-3 d-flex flex-wrap justify-content-between gap-3"><strong>{{ __('frontend.total_tax') }}
+                       </strong> <span id="totalTaxAmount" class="fw-bold text-secondary">{{ Currency::format($total_tax) ?? '--' }}</span></p>
+                   </div>
+                  </div>
+               </div>
             </div>
 
                         @php
-                            // STEP 5: Grand Total = Sub Total + Total Tax
-                            $grand_total = $sub_total + $total_tax;
-                            
-                            // Use database total if available, otherwise use calculated total
-                            if ($appointment->patientEncounter !== null && $transaction && !empty($transaction['final_total_amount'])) {
-                                $final_amount = $transaction['final_total_amount'];
-                            } elseif ($appointment->total_amount && $appointment->total_amount > 0) {
-                                $final_amount = $appointment->total_amount;
-                            } else {
-                                $final_amount = $grand_total;
-                            }
+                            $grand_total = $appointment->patientEncounter
+                                ? $service_total_amount + $total_tax - $discount_amount
+                                : $appointment->total_amount;
                         @endphp
 
-                        <!-- STEP 5: Grand Total -->
-                        <hr class="border-top border-gray">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
-                            <span class="fw-bold text-dark">{{ __('messages.grand_total') }}</span>
-                            <span class="text-success fw-bold">{{ Currency::format($final_amount) ?? '--' }}</span>
-                        </div>
-                        @if (optional($appointment->appointmenttransaction)->advance_payment_status == 1)
-                            <div class="d-flex flex-wrap align-items-center justify-content-between">
-                                <span>{{ __('service.advance_payment_amount') }}({{ $appointment->advance_payment_amount }}%)</span>
-                                <span>{{ Currency::format($appointment->advance_paid_amount) ?? '--' }}</span>
+                        <div class="mt-3 pt-4 mb-1 border-top">
+                            <div class="d-flex align-items-center mb-3 gap-3 flex-wrap justify-content-between">
+                                <h6 class="mb-0">{{ __('appointment.total') }}</h6>
+                                <h6 class="mb-0 text-primary">{{ Currency::format($grand_total) }}</h6>
                             </div>
-                        @endif
+                            @if($advancePaid)
+                                <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between">
+                                    <h6 class="mb-3">{{ __('frontend.advance_paid_amount') }} ({{ $appointment->advance_payment_amount }}%)</h6>
+                                    <h6 class="mb-3 text-success">{{ Currency::format($appointment->advance_paid_amount) }}</h6>
+                                </div>
 
-                        @if (optional($appointment->appointmenttransaction)->advance_payment_status == 1 && $appointment->status == 'checkout')
-                            <div class="d-flex flex-wrap align-items-center justify-content-between pt-2 pb-2 mb-2">
-                                <span>{{ __('service.remaining_amount') }}<span class="text-capitalize badge bg-success p-2 ms-2">{{ __('appointment.paid') }}</span></span>
-                                <span class="heading-color">{{ Currency::format($final_amount - $appointment->advance_paid_amount) }}</span>
-                            </div>
-                        @elseif (optional($appointment->appointmenttransaction)->advance_payment_status == 1 && optional($appointment->appointmenttransaction)->payment_status != 1 && $appointment->status != 'cancelled')
-                            <div class="d-flex flex-wrap align-items-center justify-content-between pt-2 pb-2 mb-2">
-                                <span>{{ __('service.remaining_amount') }}<span class="text-capitalize badge bg-warning p-2 ms-2">{{ __('appointment.pending') }}</span></span>
-                                <span class="heading-color">{{ Currency::format($final_amount - $appointment->advance_paid_amount) }}</span>
-                            </div>
-                        @endif
-
-                        @if(optional($appointment->appointmenttransaction)->transaction_type)
-                            <div class="d-flex flex-wrap align-items-center justify-content-between pt-2 pb-2 mb-2">
-                                <span class="fw-semibold">{{ __('appointment.lbl_payment_method') }}</span>
-                                <span class="text-primary fw-bold">
-                                    {{ ucfirst(optional($appointment->appointmenttransaction)->transaction_type) }}
-                                </span>
-                            </div>
-                        @endif
+                                @if($appointment->status != 'cancelled')
+                                    <div class="d-flex align-items-center gap-3 flex-wrap justify-content-between">
+                                        <h6 class="mb-0">{{ __('frontend.remaining_amount') }}
+                                            @if(optional($appointment->appointmenttransaction)->payment_status == 1)
+                                                <span class="badge bg-success-subtle text-success">{{ __('frontend.paid') }}</span>
+                                            @else
+                                                <span class="badge bg-danger-subtle text-danger">{{ __('frontend.pending') }}</span>
+                                            @endif
+                                        </h6>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <h6 class="mb-0 text-secondary">{{ Currency::format($grand_total - $appointment->advance_paid_amount) }}</h6>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
                         </div>
                     </div>
                     <div class="d-flex justify-content-end mt-4">
                         @if($advancePaid && $appointment->status == 'check_in' && optional($appointment->appointmenttransaction)->payment_status == 0 && optional($appointment->patientEncounter)->status == 1)
-                            <a href="#" class="btn btn-secondary"  data-bs-toggle="modal" data-bs-target="#paymentModal">{{ __('frontend.pay_now') }} {{ Currency::format($final_amount - $appointment->advance_paid_amount) }}</a>
+                            <a href="#" class="btn btn-secondary"  data-bs-toggle="modal" data-bs-target="#paymentModal">{{ __('frontend.pay_now') }} {{ Currency::format($grand_total - $appointment->advance_paid_amount) }}</a>
                         @elseif($appointment->status == 'check_in' && optional($appointment->appointmenttransaction)->payment_status == 0 && optional($appointment->patientEncounter)->status == 1)
-                            <a href="#" class="btn btn-secondary"  data-bs-toggle="modal" data-bs-target="#paymentModal">{{ __('frontend.pay_now') }} {{ Currency::format($final_amount) }}</a>
+                            <a href="#" class="btn btn-secondary"  data-bs-toggle="modal" data-bs-target="#paymentModal">{{ __('frontend.pay_now') }} {{ Currency::format($grand_total) }}</a>
                         @endif
                     </div>
                 </div>
@@ -1082,19 +958,19 @@
                     </div>
                     <div class="encounter-box mt-5">
                         <a class="d-flex justify-content-between gap-3 mb-2 encounter-list"
-                        href="#medical-report-{{ $appointment->id }}" data-bs-toggle="collapse">
+                           href="#medical-report-{{ $appointment->id }}" data-bs-toggle="collapse">
                             <p class="mb-0 h6">Medical Report</p>
                             <i class="ph ph-caret-down"></i>
                         </a>
                         <div id="medical-report-{{ $appointment->id }}" class="collapse encounter-inner-box rounded">
                             @if ($medical_report && $medical_report->file_url)
                                 <a href="{{ asset($medical_report->file_url) }}" download class="btn btn-primary">
-                                Download Report
+                                  Download Report
                                 </a>
                             @endif
                         </div>
                     </div>
-                    <div class="encounter-box mt-5">
+                       <div class="encounter-box mt-5">
                         <a class="d-flex justify-content-between gap-3 mb-2 encounter-list"
                             href="#body_chart-{{ $appointment->id }}" data-bs-toggle="collapse">
                             <p class="mb-0 h6">Body chart</p>
@@ -1115,7 +991,7 @@
                                         </div>
                                     @endforeach
                                 @endforeach
-                        </div>
+                          </div>
                         @else
                             <p class="font-size-12 mb-0 text-danger text-center">No report found</p>
                         @endif
@@ -1124,10 +1000,11 @@
                     <div class="encounter-box mt-5">
                         <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#prescription"
                             data-bs-toggle="collapse">
-                            <p class="mb-0 h6">{{ __('frontend.prescription') }}</p>
+                            <p class="mb-0 h6">{{ __('frontend.prescription') }}
+                            </p>
                             <i class="ph ph-caret-down"></i>
                         </a>
-                        <div id="prescription" class="collapse encounter-inner-box rounded">
+                        <div id="prescription" class="collapse  encounter-inner-box rounded">
                             @if($prescriptions->isNotEmpty())
                                 @foreach($prescriptions as $prescription)
                                     <h6>{{ $prescription->name }}</h6>
@@ -1158,13 +1035,13 @@
                     </div>
 
                     <div class="encounter-box mt-5">
-                        <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#soap"
+                        <a class="d-flex justify-content-between gap-3 mb-2 encounter-list" href="#prescription"
                             data-bs-toggle="collapse">
                             <p class="mb-0 h6">{{ __('frontend.soap') }}
                             </p>
                             <i class="ph ph-caret-down"></i>
                         </a>
-                        <div id="soap" class="collapse encounter-inner-box rounded">
+                        <div id="prescription" class="collapse  encounter-inner-box rounded">
                             @if($soap)
 
                                     <div class="border-top mb-3">
@@ -1195,7 +1072,7 @@
                                             <h6 class="font-size-14">{{ __('frontend.plan') }}
                                             </h6>
                                                 <span class="font-size-14 mb-2">
-                                                {{$soap->plan}}
+                                                  {{$soap->plan}}
                                                 </span>
 
                                             </div>
@@ -1251,53 +1128,6 @@
 
 @push('after-scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<style>
-    .tax-total-line {
-        padding: 8px 0;
-        border-bottom: 1px solid #e9ecef;
-        transition: background-color 0.2s ease;
-    }
-    
-    .tax-total-line:hover {
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        padding: 8px 12px;
-        margin: 0 -12px;
-    }
-    
-    #taxArrow {
-        font-size: 14px;
-    }
-    
-    .tax-breakdown-container {
-        animation: slideDown 0.3s ease-out;
-    }
-    
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .tax-breakdown-container .bg-light {
-        background-color: #f8f9fa !important;
-        border: 1px solid #dee2e6 !important;
-        border-radius: 8px !important;
-    }
-    
-    .tax-breakdown-container .d-flex {
-        font-size: 14px;
-    }
-    
-    .tax-breakdown-container .d-flex:last-child {
-        margin-bottom: 0 !important;
-    }
-</style>
 <script>
     $(document).ready(function () {
         $('.delete-rating-btn').on('click', function () {
@@ -1467,23 +1297,6 @@
             alert('An error occurred during payment processing.');
         });
     });
-
-    // Toggle tax breakdown function
-    function toggleTaxBreakdown() {
-        const breakdown = document.getElementById('taxBreakdown');
-        const arrow = document.getElementById('taxArrow');
-        
-        if (breakdown.style.display === 'none' || breakdown.style.display === '') {
-            // Show breakdown
-            breakdown.style.display = 'block';
-            arrow.style.transform = 'rotate(0deg)'; // Keep arrow pointing up when expanded
-        } else {
-            // Hide breakdown
-            breakdown.style.display = 'none';
-            arrow.style.transform = 'rotate(180deg)'; // Rotate arrow down when collapsed
-        }
-    }
 </script>
 
 @endpush
-

@@ -79,18 +79,15 @@ class ServiceController extends Controller
         $clinic_id = $request->query('clinic_id');
         if ($clinic_id) {
             $service_list = ClinicsService::with('category', 'ClinicServiceMapping')
-                ->where('type', 'in_clinic')
                 ->whereHas('ClinicServiceMapping', function ($query) use ($clinic_id) {
                     $query->where('clinic_id', $clinic_id);
                 });
         }
         if ($request->has('filter.clinic_id') && $request->input('filter.clinic_id') ) {
             $clinicId = $request->input('filter.clinic_id');
-            $service_list = $service_list
-                ->where('type', 'in_clinic')
-                ->whereHas('ClinicServiceMapping', function ($query) use ($clinicId) {
-                    $query->where('clinic_id', $clinicId);
-                });
+            $service_list = $service_list->whereHas('ClinicServiceMapping', function ($query) use ($clinicId) {
+                $query->where('clinic_id', $clinicId);
+            });
         }
 
 
@@ -123,28 +120,16 @@ class ServiceController extends Controller
 
         return DataTables::of($services)
             ->addColumn('card', function ($service) {
-                $inclusive_tax = $service->charges;
-                if($service->is_inclusive_tax == 1 && $service->inclusive_tax_price > 0) {
-                    $inclusive_tax = $service->charges + $service->inclusive_tax_price;
-                }
                 $discount_amount =0;
                 if ($service->discount) {
                     $discount_amount = ($service->discount_type == 'percentage')
-                        ? $inclusive_tax * $service->discount_value / 100
+                        ? $service->charges * $service->discount_value / 100
                         : $service->discount_value;
 
                 }
 
-                // Calculate tax on the discounted price, not on original price
-                // $discounted_price = $service->charges - $discount_amount;
-                // if ($service->charges > 0 && $service->inclusive_tax_price > 0) {
-                //     $tax_rate = $service->inclusive_tax_price / $service->charges;
-                //     $tax_on_discounted = $discounted_price * $tax_rate;
-                //     $service->payable_amount = $discounted_price + $tax_on_discounted;
-                // } else {
-                //     $service->payable_amount = $discounted_price;
-                // }
-                $service->payable_amount = $inclusive_tax - $discount_amount;
+                $service->payable_amount = $service->charges-$discount_amount+$service->inclusive_tax_price ;
+
                 return view('frontend::components.card.service_card', compact('service'))->render();
             })
             ->rawColumns(['card'])
@@ -155,24 +140,17 @@ class ServiceController extends Controller
     public function serviceDetails($id)
     {
         $service = ClinicsService::CheckMultivendor()->where('id', $id)->with('category', 'sub_category', 'ClinicServiceMapping', 'doctor_service', 'systemservice')->first();
-        $amount = $service->charges;
-        if($service->is_inclusive_tax == 1) {
-            $amount = $service->charges + $service->inclusive_tax_price;
-        } 
 
         $discount_amount =0;
-        if ($service->discount == 1) {
+        if ($service->discount) {
             $discount_amount = ($service->discount_type == 'percentage')
-                ? $amount * $service->discount_value / 100
+                ? $service->charges * $service->discount_value / 100
                 : $service->discount_value;
 
         }
 
-        // Calculate tax on the discounted price, not on original price
-        $discounted_price = $amount - $discount_amount;
-        $service->payable_amount = $discounted_price;
-        
-// dd($service);
+        $service->payable_amount = $service->charges - $discount_amount +  $service->inclusive_tax_price;
+
         return view('frontend::service_detail', compact('service'));
     }
 
@@ -181,7 +159,7 @@ class ServiceController extends Controller
         // dd('Booking page');
 
         if (!auth()->check()) {
-            return redirect()->guest(route('login-page', ['redirect_to' => $request->fullUrl()]));
+            return view('frontend::auth.login', ['redirect_to' => route('booking', ['id' => $id])]);
         }
         $previousUrl = url()->previous();
 
@@ -259,17 +237,7 @@ class ServiceController extends Controller
             'Razor Pay' => 'razor_payment_method',
         ];
 
-        // $enabledPaymentMethods = ['cash', 'Wallet']; // Add Cash and Wallet by default
-
-        $enabledPaymentMethods = [];
-
-        // If service type is not 'online', allow 'cash' and 'Wallet' by default.
-        // If type is online, exclude 'cash'.
-        if ($selectedService->type != 'online') {
-            $enabledPaymentMethods = ['cash', 'Wallet'];
-        } else {
-            $enabledPaymentMethods = ['Wallet'];
-        }
+        $enabledPaymentMethods = ['cash', 'Wallet']; // Add Cash and Wallet by default
 
         if ($selectedService->is_enable_advance_payment == 1) {
             $enabledPaymentMethods = array_filter($enabledPaymentMethods, function($method) {

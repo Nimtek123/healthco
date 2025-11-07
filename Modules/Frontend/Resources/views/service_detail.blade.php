@@ -47,13 +47,8 @@
                             @if ($service->discount)
                                 <div class="service-price d-flex flex-wrap align-items-center gap-4  pb-1">
                                     <div class="d-flex align-items-center gap-2">
-                                        @if(isset($service->payable_amount))
-                                            <span class="text-secondary fw-bold">{{ Currency::format($service->payable_amount) }}</span>
-                                            <del>{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</del>
-                                        @else
-                                            <span class="text-secondary fw-bold">{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</span>
-                                            <del>{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</del>
-                                        @endif
+                                        <span class="text-secondary fw-bold">{{ Currency::format($service->payable_amount) }}</span>
+                                        <del>{{ Currency::format($service->charges) }}</del>
                                     </div>
                                     <span class="text-success fw-bold">
                                         {{ $service->discount_type == 'percentage' ? $service->discount_value . '%' : Currency::format($service->discount_value) }}
@@ -62,7 +57,8 @@
                             @else
                                 <div class="service-price d-flex flex-wrap align-items-center gap-4  pb-1">
                                     <div class="d-flex align-items-center gap-2">
-                                        <span class="text-secondary fw-bold">{{ Currency::format($service->charges + $service->inclusive_tax_price) }}</span>
+                                        <span
+                                            class="text-secondary fw-bold">{{ Currency::format($service->payable_amount) }}</span>
                                     </div>
                                 </div>
                             @endif

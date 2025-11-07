@@ -49,9 +49,9 @@ class Handler extends ExceptionHandler
 
         foreach ($customRedirectRoutes as $route) {
             if ($request->is($route)) {
-                return redirect()->guest(route('login-page', ['redirect_to' => $request->fullUrl()]));
+                return redirect()->guest(route('login-page'));
             }
         }   
-        return redirect()->guest(route('login-page', ['redirect_to' => $request->fullUrl()]));
+        return redirect()->guest(route('login'));
     }
 }

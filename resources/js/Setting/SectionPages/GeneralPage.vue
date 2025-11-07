@@ -435,4 +435,8 @@ const clearcache = () => {
   width: 50px;
   height: 50px;
 }
+
+.vue-tel-input .vti__input {
+  background-color: #F5F6FA !important;
+}
 </style>

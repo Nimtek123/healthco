@@ -52,8 +52,7 @@ function handleAction(URL, method, confirmationMessage, successMessage) {
     showCancelButton: true,
     confirmButtonColor: "#3085d6",
     cancelButtonColor: "#d33",
-    confirmButtonText: window.localMessagesUpdate?.messages?.yes || "Yes",
-    cancelButtonText: window.localMessagesUpdate?.messages?.cancel || "Cancel"
+    confirmButtonText: "Yes"
   }).then((result) => {
     if (result.isConfirmed) {
       $.ajax({

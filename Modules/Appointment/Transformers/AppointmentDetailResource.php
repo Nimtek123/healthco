@@ -101,27 +101,8 @@ class AppointmentDetailResource extends JsonResource
 
         $refund_amount = max(0, $refund_amount);
 
-        // Calculate inclusive tax for quick booking
-        if ($this->is_inclusive_tax == 1) {
-            $inclusive_tax = $this->calculate_inclusive_tax($this->service_price, $this->inclusive_tax);
-            $calculated_inclusive_tax = $inclusive_tax['total_inclusive_tax'] ?? 0;
-            $price = $inclusive_tax['taxes'] ?? [];
-        } else {
-            $calculated_inclusive_tax = 0;
-            $price = [];
-        }
-
-        // Override total_inclusive_tax with calculated value if available
-        if ($calculated_inclusive_tax > 0) {
-            $total_inclusive_tax = $calculated_inclusive_tax;
-        }
-
         $serviceAmount = $this->service_amount;
         $service_price = $service_price ;
-        
-        // Calculate price before discount (service_price + inclusive_tax)
-        $price_before_discount = $this->service_price + $total_inclusive_tax;
-        
         return [
             'id' => $this->id,
             'status' => $this->status,
@@ -176,7 +157,6 @@ class AppointmentDetailResource extends JsonResource
             'total_tax' => $total_tax,
             'total_inclusive_tax' => $total_inclusive_tax,
             'service_inclusive_tax' => $service_inclusive_tax,
-            'price' => $price_before_discount,
             'tax_data' => $tax_data,
             'billing_items' => BillingItemResource::collection($billingItems),
             'payment_status' => optional($this->appointmenttransaction)->payment_status,

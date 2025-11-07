@@ -33,7 +33,7 @@
                                 novalidate>
                                 @csrf
                                 <input type="hidden" name="user_type" id="user_type" value="user">
-                                <input type="hidden" name="action_type" value="login">
+
                                 <input type="hidden" name="redirect_to" value="{{ $redirect_to ?? null }}">
 
                                 <div class="input-group custom-input-group mb-3" style="flex-direction: column; align-items: flex-start;">
@@ -67,7 +67,6 @@
                                 </div>
                                 <div class="d-flex justify-content-between gap-3 mt-5 auth-btn">
                                     <button type="submit" id="login-button" class="btn btn-secondary sign-in-btn">{{ __("messages.sign_in") }}</button>
-                                    @if (setting('is_google_login'))
                                     <a href="{{ route('auth.google') }}" id="google-login" class="btn px-3 google-btn">
                                         <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
                                             xmlns="http://www.w3.org/2000/svg">
@@ -85,7 +84,6 @@
                                                 fill="#4285F4" />
                                         </svg>
                                     </a>
-                                    @endif
                                 </div>
                                 <div class="d-flex justify-content-center flex-wrap gap-1 mt-5 mb-3">
                                  <a href="{{ route('login-page', ['google2fa' => 1]) }}"

@@ -20,12 +20,9 @@ use Modules\Clinic\Models\ClinicGallery;
 use Modules\Clinic\Models\ClinicsService;
 use Modules\Clinic\Models\DoctorClinicMapping;
 use Illuminate\Support\Str;
-use Modules\Clinic\Models\ClinicServiceMapping;
 use Modules\Clinic\Models\ClinicSession;
 use Modules\MultiVendor\Models\MultiVendor;
 use Modules\World\Models\Country;
-use Modules\World\Models\State;
-use Modules\World\Models\City;
 use Modules\Clinic\Trait\ClinicTrait;
 
 class ClinicesController extends Controller
@@ -79,13 +76,8 @@ class ClinicesController extends Controller
 
         $customefield = CustomField::exportCustomFields(new Clinics());
         $categoryName = SystemServiceCategory::get();
-        $countries = Country::where('status', 1)->get();
-        $states = [];
-        $cities = []; 
-        $clinicadmin = User::role(['vendor'])->where('status', 1)->where('is_banned', 0)->get();
-        $vendors = $clinicadmin;
-        $systemservicecategories = $categoryName;
-        $customfields = $customefield;
+        $countries = Country::all();
+        $clinicadmin = User::role(['vendor'])->get();
 
         $export_import = true;
         $export_columns = [
@@ -121,40 +113,13 @@ class ClinicesController extends Controller
             'text' => __('service.lbl_status'),
         ];
         $export_url = route('backend.clinics.export');
-        $clinic = Clinics::first(); 
-        $weekdays = [];
-        $days = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
-        $sessions = [];
-        if ($clinic) {
-            $sessions = ClinicSession::where('clinic_id', $clinic->id)->get();
-        }
-        foreach ($days as $day) {
-            $session = collect($sessions)->where('day', $day)->first();
-            $weekdays[] = [
-                'day' => $day,
-                'start_time' => $session->start_time ?? '09:00',
-                'end_time' => $session->end_time ?? '18:00',
-                'is_holiday' => $session->is_holiday ?? false,
-                'breaks' => $session
-                    ? (is_string($session->breaks) ? json_decode($session->breaks, true) ?? [] : ($session->breaks ?? []))
-                    : [],
-                'id' => $session->id ?? null,
-            ];
-        }
-
-        return view('clinic::backend.clinic.index_datatable', compact(
-            'clinic',
-            'weekdays',
-            'module_action', 'module_title', 'clinicadmin', 'filter', 'columns', 'customefield',
-            'export_import', 'export_columns', 'categoryName', 'export_url', 'countries',
-            'states', 'cities', 'vendors', 'systemservicecategories', 'customfields'
-        ));
+        return view('clinic::backend.clinic.index_datatable', compact('module_action', 'module_title', 'clinicadmin', 'filter', 'columns', 'customefield', 'export_import', 'export_columns', 'categoryName', 'export_url', 'countries'));
     }
 
 
     public function index_list(Request $request)
     {
- 
+
         $userId = auth()->id();
 
         $query_data = Clinics::SetRole(auth()->user())->with('clinicdoctor', 'specialty', 'clinicdoctor', 'receptionist');
@@ -165,22 +130,26 @@ class ClinicesController extends Controller
                 $query->where('doctor_id', $doctor_id);
             });
         }
-        if ($request->has('vendor_id') && !empty($request->vendor_id)) {
+        if ($request->has('vendor_id')) {
             $vendor_id = $request->vendor_id;
 
             // Check if multiVendor is enabled
             if (multiVendor() == "1") {
-                $user = User::find($vendor_id);
+                // Check if vendor_id is not null
+                if ($vendor_id !== null) {
+                    $user = User::find($vendor_id);
 
-                // Check user existence and type
-                if ($user && in_array($user->user_type, ['admin', 'demo_admin'])) {
-                    // Get all admin/demo_admin IDs
-                    $user_ids = User::role(['admin', 'demo_admin'])->pluck('id');
-                    $query_data->whereIn('vendor_id', $user_ids);
-                } else {
-                    // Filter by specific vendor (clinic admin)
-                    $query_data->where('vendor_id', $vendor_id);
+                    // Check user existence and type
+                    if ($user && in_array($user->user_type, ['admin', 'demo_admin'])) {
+                        $user_ids = User::role(['admin', 'demo_admin'])->pluck('id');
+                        $query_data->whereIn('vendor_id', $user_ids);
+                    } else {
+                        $query_data->where('vendor_id', $vendor_id);
+                    }
                 }
+                // else {
+                //     $query_data->where('id', $request->clinic_id);
+                // }
             }
         }
         if ($request->has('clinicId')) {
@@ -197,19 +166,6 @@ class ClinicesController extends Controller
             }
             $query_data->whereIn('id', $clinicIds);
         }
-        
-        // Exclude clinics already assigned to a receptionist, except the one currently assigned when editing
-        if ($request->boolean('exclude_assigned_receptionist')) {
-            $keepClinicId = $request->input('current_receptionist_clinic_id');
-            if (!empty($keepClinicId)) {
-                $query_data->where(function ($q) use ($keepClinicId) {
-                    $q->whereDoesntHave('receptionist')
-                      ->orWhere('id', $keepClinicId);
-                });
-            } else {
-                $query_data->whereDoesntHave('receptionist');
-            }
-        }
         if ($request->has('clinicid')) {
 
             $query_data->where('id', $request->clinicid);
@@ -222,16 +178,13 @@ class ClinicesController extends Controller
             $data[] = [
 
                 'id' => $row->id,
-                'name' => $row->name,
-                'clinic_name' => $row->name, // Keep both for backward compatibility
-                'type' => $row->type,
+                'clinic_name' => $row->name,
                 'description' => $row->description,
                 'status' => $row->status,
                 'avatar' => $row->file_url,
                 'address' => $row->address,
 
             ];
-            
         }
 
         if ($request->is('api/*')) {
@@ -241,7 +194,6 @@ class ClinicesController extends Controller
         return response()->json($data);
     }
 
-     
     public function index_data(Datatables $datatable, Request $request)
     {
         $userId = auth()->id();
@@ -264,16 +216,10 @@ class ClinicesController extends Controller
             }
 
             if (isset($filter['country'])) {
+
                 $query->where('country', $filter['country']);
             }
 
-            if (isset($filter['state'])) {
-                $query->where('state', $filter['state']);
-            }
-
-            if (isset($filter['city'])) {
-                $query->where('city', $filter['city']);
-            }
 
             if (isset($filter['column_status'])) {
                 $query->where('status', $filter['column_status']);
@@ -365,24 +311,22 @@ class ClinicesController extends Controller
      */
     public function store(ClinicRequest $request)
     {
-        // dd('hello');
         $request->validate([
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
         // $uploadedFiles = $request->file('file_url');
-        // Exclude 'id' and 'file_url' to ensure new clinic creation
-        $data = $request->except(['file_url', 'id', '_method']);
+        $data = $request->except('file_url');
         $data['slug'] = strtolower(Str::slug($request->clinic_name, '-'));
         if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
             $data['vendor_id'] = $request->filled('vendor_id') ? $request->vendor_id : auth()->user()->id;
         } else {
             $data['vendor_id'] = auth()->user()->id;
         }
-        // Handle speciality field - it can come as either 'speciality' or 'system_service_category'
-        $specialityId = $request->input('speciality') ?: $request->input('system_service_category');
-        $data['system_service_category'] = $specialityId;
- 
+        $categoryName = $request->input('system_service_category');
+        $category = SystemServiceCategory::where('name', $categoryName)->first();
+        $data['system_service_category'] = $category ? $category->id : null;
+
         $clinic = Clinics::create($data);
 
 
@@ -419,7 +363,7 @@ class ClinicesController extends Controller
         if ($request->is('api/*')) {
             return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
         } else {
-            return redirect()->route('backend.clinics.index')->with('success', $message);
+            return response()->json(['message' => $message, 'status' => true], 200);
         }
     }
 
@@ -428,8 +372,7 @@ class ClinicesController extends Controller
      */
     public function show($id)
     {
-        $clinic = Clinics::with('specialty')->findOrFail($id);
-        return response()->json(['data' => $clinic, 'status' => true]);
+        return view('clinic::show');
     }
 
     /**
@@ -437,35 +380,19 @@ class ClinicesController extends Controller
      */
     public function edit($id)
     {
-        $clinic = Clinics::with('specialty')->findOrFail($id);
-        // Return the speciality ID for proper auto-selection on the frontend
-        $clinic->system_service_category = optional($clinic->specialty)->id;
+        $module_action = 'Edit';
 
-        $customefield = CustomField::exportCustomFields(new Clinics());
-        $categoryName = SystemServiceCategory::get();
-        $countries = Country::where('status', 1)->get();
-        $states = $clinic->country ? State::where('country_id', $clinic->country)->where('status', 1)->get() : [];
-        $cities = $clinic->state ? City::where('state_id', $clinic->state)->where('status', 1)->get() : [];
-        $clinicadmin = User::role(['vendor'])->where('status', 1)->where('is_banned', 0)->get();
- 
-        return response()->json([
-            'clinic' => $clinic,
-            'vendors' => $clinicadmin,
-            'countries' => $countries,
-            'states' => $states,
-            'cities' => $cities,
-            'systemservicecategories' => $categoryName,
-            'customfields' => $customefield,
-        ]);
+        $data = Clinics::with('specialty')->findOrFail($id); // Assuming the relationship name is specialty
+        $data['system_service_category'] = optional($data->specialty)->name;
+        return response()->json(['data' => $data, 'status' => true]);
     }
-
 
     /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, $id)
     {
-// dd('hello');
+
         $request->validate([
         'latitude' => ['nullable', 'numeric', 'between:-90,90'],
         'longitude' => ['nullable', 'numeric', 'between:-180,180'],
@@ -473,32 +400,28 @@ class ClinicesController extends Controller
 
         $data = Clinics::findOrFail($id);
 
-        $request_data = $request->except(['file_url', 'remove_file']);
+        $request_data = $request->except('file_url');
         if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('demo_admin')) {
             $request_data['vendor_id'] = $request->has('vendor_id') ? $request->vendor_id : auth()->user()->id;
         }
-        // if ($request->has('vendor_id')) {
-        //     $service_ids = ClinicServiceMapping::where('clinic_id', $data['id'])
-        //         ->pluck('service_id')
-        //         ->toArray();
-
-        //     if (!empty($service_ids)) {
-        //         ClinicsService::whereIn('id', $service_ids)
-        //             ->update(['vendor_id' => $request_data['vendor_id']]);
-        //     }
-        // }
-        // $categoryName = $request->input('system_service_category');
-        // $category = SystemServiceCategory::where('name', $categoryName)->first();
-        // $request_data['system_service_category'] = $category ? $category->id : null;
-        // Handle speciality field - it can come as either 'speciality' or 'system_service_category'
-        $specialityId = $request->input('speciality') ?: $request->input('system_service_category');
-        $request_data['system_service_category'] = $specialityId;
+        $categoryName = $request->input('system_service_category');
+        $category = SystemServiceCategory::where('name', $categoryName)->first();
+        $request_data['system_service_category'] = $category ? $category->id : null;
         $data->update($request_data);
 
         if ($request->hasFile('file_url')) {
+
             storeMediaFile($data, $request->file('file_url'));
-        } elseif ($request->boolean('remove_file')) {
-            $data->clearMediaCollection('file_url');
+        }
+
+        if ($request->is('api/*')) {
+            if ($request->file_url && $request->file_url == null) {
+                $data->clearMediaCollection('file_url');
+            }
+        } else {
+            if ($request->file_url == null) {
+                $data->clearMediaCollection('file_url');
+            }
         }
 
         if ($request->custom_fields_data) {
@@ -529,11 +452,11 @@ class ClinicesController extends Controller
 
         $message = __('messages.update_form', ['form' => __('clinic.singular_title')]);
 
-      if ($request->is('api/*')) {
-        return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
-    } else {
-        return redirect()->route('backend.clinics.index')->with('success', $message);
-    }
+        if ($request->is('api/*')) {
+            return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
+        } else {
+            return response()->json(['message' => $message, 'status' => true], 200);
+        }
     }
 
     /**
@@ -589,26 +512,8 @@ class ClinicesController extends Controller
         $clinic = Clinics::findOrFail($id);
 
         $data = ClinicGallery::where('clinic_id', $id)->get();
-        
-        return response()->json(['data' => $data, 'clinic' => $clinic, 'status' => true]);
-    }
 
-    public function showGallery($id)
-    {
-        try {
-            $clinic = Clinics::findOrFail($id);
-            $featureImages = ClinicGallery::where('clinic_id', $id)->get();
-            
-            return response()->json([
-                'status' => true,
-                'html' => view('clinic::backend.clinic.clinic_gallery', compact('clinic', 'featureImages'))->render()
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'error' => $e->getMessage()
-            ]);
-        }
+        return response()->json(['data' => $data, 'clinic' => $clinic, 'status' => true]);
     }
 
     public function uploadGalleryImages(Request $request, $id)
@@ -643,25 +548,16 @@ class ClinicesController extends Controller
     public function clinicDetails(Request $request, $id)
     {
         $data = Clinics::with('cities', 'states', 'countries', 'specialty', 'clinicsessions')->findOrFail($id);
-        
+
         $data->pincode = $data->pincode ?? '-';
         $data->city = optional($data->cities)->name ? optional($data->cities)->name : '-';
         $data->state = optional($data->states)->name ? optional($data->states)->name : '-';
         $data->country = optional($data->countries)->name ? optional($data->countries)->name : '-';
         $data->system_service_category = optional($data->specialty)->name ? optional($data->specialty)->name : '-';
-        $clinicSessions = $this->getClinicSession($data->clinicsessions);
-        // dd($clinicSessions);
 
-        if ($request->ajax()) {
-            return view('clinic::backend.clinic.clinic_detail_offcanvas', [
-                'clinic' => $data,
-                'clinicSessions' => $clinicSessions,
-            ])->render();
-        }
-        return view('clinic::backend.clinic.clinic_detail_offcanvas', [
-            'clinic' => $data,
-            'clinicSessions' => $clinicSessions,
-        ]);
+        $data->clinic_sessions = $this->getClinicSession($data->clinicsessions);
+
+        return response()->json(['data' => $data, 'status' => true]);
     }
 
     public function clinicList(Request $request)
@@ -677,28 +573,5 @@ class ClinicesController extends Controller
         }
         return response()->json(['data' => $data, 'status' => true]);
     }
-    public function checkEmail(Request $request)
-    {
-        $email = $request->input('email');
-        $clinicId = $request->input('id'); 
-        $query = Clinics::where('email', $email);
-        if ($clinicId) {
-            $query->where('id', '!=', $clinicId); 
-        }
-
-        $exists = $query->exists();
-
-        return response()->json(['exists' => $exists]);
-    }
-
-    public function speciality()
-    {
-        $specialities = SystemServiceCategory::where('status', 1)->get(['id', 'name']);
-        return response()->json([
-            'status' => true,
-            'data' => $specialities
-        ]);
-    }
-
 
 }

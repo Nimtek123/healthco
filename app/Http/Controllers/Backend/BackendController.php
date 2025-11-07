@@ -106,11 +106,9 @@ class BackendController extends Controller
         $totalrevenue = $totalrevenue + $total_cancellation_charge;
 
 
-        $userQuery = User::where('user_type', 'user');
-        
-        $total_active_user = (clone $userQuery)->where('status', 1)->count();
-        $total_inactive_user = (clone $userQuery)->where('status', 0)->count();
-        $total_user = $total_active_user + $total_inactive_user;
+        $userQuery = User::where('user_type', 'user')->where('status', 1);
+
+        $total_user = $userQuery->count();
 
         $vendorQuery = User::where('user_type', 'vendor')->where('status', 1);
 
@@ -121,13 +119,8 @@ class BackendController extends Controller
         $clinicservice = ClinicsService::CheckMultivendor()->where('status', 1)->get();
         $total_clinicservice = $clinicservice->count();
 
-        $clinicsQuery = Clinics::query();
-        if (multiVendor() == "0") {
-            $clinicsQuery = $clinicsQuery->whereHas('vendor', function ($q) {
-                $q->whereIn('user_type', ['admin', 'demo_admin']);
-            });
-        }
-        $total_clinics = $clinicsQuery->count();
+        $clinics = Clinics::CheckMultivendor()->where('status', 1)->get();
+        $total_clinics = $clinics->count();
 
 
         $date_range = '';
@@ -157,8 +150,6 @@ class BackendController extends Controller
             'old_patient_count' => $oldPatientCount,
             'adult_patient_count' => $adultPatientCount,
             'total_user' => $total_user ?? 0,
-            'total_active_user' => $total_active_user ?? 0,
-            'total_inactive_user' => $total_inactive_user ?? 0,
             'totalactivevendor' => $totalactivevendor ?? 0,
             'register_vendor' => $register_vendor ?? [],
             'total_clinicservice' => $total_clinicservice ?? 0,
@@ -289,11 +280,10 @@ class BackendController extends Controller
 
         $userQuery = User::where('user_type', 'user')
             ->where('created_at', '>=', $startDate)
-            ->where('created_at', '<=', $endDate);
-            
-        $total_active_user = (clone $userQuery)->where('status', 1)->count();
-        $total_inactive_user = (clone $userQuery)->where('status', 0)->count();
-        $total_user = $total_active_user + $total_inactive_user;
+            ->where('created_at', '<=', $endDate)
+            ->where('status', 1);
+
+        $total_user = $userQuery->count();
 
         $vendorQuery = User::where('user_type', 'vendor')
             ->where('created_at', '>=', $startDate)
@@ -308,15 +298,11 @@ class BackendController extends Controller
             ->where('created_at', '<=', $endDate)->get();
         $total_clinicservice = $clinicservice->count();
 
-        $clinicsQuery = Clinics::query()
+        $clinics = Clinics::CheckMultivendor()
             ->where('created_at', '>=', $startDate)
-            ->where('created_at', '<=', $endDate);
-        if (multiVendor() == "0") {
-            $clinicsQuery = $clinicsQuery->whereHas('vendor', function ($q) {
-                $q->whereIn('user_type', ['admin', 'demo_admin']);
-            });
-        }
-        $total_clinics = $clinicsQuery->count();
+            ->where('created_at', '<=', $endDate)
+            ->where('status', 1)->get();
+        $total_clinics = $clinics->count();
         $setting = Setting::where('name', 'date_formate')->first();
         $dateformate = $setting ? $setting->val : 'Y-m-d';
         $setting = Setting::where('name', 'time_formate')->first();
@@ -340,8 +326,6 @@ class BackendController extends Controller
             'old_patient_count' => $oldPatientCount,
             'adult_patient_count' => $adultPatientCount,
             'total_user' => $total_user ?? 0,
-            'total_active_user' => $total_active_user ?? 0,
-            'total_inactive_user' => $total_inactive_user ?? 0,
             'totalactivevendor' => $totalactivevendor ?? 0,
             'register_vendor' => $register_vendor ?? [],
             'total_clinicservice' => $total_clinicservice ?? 0,
@@ -774,20 +758,12 @@ class BackendController extends Controller
 
         if ($type == 'Year') {
 
-            $monthlyTotals = Appointment::CheckMultivendor()
-                ->join('appointment_transactions', 'appointments.id', '=', 'appointment_transactions.appointment_id') // Join with transaction table
-                ->leftJoin('patient_encounters', 'appointments.id', '=', 'patient_encounters.appointment_id') // Join with encounters
-                ->leftJoin('billing_record', 'patient_encounters.id', '=', 'billing_record.encounter_id') // Join with billing records
-                ->selectRaw('YEAR(appointments.start_date_time) as year')
-                ->selectRaw('MONTH(appointments.start_date_time) as month')
-                ->selectRaw('SUM(COALESCE(NULLIF(billing_record.final_total_amount, 0), appointment_transactions.total_amount)) as total_amount') // Use billing amount if exists, else transaction amount
-                ->where('appointments.status', 'checkout')
-                ->where(function($query) {
-                    $query->where('appointment_transactions.payment_status', 1)
-                          ->orWhere('billing_record.payment_status', 1);
-                })
-                ->groupByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time)')
-                ->orderByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time)')
+            $monthlyTotals = Appointment::CheckMultivendor()->selectRaw('YEAR(start_date_time) as year')
+                ->selectRaw('MONTH(start_date_time) as month')
+                ->selectRaw('SUM(total_amount) as total_amount')
+                ->where('status', 'checkout')
+                ->groupByRaw('YEAR(start_date_time), MONTH(start_date_time)')
+                ->orderByRaw('YEAR(start_date_time), MONTH(start_date_time)')
                 ->get();
 
 
@@ -835,20 +811,14 @@ class BackendController extends Controller
 
             $firstWeek = Carbon::now()->startOfMonth()->week;
 
-            $monthlyWeekTotals = Appointment::CheckMultivendor()
-                ->join('appointment_transactions', 'appointments.id', '=', 'appointment_transactions.appointment_id') // Join with transaction table
-                ->leftJoin('patient_encounters', 'appointments.id', '=', 'patient_encounters.appointment_id') // Join with encounters
-                ->leftJoin('billing_record', 'patient_encounters.id', '=', 'billing_record.encounter_id') // Join with billing records
-                ->selectRaw('YEAR(appointments.start_date_time) as year, MONTH(appointments.start_date_time) as month, WEEK(appointments.start_date_time) as week, COALESCE(SUM(COALESCE(NULLIF(billing_record.final_total_amount, 0), appointment_transactions.total_amount)), 0) as total_amount') // Use billing amount if exists
-                ->where('appointments.status', 'checkout')
-                ->where(function($query) {
-                    $query->where('appointment_transactions.payment_status', 1)
-                          ->orWhere('billing_record.payment_status', 1);
-                })
-                ->whereYear('appointments.start_date_time', $currentYear)
-                ->whereMonth('appointments.start_date_time', $currentMonth)
-                ->groupByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time), WEEK(appointments.start_date_time)')
-                ->orderByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time), WEEK(appointments.start_date_time)')
+            $monthlyWeekTotals = Appointment::CheckMultivendor()->selectRaw('YEAR(start_date_time) as year, MONTH(start_date_time) as month, WEEK(start_date_time) as week, COALESCE(SUM(total_amount), 0) as total_amount')
+                ->where('status', 'checkout')
+                ->whereYear('start_date_time', $currentYear)
+                ->whereMonth('start_date_time', $currentMonth)
+                ->groupBy('year', 'month', 'week')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->orderBy('week')
                 ->get();
 
             if (auth()->user()->hasRole('vendor')) {
@@ -859,8 +829,10 @@ class BackendController extends Controller
                     ->selectRaw('YEAR(appointments.start_date_time) as year, MONTH(appointments.start_date_time) as month, WEEK(appointments.start_date_time) as week, COALESCE(SUM(commission_earnings.commission_amount), 0) as total_amount')
                     ->whereYear('appointments.start_date_time', $currentYear)
                     ->whereMonth('appointments.start_date_time', $currentMonth)
-                    ->groupByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time), WEEK(appointments.start_date_time)')
-                    ->orderByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time), WEEK(appointments.start_date_time)')
+                    ->groupBy('year', 'month', 'week')
+                    ->orderBy('year')
+                    ->orderBy('month')
+                    ->orderBy('week')
                     ->get();
             }
 
@@ -890,21 +862,13 @@ class BackendController extends Controller
             $currentWeekStartDate = Carbon::now()->startOfWeek();
             $lastDayOfWeek = Carbon::now()->endOfWeek();
 
-            $weeklyDayTotals = Appointment::CheckMultivendor()
-                ->join('appointment_transactions', 'appointments.id', '=', 'appointment_transactions.appointment_id') // Join with transaction table
-                ->leftJoin('patient_encounters', 'appointments.id', '=', 'patient_encounters.appointment_id') // Join with encounters
-                ->leftJoin('billing_record', 'patient_encounters.id', '=', 'billing_record.encounter_id') // Join with billing records
-                ->selectRaw('DAY(appointments.start_date_time) as day, COALESCE(SUM(COALESCE(NULLIF(billing_record.final_total_amount, 0), appointment_transactions.total_amount)), 0) as total_amount') // Use billing amount if exists
-                ->where('appointments.status', 'checkout')
-                ->where(function($query) {
-                    $query->where('appointment_transactions.payment_status', 1)
-                          ->orWhere('billing_record.payment_status', 1);
-                })
-                ->whereYear('appointments.start_date_time', $currentYear)
-                ->whereMonth('appointments.start_date_time', $currentMonth)
-                ->whereBetween('appointments.start_date_time', [$currentWeekStartDate, $currentWeekStartDate->copy()->addDays(6)])
-                ->groupBy(DB::raw('DAY(appointments.start_date_time)'))
-                ->orderBy(DB::raw('DAY(appointments.start_date_time)'))
+            $weeklyDayTotals = Appointment::CheckMultivendor()->selectRaw('DAY(start_date_time) as day, COALESCE(SUM(total_amount), 0) as total_amount')
+                ->where('status', 'checkout')
+                ->whereYear('start_date_time', $currentYear)
+                ->whereMonth('start_date_time', $currentMonth)
+                ->whereBetween('start_date_time', [$currentWeekStartDate, $currentWeekStartDate->copy()->addDays(6)])
+                ->groupBy('day')
+                ->orderBy('day')
                 ->get();
 
             if (auth()->user()->hasRole('vendor')) {
@@ -917,8 +881,8 @@ class BackendController extends Controller
                     ->whereYear('appointments.start_date_time', $currentYear)
                     ->whereMonth('appointments.start_date_time', $currentMonth)
                     ->whereBetween('appointments.start_date_time', [$currentWeekStartDate, $currentWeekStartDate->copy()->addDays(6)])
-                    ->groupBy(DB::raw('DAY(appointments.start_date_time)'))
-                    ->orderBy(DB::raw('DAY(appointments.start_date_time)'))
+                    ->groupBy('day')
+                    ->orderBy('day')
                     ->get();
 
             }
@@ -945,115 +909,65 @@ class BackendController extends Controller
 
             $category = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
         } else {
-            // For custom date ranges, determine the best grouping based on range length
-            $startDateObj = \Carbon\Carbon::parse($startDate);
-            $endDateObj = \Carbon\Carbon::parse($endDate);
-            $daysDifference = $startDateObj->diffInDays($endDateObj);
-            
-            if ($daysDifference <= 7) {
-                // For ranges <= 7 days, show daily data
-                $monthlyTotals = Appointment::CheckMultivendor()
-                    ->join('appointment_transactions', 'appointments.id', '=', 'appointment_transactions.appointment_id') // Join with transaction table
-                    ->leftJoin('patient_encounters', 'appointments.id', '=', 'patient_encounters.appointment_id') // Join with encounters
-                    ->leftJoin('billing_record', 'patient_encounters.id', '=', 'billing_record.encounter_id') // Join with billing records
-                    ->selectRaw('DATE(appointments.start_date_time) as date')
-                    ->selectRaw('SUM(COALESCE(NULLIF(billing_record.final_total_amount, 0), appointment_transactions.total_amount)) as total_amount') // Use billing amount if exists
-                    ->where('appointments.status', 'checkout')
-                    ->where(function($query) {
-                        $query->where('appointment_transactions.payment_status', 1)
-                              ->orWhere('billing_record.payment_status', 1);
-                    })
-                    ->whereBetween('appointments.start_date_time', [$startDate, $endDate])
-                    ->groupBy(DB::raw('DATE(appointments.start_date_time)'))
-                    ->orderBy(DB::raw('DATE(appointments.start_date_time)'))
-                    ->get();
-            } else {
-                // For longer ranges, show monthly data
-                $monthlyTotals = Appointment::CheckMultivendor()
-                    ->join('appointment_transactions', 'appointments.id', '=', 'appointment_transactions.appointment_id') // Join with transaction table
-                    ->leftJoin('patient_encounters', 'appointments.id', '=', 'patient_encounters.appointment_id') // Join with encounters
-                    ->leftJoin('billing_record', 'patient_encounters.id', '=', 'billing_record.encounter_id') // Join with billing records
-                    ->selectRaw('YEAR(appointments.start_date_time) as year')
-                    ->selectRaw('MONTH(appointments.start_date_time) as month')
-                    ->selectRaw('SUM(COALESCE(NULLIF(billing_record.final_total_amount, 0), appointment_transactions.total_amount)) as total_amount') // Use billing amount if exists
-                    ->where('appointments.status', 'checkout')
-                    ->where(function($query) {
-                        $query->where('appointment_transactions.payment_status', 1)
-                              ->orWhere('billing_record.payment_status', 1);
-                    })
+            $monthlyTotals = Appointment::CheckMultivendor()->selectRaw('YEAR(start_date_time) as year')
+                ->selectRaw('MONTH(start_date_time) as month')
+                ->selectRaw('SUM(total_amount) as total_amount')
+                ->where('status', 'checkout')
+                ->whereBetween('start_date_time', [$startDate, $endDate])
+                ->groupByRaw('YEAR(start_date_time), MONTH(start_date_time)')
+                ->orderByRaw('YEAR(start_date_time), MONTH(start_date_time)')
+                ->get();
+
+            if (auth()->user()->hasRole('vendor')) {
+                $monthlyTotals = CommissionEarning::where('employee_id', $userid)
+                    ->where('commission_status', '!=', 'pending')
+                    ->join('appointments', 'commission_earnings.commissionable_id', '=', 'appointments.id')
+                    ->selectRaw('YEAR(appointments.start_date_time) as year, MONTH(appointments.start_date_time) as month, SUM(commission_earnings.commission_amount) as total_amount')
                     ->whereBetween('appointments.start_date_time', [$startDate, $endDate])
                     ->groupByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time)')
                     ->orderByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time)')
                     ->get();
             }
 
-            if (auth()->user()->hasRole('vendor')) {
-                if ($daysDifference <= 7) {
-                    // For ranges <= 7 days, show daily data
-                    $monthlyTotals = CommissionEarning::where('employee_id', $userid)
-                        ->where('commission_status', '!=', 'pending')
-                        ->join('appointments', 'commission_earnings.commissionable_id', '=', 'appointments.id')
-                        ->selectRaw('DATE(appointments.start_date_time) as date, SUM(commission_earnings.commission_amount) as total_amount')
-                        ->whereBetween('appointments.start_date_time', [$startDate, $endDate])
-                        ->groupBy(DB::raw('DATE(appointments.start_date_time)'))
-                        ->orderBy(DB::raw('DATE(appointments.start_date_time)'))
-                        ->get();
-                } else {
-                    // For longer ranges, show monthly data
-                    $monthlyTotals = CommissionEarning::where('employee_id', $userid)
-                        ->where('commission_status', '!=', 'pending')
-                        ->join('appointments', 'commission_earnings.commissionable_id', '=', 'appointments.id')
-                        ->selectRaw('YEAR(appointments.start_date_time) as year, MONTH(appointments.start_date_time) as month, SUM(commission_earnings.commission_amount) as total_amount')
-                        ->whereBetween('appointments.start_date_time', [$startDate, $endDate])
-                        ->groupByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time)')
-                        ->orderByRaw('YEAR(appointments.start_date_time), MONTH(appointments.start_date_time)')
-                        ->get();
-                }
-            }
-
             $chartData = [];
+
+            $startDateObj = \Carbon\Carbon::parse($startDate);
+            $endDateObj = \Carbon\Carbon::parse($endDate);
+
             $category = [];
 
-            if ($daysDifference <= 7) {
-                // Handle daily data
-                $currentDate = $startDateObj->copy();
-                while ($currentDate <= $endDateObj) {
-                    $dateStr = $currentDate->format('Y-m-d');
-                    $category[] = $currentDate->format('M d');
-                    
-                    $totalAmount = $monthlyTotals->where('date', $dateStr)->sum('total_amount');
+            if ($startDateObj->year == $endDateObj->year) {
+                $category = [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec"
+                ];
+
+                for ($month = 1; $month <= 12; $month++) {
+                    $totalAmount = $monthlyTotals->where('month', $month)->sum('total_amount');
                     $total_amount = (float) $totalAmount;
                     $chartData[] = round($total_amount, 2);
-                    
-                    $currentDate->addDay();
                 }
             } else {
-                // Handle monthly data
-                if ($startDateObj->year == $endDateObj->year) {
-                    // Same year - show months from start to end
-                    $monthStart = $startDateObj->month;
-                    $monthEnd = $endDateObj->month;
-                    
+                for ($year = $startDateObj->year; $year <= $endDateObj->year; $year++) {
+                    $monthStart = ($year == $startDateObj->year) ? $startDateObj->month : 1;
+                    $monthEnd = ($year == $endDateObj->year) ? $endDateObj->month : 12;
+
                     for ($month = $monthStart; $month <= $monthEnd; $month++) {
                         $category[] = date("M", mktime(0, 0, 0, $month, 1));
-                        
+
                         $totalAmount = $monthlyTotals->where('month', $month)->sum('total_amount');
                         $total_amount = (float) $totalAmount;
                         $chartData[] = round($total_amount, 2);
-                    }
-                } else {
-                    // Different years - show all months in range
-                    for ($year = $startDateObj->year; $year <= $endDateObj->year; $year++) {
-                        $monthStart = ($year == $startDateObj->year) ? $startDateObj->month : 1;
-                        $monthEnd = ($year == $endDateObj->year) ? $endDateObj->month : 12;
-
-                        for ($month = $monthStart; $month <= $monthEnd; $month++) {
-                            $category[] = date("M Y", mktime(0, 0, 0, $month, 1, $year));
-
-                            $totalAmount = $monthlyTotals->where('month', $month)->where('year', $year)->sum('total_amount');
-                            $total_amount = (float) $totalAmount;
-                            $chartData[] = round($total_amount, 2);
-                        }
                     }
                 }
             }
@@ -1125,7 +1039,7 @@ class BackendController extends Controller
                 $items = ClinicsService::CheckMultivendor()->select('id', 'name as text')->where('status', 1)->get();
                 break;
             case 'category':
-                $items = ClinicsCategory::select('id', 'name as text')->where('status', 1)->where('featured', 1)->get();
+                $items = ClinicsCategory::select('id', 'name as text')->where('status', 1)->get();
                 break;
             case 'clinic':
                 $items = Clinics::CheckMultivendor()->select('id', 'name as text')->where('status', 1)->get();

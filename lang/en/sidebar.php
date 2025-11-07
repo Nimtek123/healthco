@@ -92,7 +92,6 @@ return [
     'user' => 'Users',
     'encounter' => 'Encounter',
     'patient' =>'Patient',
-
     'billing_record' => 'Billing record',
     'doctor_earning' => 'Doctor Earning',
     'vendor_earning' => 'Clinic Admin Earning',
@@ -103,6 +102,4 @@ return [
 
     'blog'=> 'Blog',
     'frontend_setting'=>'Frontend Setting',
-    'id' =>'Id',
-    'appoitment_id' =>'Appointment Id',
 ];

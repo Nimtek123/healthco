@@ -9,6 +9,8 @@
   width: 980px;
   height: 100%;
   margin: auto;
+  /* Lists (Nested) */
+  /* Definition Lists */
 }
 .booking-wizard .bs-bg-primary {
   background-color: var(--bs-primary) !important;
@@ -240,9 +242,6 @@
   display: block;
   color: #0d1e67;
 }
-.booking-wizard {
-  /* Lists (Nested) */
-}
 .booking-wizard ol, .booking-wizard ul {
   padding-left: 25px;
   margin-bottom: 1em;
@@ -255,9 +254,6 @@
 }
 .booking-wizard ul li {
   list-style: inherit;
-}
-.booking-wizard {
-  /* Definition Lists */
 }
 .booking-wizard dl dd {
   margin-bottom: 15px;
@@ -512,13 +508,11 @@
   list-style: none;
   position: relative;
   transition: opacity 400ms ease-in-out;
+  cursor: pointer;
 }
 .booking-wizard .widget-tabs .tab-item:not(.active) {
   opacity: 0.8;
   transition: opacity 400ms ease-in-out;
-}
-.booking-wizard .widget-tabs .tab-item {
-  cursor: pointer;
 }
 .booking-wizard .widget-tabs .tab-item::before {
   content: "";

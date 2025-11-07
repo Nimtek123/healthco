@@ -28,7 +28,6 @@ class CheckHeaderMenuSettings
             'clinics' => 'clinics',
             'doctors' => 'doctors',
             'appointment-list' => 'appointments',
-            'incidence' => 'incidence',
         ];
 
         $currentRoute = $request->route()->getName();

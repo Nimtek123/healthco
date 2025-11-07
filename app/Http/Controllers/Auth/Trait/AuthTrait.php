@@ -26,17 +26,17 @@ trait AuthTrait
     {
         $credentials = $request->only('email', 'password');
         $remember = $request->filled('remember_me');
-
+    
         if (Auth::attempt($credentials + ['status' => 1], $remember)) {
             $user = auth()->user();
-
+    
             if ($user->roles()->count() == 1) {
                 if (multiVendor() == "0") {
                     if ($user->hasRole('vendor') || $user->hasRole('doctor') || $user->hasRole('receptionist')) {
                         $role =  $user->user_type;
                         if ($role == 'vendor' || ($role == 'doctor' && optional($user->doctor)->vendor->user_type == 'vendor') || ($role == 'receptionist' && optional($user->receptionist)->vendor->user_type == 'vendor')) {
                             Auth::logout();
-
+        
                             return ['status' => 406, 'message' => __('messages.account_deactivated')];
                         }
                     }
@@ -52,19 +52,19 @@ trait AuthTrait
 
                     }
 
-                }
+                } 
                 if($user->hasRole('user')){
-
+                    
                         Auth::logout();
                        return ['status' => 406, 'message' => 'Unauthorized role & The provided credentials do not match our records'];
-                }
+                } 
 
                 event(new UserLoginSuccess($request, auth()->user()));
 
                 return ['status' => 200, 'message' => 'Login successful!'];
             }
         }
-
+    
         return ['status' => 401, 'error' => __('auth.failed')];
     }
 
@@ -76,16 +76,15 @@ trait AuthTrait
             'last_name' => ['required', 'string', 'max:191'],
             'email' => ['required', 'string', 'email', 'max:191', 'unique:users'],
             'password' => ['required', Rules\Password::defaults()],
-            'mobile' => ['required', 'string', 'max:15', 'unique:users'],
         ]);
 
-
+       
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
                 'errors' => $validator->errors(),
-                'message' => $validator->errors()->first(),
+                'message' => 'Validation failed'
             ], 422);
         }
         // $emailExists = User::where('email', $request->email)->exists();
@@ -98,13 +97,11 @@ trait AuthTrait
             'name' => $request->first_name . ' ' . $request->last_name,
             'email' => $request->email,
             'mobile' => $request->mobile,
-            'gender' => $request->gender,
             'address' => $request->address,
             'password' => Hash::make($request->password),
-            'user_type' => $request->user_type,
-            'date_of_birth' => $request->date_of_birth,
+            'user_type' => $request->user_type
         ];
-
+        
         if (isset($model)) {
             $user = $model::create($arr);
         } else {
@@ -118,7 +115,7 @@ trait AuthTrait
 
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
 
-        $user->save();
+        $user->save();         
 
         if($user->user_type == 'user'){
 
@@ -157,12 +154,12 @@ trait AuthTrait
             $vendor_id = $clinic_data->vendor_id;
 
             if ($usertype == "doctor") {
-
+        
                 $data = [
                     'clinic_id' => $request->clinic_id,
                     'doctor_id' => $user->id,
                 ];
-
+        
                 DoctorClinicMapping::updateOrCreate(
                     [
                         'clinic_id' => $request->clinic_id,
@@ -170,7 +167,7 @@ trait AuthTrait
                     ],
                     $data
                 );
-
+        
                 foreach ($days as $key => $val) {
 
                     $val['clinic_id'] = $request->clinic_id;
@@ -179,12 +176,12 @@ trait AuthTrait
                     DoctorSession::create($val);
                 }
                 if($clinic_data) {
-
+            
                     $doctor_data = [
                         'vendor_id' => $vendor_id,
                         'doctor_id' => $user->id, // Corrected typo from $usre_id to $user->id
                     ];
-
+        
                     Doctor::updateOrCreate(
                         [
                             'doctor_id' => $user->id,
@@ -203,7 +200,7 @@ trait AuthTrait
                     'receptionist_id'=>$user->id,
                     'vendor_id'=>$vendor_id,
 
-                ];
+                ];   
 
                 Receptionist::updateOrCreate(
                     [
@@ -214,9 +211,9 @@ trait AuthTrait
 
 
             }
-
+            
         }
-
+        
 
         \Illuminate\Support\Facades\Artisan::call('view:clear');
         \Illuminate\Support\Facades\Artisan::call('cache:clear');
@@ -231,7 +228,7 @@ trait AuthTrait
     }
 
     /**
-     * generate google authenticator qr code
+     * generate google authenticator qr code 
      * @param $userData
      */
     protected function multiFactorAuth($userData)
@@ -251,6 +248,6 @@ trait AuthTrait
 
 
         return $QR_Image;
-
+        
     }
 }

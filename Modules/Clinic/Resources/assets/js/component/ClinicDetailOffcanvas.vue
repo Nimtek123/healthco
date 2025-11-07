@@ -10,17 +10,17 @@
                     <div class="pt-2">
                         <h4>{{ clinic.name }}</h4>
                         <div class="d-flex gap-5">
-                            <p class="d-flex align-items-center gap-2"><i class="ph ph-envelope heading-color"></i><span class="text-secondary border-bottom border-secondary">{{clinic.email }}</span></p>
-                            <p class="d-flex align-items-center gap-2"><i class="ph ph-phone heading-color"></i><span class="text-primary border-bottom border-primary">{{ clinic.contact_number }}</span></p>
+                            <p class="d-flex align-items-center gap-2"><i class="ph ph-envelope text-dark"></i><span class="text-secondary border-bottom border-secondary">{{clinic.email }}</span></p>
+                            <p class="d-flex align-items-center gap-2"><i class="ph ph-phone text-dark"></i><span class="text-primary border-bottom border-primary">{{ clinic.contact_number }}</span></p>
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <p class="d-flex align-items-center gap-2"><i class="ph ph-map-pin heading-color"></i>{{clinic.address }}</p>
+                            <p class="d-flex align-items-center gap-2"><i class="ph ph-map-pin text-dark"></i>{{clinic.address }}</p>
                         </div>
                         <div class="d-flex gap-5">
-                            <p class="m-0">{{ $t('clinic.lbl_postal_code') }}: <span class="heading-color">{{ clinic.pincode }}</span></p>
-                            <p class="m-0">{{ $t('clinic.lbl_city') }}: <span class="heading-color">{{clinic.city }}</span></p>
-                            <p class="m-0">{{ $t('clinic.lbl_state') }}: <span class="heading-color">{{clinic.state }}</span></p>
-                            <p class="m-0">{{ $t('clinic.lbl_country') }}: <span class="heading-color">{{clinic.country }}</span></p>
+                            <p class="m-0">{{ $t('clinic.lbl_postal_code') }}: <span class="text-dark">{{ clinic.pincode }}</span></p>
+                            <p class="m-0">{{ $t('clinic.lbl_city') }}: <span class="text-dark">{{clinic.city }}</span></p>
+                            <p class="m-0">{{ $t('clinic.lbl_state') }}: <span class="text-dark">{{clinic.state }}</span></p>
+                            <p class="m-0">{{ $t('clinic.lbl_country') }}: <span class="text-dark">{{clinic.country }}</span></p>
                         </div>
                     </div>
             </div>
@@ -31,8 +31,8 @@
                  </div>
                  </div>
                  <div class="d-flex gap-5">
-                    <p class="m-0">{{ $t('clinic.speciality') }}: <span class="heading-color">{{ clinic.system_service_category }}</span></p>
-                    <p class="m-0" v-if="clinic.time_slot">{{ $t('clinic.time_slot') }}: <span class="heading-color">{{ clinic.time_slot }} Min.</span></p>
+                    <p class="m-0">{{ $t('clinic.speciality') }}: <span class="text-dark">{{ clinic.system_service_category }}</span></p>
+                    <p class="m-0" v-if="clinic.time_slot">{{ $t('clinic.time_slot') }}: <span class="text-dark">{{ clinic.time_slot }} Min.</span></p>
                  </div>
             </div>
           </div>
@@ -45,7 +45,7 @@
                     <div v-for='openDay in clinicSessions.open_days' :key="openDay.day">
                         <p class="d-flex justify-content-between gap-3 border-bottom pb-3 mb-3">
                             <span>{{ formatDayRange(openDay.day) }}</span>
-                            <span v-if="openDay.start_time && openDay.end_time" class="text-end heading-color">
+                            <span v-if="openDay.start_time && openDay.end_time" class="text-end text-dark">
                                 {{ formatTime(openDay.start_time) }} - {{ formatTime(openDay.end_time) }}
                                 <!-- Add breaks display -->
                                 <template v-if="openDay.breaks && openDay.breaks.length">

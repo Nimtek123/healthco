@@ -25,12 +25,10 @@
                     <div class="p-3 section-bg rounded">
                         @foreach ($clinic->clinicsessions as $session)
                             @if ($session->is_holiday)
-                             <div class="clinic-sessions-box">
                                 <div class="d-flex justify-content-between align-items-center gap-2">
                                     <p class="m-0 clinic-sessions-day">{{ ucfirst($session->day) }}:</p>
-                                    <span class="clinic-sessions-time fw-medium text-heading">{{ __('frontend.unavailable') }}</span>
+                                    <span class="clinic-sessions-time fw-medium">{{ __('frontend.unavailable') }}</span>
                                 </div>
-                             </div>
                             @else
                                 <div class="clinic-sessions-box">
                                     <div class="d-flex justify-content-between align-items-center gap-2">
@@ -42,7 +40,6 @@
                                     </div>
                                     @if ($session->breaks)
                                         @foreach ($session->breaks as $break)
-                                         <div class="clinic-sessions-box">
                                             <div class="d-flex justify-content-between align-items-center gap-2">
                                                 <p class="m-0 clinic-sessions-day">Break:</p>
                                                 <span class="clinic-sessions-time break fw-medium">
@@ -51,7 +48,6 @@
                                                     {{ \Carbon\Carbon::parse($break['end_break'])->format('h:i A') }}
                                                 </span>
                                             </div>
-                                         </div>
                                         @endforeach
                                     @endif
                                 </div>
@@ -246,32 +242,8 @@
                     <div class="tab-pane p-0 " id="service-clinic">
                         <div class="row gy-4 row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3">
                             @foreach ($clinic->clinicservices->take(6) as $clinicservice)
-                                @php
-                                    $service = $clinicservice->service;
-                                    
-                                    if ($service && $service->discount) {
-                                        // Calculate discount
-                                        $discount_amount = 0;
-                                        if ($service->discount_type === 'percentage') {
-                                            $discount_amount = $service->charges * $service->discount_value / 100;
-                                        } else {
-                                            $discount_amount = $service->discount_value;
-                                        }
-                                        $discounted_price = $service->charges - $discount_amount;
-                                        
-                                        // Calculate inclusive tax on discounted price
-                                        $inclusive_tax = 0;
-                                        if ($service->is_inclusive_tax && $service->inclusive_tax_price > 0) {
-                                            $tax_percent = $service->charges > 0 ? ($service->inclusive_tax_price / $service->charges) * 100 : 0;
-                                            $inclusive_tax = round($discounted_price * $tax_percent / 100, 2);
-                                        }
-                                        
-                                        // Set the final payable amount
-                                        $service->payable_amount = $discounted_price + $inclusive_tax;
-                                    }
-                                @endphp
                                 <div class="col">
-                                    <x-frontend::card.service_card :service="$service" />
+                                    <x-frontend::card.service_card :service="$clinicservice->service" />
                                 </div>
                             @endforeach
                         </div>

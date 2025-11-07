@@ -44,7 +44,7 @@ class IncidenceController extends Controller
         $reqdata['created_by'] = Auth::user()->id;
         $reqdata['incident_date'] = date('Y-m-d');
 
-        $reqdata['phone'] = $reqdata['country_code'] . ' ' . $reqdata['phone'];
+        $reqdata['phone'] = $reqdata['country_code'] . $reqdata['phone'];
         $data = Incidence::create($reqdata);
         if ($request->hasFile('file_url')) {
             storeMediaFile($data, $request->file('file_url'));

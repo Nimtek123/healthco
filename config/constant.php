@@ -145,26 +145,26 @@ return [
             'module_name' => 'Permission',
             'is_custom_permission' => 0,
         ],
-        // [
-        //     'module_name' => 'Vital',
-        //     'is_custom_permission' => 0,
-        // ],
-        // [
-        //     'module_name' => 'Subscription',
-        //     'is_custom_permission' => 0,
-        // ],
-        // [
-        //     'module_name' => 'My Account',
-        //     'is_custom_permission' => 0,
-        // ],
-        // [
-        //     'module_name' => 'Subscription List',
-        //     'is_custom_permission' => 0,
-        // ],
-        // [
-        //     'module_name' => 'Plan List',
-        //     'is_custom_permission' => 0,
-        // ],
+        [
+            'module_name' => 'Vital',
+            'is_custom_permission' => 0,
+        ],
+        [
+            'module_name' => 'Subscription',
+            'is_custom_permission' => 0,
+        ],
+        [
+            'module_name' => 'My Account',
+            'is_custom_permission' => 0,
+        ],
+        [
+            'module_name' => 'Subscription List',
+            'is_custom_permission' => 0,
+        ],
+        [
+            'module_name' => 'Plan List',
+            'is_custom_permission' => 0,
+        ],
         [
             'module_name' => 'Request Service',
             'is_custom_permission' => 0,

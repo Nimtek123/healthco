@@ -39,8 +39,6 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
       Route::get('index_list', [RequestServicesController::class, 'index_list'])->name('index_list');
       Route::get('index_data', [RequestServicesController::class, 'index_data'])->name('index_data');
       Route::post('update-status/{id}', [RequestServicesController::class, 'update_status'])->name('update_status');
-      Route::post('approve/{id}', [RequestServicesController::class, 'approve'])->name('approve');
-      Route::post('decline/{id}', [RequestServicesController::class, 'decline'])->name('decline');
     });
     Route::resource('requestservices', RequestServicesController::class);
     Route::get('datatable_view', [RequestServicesController::class, 'datatable_view'])->name('datatable_view');

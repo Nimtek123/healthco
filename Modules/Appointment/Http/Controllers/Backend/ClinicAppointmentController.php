@@ -4,10 +4,11 @@ namespace Modules\Appointment\Http\Controllers\Backend;
 
 use App\Authorizable;
 use App\Http\Controllers\Controller;
+use App\Models\Clinic;
+use Modules\Clinic\Models\Clinics;
 use App\Models\BodyChartSetting;
 use Illuminate\Http\RedirectResponse;
 use App\Models\User;
- 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Modules\Appointment\Models\AppointmentPatientBodychart;
@@ -21,7 +22,6 @@ use Modules\Appointment\Models\AppointmentTransaction;
 use Modules\Appointment\Models\AppointmentPatientRecord;
 use Modules\Commission\Models\CommissionEarning;
 use Modules\Clinic\Models\ClinicsService;
-use Modules\Clinic\Models\Clinics;
 use Modules\Constant\Models\Constant;
 use PDF;
 use Illuminate\Support\Facades\Storage;
@@ -72,8 +72,6 @@ class ClinicAppointmentController extends Controller
         $doctor = Doctor::SetRole(auth()->user())->where('status', 1)->with('user')->get();
         $customefield = CustomField::exportCustomFields(new Appointment());
         $service = ClinicsService::SetRole(auth()->user())->where('status', 1)->get();
-        $customer = User::where('user_type', 'user')->get();  
-        $clinic = Clinics::all();
         $userId = auth()->id();
 
         $user_id = null;
@@ -171,7 +169,7 @@ class ClinicAppointmentController extends Controller
 
         $import_url = route('backend.appointments.import');
         $export_url = route('backend.appointments.export');
-        return view('appointment::backend.clinic_appointment.index_datatable', compact('service','customer','clinic', 'module_action', 'filter', 'columns', 'customefield', 'export_import', 'export_columns', 'import_columns', 'export_url', 'import_url', 'export_doctor_id', 'doctor', 'user_id', 'doctor_id', 'clinic_id', 'patients'));
+        return view('appointment::backend.clinic_appointment.index_datatable', compact('service', 'module_action', 'filter', 'columns', 'customefield', 'export_import', 'export_columns', 'import_columns', 'export_url', 'import_url', 'export_doctor_id', 'doctor', 'user_id', 'doctor_id', 'clinic_id', 'patients'));
     }
     public function bulk_action(Request $request)
     {
@@ -203,7 +201,7 @@ class ClinicAppointmentController extends Controller
     {
         $module_name = $this->module_name;
         $userId = auth()->id();
-        $query = Appointment::SetRole(auth()->user())->with('payment', 'commissionsdata', 'patientEncounter', 'cliniccenter', 'doctor');
+        $query = Appointment::SetRole(auth()->user())->with('payment', 'commissionsdata', 'patientEncounter', 'cliniccenter');
 
         $customform = CustomForm::where('module_type', 'appointment_module')
             ->where('status', 1)
@@ -317,36 +315,22 @@ class ClinicAppointmentController extends Controller
             ->editColumn('user_id', function ($data) {
                 return view('appointment::backend.clinic_appointment.user_id', compact('data'));
             })
-            ->filterColumn('user_id', function ($query, $keyword) {
-                $query->whereHas('user', function ($q) use ($keyword) {
-                    $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$keyword%"])
-                      ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%$keyword%"])
-                      ->orWhere('first_name', 'LIKE', "%$keyword%")
-                      ->orWhere('last_name', 'LIKE', "%$keyword%");
-                });
-            })
-            ->orderColumn('user_id', function ($query, $order) {
-                $query->leftJoin('users as patient_users', 'appointments.user_id', '=', 'patient_users.id')
-                    ->orderByRaw("CONCAT(patient_users.first_name, ' ', patient_users.last_name) $order");
-            }, 1)
             ->editColumn('start_date_time', function ($data) {
-                $timezone = Setting::where('name', 'default_time_zone')->value('val') ?? 'UTC';
+                // $timezone = Setting::where('name', 'default_time_zone')->value('val') ?? 'UTC';
 
-                $dateSetting = Setting::where('name', 'date_formate')->first();
-                $dateformate = $dateSetting ? $dateSetting->val : 'Y-m-d';
-                $timeSetting = Setting::where('name', 'time_formate')->first();
-                $timeformate = $timeSetting ? $timeSetting->val : 'h:i A';
-                
-                $combinedFormat = $dateformate . ' ' . $timeformate;
-                
-                // $date = Carbon::parse($data->start_date_time)
-                // ->timezone($timezone)
-                // ->format($combinedFormat);
-                $date = Carbon::parse($data->start_date_time)
-                ->format($combinedFormat);
-                
-                // dd($date);
-                return $date;
+                // $dateSetting = Setting::where('name', 'date_formate')->first();
+                // $dateformate = $dateSetting ? $dateSetting->val : 'Y-m-d';
+
+                // $timeSetting = Setting::where('name', 'time_formate')->first();
+                // $timeformate = $timeSetting ? $timeSetting->val : 'h:i A';
+
+                // $combinedFormat = $dateformate . ' ' . $timeformate;
+
+                //     $date = Carbon::parse($data->start_date_time)
+                //     ->timezone($timezone)
+                //     ->format($combinedFormat);
+
+                return $data->start_date_time;
             })
             ->editColumn('services', function ($data) {
                 if ($data->clinicservice) {
@@ -377,7 +361,6 @@ class ClinicAppointmentController extends Controller
                 }
                 return '<span>' . \Currency::format($total_amount) . '</span>';
             })
-            
             ->editColumn('doctor_id', function ($data) {
                 // $doctor_id = $data->doctor_id;
                 // $doctor = User::find($doctor_id);
@@ -390,17 +373,9 @@ class ClinicAppointmentController extends Controller
                 //     return '-';
                 // }
             })
-            ->filterColumn('doctor_id', function ($query, $keyword) {
-                $query->whereHas('doctor', function ($q) use ($keyword) {
-                    $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$keyword%"])
-                      ->orWhereRaw("CONCAT(last_name, ' ', first_name) LIKE ?", ["%$keyword%"])
-                      ->orWhere('first_name', 'LIKE', "%$keyword%")
-                      ->orWhere('last_name', 'LIKE', "%$keyword%");
-                });
-            })
             ->orderColumn('doctor_id', function ($query, $order) {
-                $query->leftJoin('users as doctor_users', 'appointments.doctor_id', '=', 'doctor_users.id')
-                    ->orderByRaw("CONCAT(doctor_users.first_name, ' ', doctor_users.last_name) $order");
+                $query->join('users', 'appointments.doctor_id', '=', 'users.id')
+                    ->orderByRaw("CONCAT(users.first_name, ' ', users.last_name) $order");
             }, 1)
             ->editColumn('payment_status', function ($data) use ($payment_status) {
 
@@ -416,9 +391,9 @@ class ClinicAppointmentController extends Controller
             })
 
             ->editColumn('status', function ($data) use ($status) {
-                return view('appointment::backend.appointment.datatable.select_status', compact('data', 'status'))->render();
+                return view('appointment::backend.appointment.datatable.select_status', compact('data', 'status'));
             })
-            
+
             ->editColumn('updated_at', function ($data) {
                 // $setting = Setting::where('name', 'date_formate')->first();
                 // $dateformate = $setting ? $setting->val : 'Y-m-d';
@@ -832,7 +807,6 @@ class ClinicAppointmentController extends Controller
     {
         $module_title = "Appointment";
         $appointment = Appointment::with('user', 'doctor', 'otherPatient', 'clinicservice', 'appointmenttransaction', 'cliniccenter', 'media', 'patientEncounter.billingrecord')->findOrFail($id);
-        // dd($appointment);
         $setting = Setting::where('name', 'date_formate')->first();
         $dateformate = $setting ? $setting->val : 'Y-m-d';
         $setting = Setting::where('name', 'time_formate')->first();
@@ -841,8 +815,8 @@ class ClinicAppointmentController extends Controller
         $timeZone = $setting ? $setting->val : 'h:i A';
 
 
- 
-        return view('appointment::backend.clinic_appointment.appointment_detail', compact('appointment','dateformate', 'timeformate', 'timeZone'));
+
+        return view('appointment::backend.clinic_appointment.appointment_detail', compact('appointment', 'module_title', 'dateformate', 'timeformate', 'timeZone'));
     }
 
     public function bodychart_datatable(Request $request, $id)
@@ -850,7 +824,7 @@ class ClinicAppointmentController extends Controller
 
         $query = AppointmentPatientBodychart::query()->where('encounter_id', $id)->with('patient_encounter');
 
-        // $query->orderBy('created_at', 'desc');
+        $query->orderBy('created_at', 'desc');
         return Datatables::of($query)
             ->addColumn('check', function ($data) {
                 return '<input type="checkbox" class="form-check-input select-table-row"  id="datatable-row-' . $data->id . '"  name="datatable_ids[]" value="' . $data->id . '" onclick="dataTableRowCheck(' . $data->id . ')">';
@@ -988,74 +962,12 @@ class ClinicAppointmentController extends Controller
     {
         $id = $request->id;
         $module_action = __('appointment.invoice_detail');
-        $appointments = Appointment::with('user', 'doctor', 'clinicservice', 'cliniccenter', 'appointmenttransaction', 'patientEncounter.billingrecord.billingItem.clinicservice')
+        $appointments = Appointment::with('user', 'doctor', 'clinicservice', 'cliniccenter', 'appointmenttransaction', 'patientEncounter.billingrecord')
             ->where('id', $id)
             ->where('status', 'checkout')
             ->whereHas('appointmenttransaction', function ($query) {
                 $query->where('payment_status', 1);
             })->get();
-        
-        // Calculate totals for each appointment
-        $appointments->each(function ($appointment) {
-            if ($appointment->patientEncounter && $appointment->patientEncounter->billingrecord) {
-                $billingRecord = $appointment->patientEncounter->billingrecord;
-                
-                // Calculate service total from billing items (using pre-calculated total_amount from DB)
-                $service_total_amount = 0;
-                $total_inclusive_tax = 0;
-                
-                if ($billingRecord->billingItem) {
-                    foreach ($billingRecord->billingItem as $item) {
-                        $service_total_amount += $item->total_amount ?? 0;
-                        $total_inclusive_tax += $item->inclusive_tax_amount ?? 0;
-                    }
-                }
-                
-                // Calculate discount amount
-                $discount_amount = 0;
-                if ($billingRecord->final_discount == 1) {
-                    if ($billingRecord->final_discount_type == 'percentage') {
-                        $discount_amount = $service_total_amount * ($billingRecord->final_discount_value / 100);
-                    } else {
-                        $discount_amount = $billingRecord->final_discount_value ?? 0;
-                    }
-                }
-                
-                // Calculate tax from tax_percentage JSON
-                $total_tax = 0;
-                if ($appointment->appointmenttransaction && $appointment->appointmenttransaction->tax_percentage) {
-                    $taxData = json_decode($appointment->appointmenttransaction->tax_percentage, true);
-                    if (is_array($taxData)) {
-                        $sub_total = $service_total_amount - $discount_amount;
-                        foreach ($taxData as $tax) {
-                            // Skip inclusive taxes as they're already in billing items
-                            if (isset($tax['tax_type']) && $tax['tax_type'] === 'inclusive') {
-                                continue;
-                            }
-                            if (isset($tax['tax_scope']) && $tax['tax_scope'] === 'inclusive') {
-                                continue;
-                            }
-                            
-                            if ($tax['type'] === 'fixed') {
-                                $total_tax += $tax['value'];
-                            } elseif ($tax['type'] === 'percent') {
-                                $total_tax += ($sub_total * $tax['value']) / 100;
-                            }
-                        }
-                    }
-                }
-                
-                // Store calculated values as attributes
-                $appointment->calculated_service_total = $service_total_amount;
-                $appointment->calculated_total_inclusive_tax = $total_inclusive_tax;
-                $appointment->calculated_discount_amount = $discount_amount;
-                $appointment->calculated_total_tax = $total_tax;
-                $appointment->calculated_sub_total = $service_total_amount - $discount_amount;
-                $appointment->calculated_grand_total = $service_total_amount + $total_tax - $discount_amount;
-                $appointment->calculated_remaining_amount = $appointment->calculated_grand_total - ($appointment->advance_paid_amount ?? 0);
-            }
-        });
-        
         $data = $appointments->toArray();
         return view('appointment::backend.clinic_appointment.invoice_detail', compact('module_action', 'data'));
     }
@@ -1194,236 +1106,5 @@ class ClinicAppointmentController extends Controller
             default:
                 return response()->json(['error' => 'Invalid file type'], 400);
         }
-    }
-
-    /**
-     * Common function to fetch lists for different entities
-     * Used by new appointment form and other components
-     */
-    public function fetchList(Request $request, $type)
-    {
-        $term = trim($request->q ?? '');
-        $clinicId = $request->clinic_id;
-        $doctorId = $request->doctor_id;
-        $serviceId = $request->service_id;
-
-        try {
-            switch ($type) {
-                case 'doctor':
-                    return $this->fetchDoctorList($term, $clinicId);
-                
-                case 'service':
-                case 'services':
-                    return $this->fetchServiceList($term, $doctorId, $clinicId);
-                
-                case 'clinic':
-                case 'clinics':
-                    return $this->fetchClinicList($term);
-                
-                case 'customer':
-                case 'customers':
-                case 'patient':
-                case 'patients':
-                    return $this->fetchCustomerList($term);
-                
-                case 'tax':
-                case 'taxes':
-                    return $this->fetchTaxList($term);
-                
-                case 'appointment':
-                case 'appointments':
-                    return $this->fetchAppointmentList($term);
-                
-                default:
-                    return response()->json(['error' => 'Invalid list type'], 400);
-            }
-        } catch (\Exception $e) {
-            Log::error("Error fetching {$type} list: " . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch data'], 500);
-        }
-    }
-
-    /**
-     * Fetch doctor list based on clinic
-     */
-    private function fetchDoctorList($term = '', $clinicId = null)
-    {
-        $query = Doctor::with('user')
-            ->where('status', 1)
-            ->whereHas('user', function ($q) {
-                $q->where('status', 1);
-            });
-
-        if ($clinicId) {
-            $query->where('clinic_id', $clinicId);
-        }
-
-        if (!empty($term)) {
-            $query->whereHas('user', function ($q) use ($term) {
-                $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$term%"]);
-            });
-        }
-
-        $doctors = $query->limit(20)->get();
-
-        $data = [];
-        foreach ($doctors as $doctor) {
-            $data[] = [
-                'doctor_id' => $doctor->id,
-                'doctor_name' => $doctor->user->first_name . ' ' . $doctor->user->last_name,
-                'id' => $doctor->id,
-                'text' => $doctor->user->first_name . ' ' . $doctor->user->last_name,
-            ];
-        }
-
-        return response()->json($data);
-    }
-
-    /**
-     * Fetch service list based on doctor and clinic
-     */
-    private function fetchServiceList($term = '', $doctorId = null, $clinicId = null)
-    {
-        $query = ClinicsService::where('status', 1);
-
-        if ($clinicId) {
-            $query->where('clinic_id', $clinicId);
-        }
-
-        if ($doctorId) {
-            $query->whereHas('doctorServices', function ($q) use ($doctorId) {
-                $q->where('doctor_id', $doctorId);
-            });
-        }
-
-        if (!empty($term)) {
-            $query->where('name', 'LIKE', "%$term%");
-        }
-
-        $services = $query->limit(20)->get();
-
-        $data = [];
-        foreach ($services as $service) {
-            $data[] = [
-                'service_id' => $service->id,
-                'service_name' => $service->name,
-                'service_price' => $service->price,
-                'id' => $service->id,
-                'text' => $service->name . ' - ' . \Currency::format($service->price),
-            ];
-        }
-
-        return response()->json($data);
-    }
-
-    /**
-     * Fetch clinic list
-     */
-    private function fetchClinicList($term = '')
-    {
-        $query = Clinics::where('status', 1);
-
-        if (!empty($term)) {
-            $query->where('name', 'LIKE', "%$term%");
-        }
-
-        $clinics = $query->limit(20)->get();
-
-        $data = [];
-        foreach ($clinics as $clinic) {
-            $data[] = [
-                'clinic_id' => $clinic->id,
-                'clinic_name' => $clinic->name,
-                'id' => $clinic->id,
-                'text' => $clinic->name,
-            ];
-        }
-
-        return response()->json($data);
-    }
-
-    /**
-     * Fetch customer/patient list
-     */
-    private function fetchCustomerList($term = '')
-    {
-        $query = User::where('user_type', 'user')
-            ->where('status', 1)
-            ->setRolePatients(auth()->user());
-
-        if (!empty($term)) {
-            $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$term%"]);
-        }
-
-        $customers = $query->limit(20)->get();
-
-        $data = [];
-        foreach ($customers as $customer) {
-            $data[] = [
-                'customer_id' => $customer->id,
-                'customer_name' => $customer->first_name . ' ' . $customer->last_name,
-                'id' => $customer->id,
-                'text' => $customer->first_name . ' ' . $customer->last_name,
-            ];
-        }
-
-        return response()->json($data);
-    }
-
-    /**
-     * Fetch tax list
-     */
-    private function fetchTaxList($term = '')
-    {
-        $query = \Modules\Tax\Models\Tax::where('status', 1);
-
-        if (!empty($term)) {
-            $query->where('name', 'LIKE', "%$term%");
-        }
-
-        $taxes = $query->limit(20)->get();
-
-        $data = [];
-        foreach ($taxes as $tax) {
-            $data[] = [
-                'tax_id' => $tax->id,
-                'tax_name' => $tax->name,
-                'tax_percentage' => $tax->percentage,
-                'id' => $tax->id,
-                'text' => $tax->name . ' (' . $tax->percentage . '%)',
-            ];
-        }
-
-        return response()->json($data);
-    }
-
-    /**
-     * Fetch appointment list
-     */
-    private function fetchAppointmentList($term = '')
-    {
-        $query = Appointment::SetRole(auth()->user())
-            ->with('user', 'clinicservice');
-
-        if (!empty($term)) {
-            $query->whereHas('user', function ($q) use ($term) {
-                $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$term%"]);
-            });
-        }
-
-        $appointments = $query->limit(20)->get();
-
-        $data = [];
-        foreach ($appointments as $appointment) {
-            $data[] = [
-                'appointment_id' => $appointment->id,
-                'appointment_name' => $appointment->user->first_name . ' ' . $appointment->user->last_name,
-                'service_name' => optional($appointment->clinicservice)->name,
-                'id' => $appointment->id,
-                'text' => $appointment->user->first_name . ' ' . $appointment->user->last_name . ' - ' . optional($appointment->clinicservice)->name,
-            ];
-        }
-
-        return response()->json($data);
     }
 }

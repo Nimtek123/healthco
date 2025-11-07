@@ -23,15 +23,4 @@ class Blog extends BaseModel
         return $this->belongsTo('App\Models\User','author_id','id')->withTrashed();
     }
 
-    protected static function booted()
-    {
-        static::deleting(function (Blog $blog) {
-            // Ensure status is disabled when blog is soft-deleted
-            if ($blog->status !== 0) {
-                $blog->status = 0;
-                $blog->saveQuietly();
-            }
-        });
-    }
-
 }

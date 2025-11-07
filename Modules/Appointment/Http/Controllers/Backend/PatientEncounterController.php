@@ -120,7 +120,7 @@ class PatientEncounterController extends Controller
     {
         $query_data = PatientEncounter::SetRole(auth()->user())->with('appointment');
 
-        $query_data = $query_data->where('status',1)->orderBy('appointment_id', 'desc')->get();
+        $query_data = $query_data->where('status',1)->get();
 
         $data = [];
 
@@ -174,8 +174,8 @@ class PatientEncounterController extends Controller
         $query = PatientEncounter::SetRole(auth()->user());
 
         $customform = CustomForm::where('module_type', 'patient_encounter_module')
-            ->where('status', 1)
-            ->get();
+                    ->where('status', 1)
+                    ->get();
 
         $filter = $request->filter;
 
@@ -193,11 +193,8 @@ class PatientEncounterController extends Controller
             if (isset($filter['doctor_name'])) {
                 $query->where('doctor_id', $filter['doctor_name']);
             }
-            // Add encounter_id filter if present
-            if (isset($filter['encounter_id'])) {
-                $query->where('id', $filter['encounter_id']);
-            }
         }
+
 
         $datatable = $datatable->eloquent($query)
             ->addColumn('check', function ($data) {
@@ -210,19 +207,6 @@ class PatientEncounterController extends Controller
             ->editColumn('clinic_id', function ($data) {
                 return view('appointment::backend.patient_encounter.clinic_id', compact('data'));
             })
-            // Show encounter_id as "Encounter#ID" if encounter_id exists, else show '--'
-            ->addColumn('encounter_id', function ($data) {
-                if (!empty($data->id)) {
-                    return '#' . $data->id;
-                }
-                return '--';
-            })
-            ->editColumn('appointment_id', function ($data) {
-                if (!empty($data->appointment_id)) {
-                    return '#' . $data->appointment_id;
-                }
-                return '--';
-            })
 
             ->editColumn('user_id', function ($data) {
                 return view('appointment::backend.clinic_appointment.user_id', compact('data'));
@@ -230,6 +214,9 @@ class PatientEncounterController extends Controller
 
             ->editColumn('encounter_date', function ($data) {
                 return formatDate($data->encounter_date) ?? '--';
+
+
+
             })
 
             ->editColumn('doctor_id', function ($data) {
@@ -237,8 +224,10 @@ class PatientEncounterController extends Controller
             })
 
             ->editColumn('status', function ($data) {
+
                 return view('appointment::backend.patient_encounter.verify_action', compact('data'));
             })
+
 
             ->filterColumn('doctor_id', function ($query, $keyword) {
                 if (!empty($keyword)) {
@@ -249,6 +238,7 @@ class PatientEncounterController extends Controller
                     });
                 }
             })
+
 
             ->filterColumn('user_id', function ($query, $keyword) {
                 if (!empty($keyword)) {
@@ -269,15 +259,6 @@ class PatientEncounterController extends Controller
                 }
             })
 
-            // Add filterColumn for encounter_id (which is actually the "id" column)
-            ->filterColumn('encounter_id', function ($query, $keyword) {
-                if (!empty($keyword)) {
-                    // Remove any leading "#" if present
-                    $keyword = ltrim($keyword, '#');
-                    $query->where('id', $keyword);
-                }
-            })
-
             ->editColumn('updated_at', function ($data) {
                 $module_name = $this->module_name;
 
@@ -289,21 +270,19 @@ class PatientEncounterController extends Controller
                     return $data->updated_at->isoFormat('llll');
                 }
             })
-            // Order by appointment_id in descending order
-            ->orderColumns(['appointment_id'], '-:column $1');
+            ->orderColumns(['id'], '-:column $1');
 
         // Custom Fields For export
         $customFieldColumns = CustomField::customFieldData($datatable, User::CUSTOM_FIELD_MODEL, null);
 
-        // Add 'encounter_id' to rawColumns so it is not escaped
-        return $datatable->rawColumns(array_merge(['action', 'status', 'is_banned', 'email_verified_at', 'check', 'image', 'encounter_id'], $customFieldColumns))
+        return $datatable->rawColumns(array_merge(['action', 'status', 'is_banned', 'email_verified_at', 'check', 'image'], $customFieldColumns))
             ->toJson();
     }
 
     public function store(Request $request)
     {
         $data = $request->all();
-// dd($data);   
+
         $data['vendor_id'] = isset($data['vendor_id']) ? $data['vendor_id'] : Auth::id();
 
         $encounter_details = PatientEncounter::create($data);
@@ -868,7 +847,7 @@ class PatientEncounterController extends Controller
 
     public function editMedicalReport(Request $request, $id)
     {
-        
+
         $medical_report=EncounterMedicalReport::where('id',$id)->first();
 
 
@@ -1146,7 +1125,7 @@ class PatientEncounterController extends Controller
 
         $module_title ="Encounter Dashboard";
 
-        $data = PatientEncounter::where('id',$id)->with('user','user.cities','user.countries','clinic','doctor','medicalHistroy','prescriptions','EncounterOtherDetails','medicalReport','appointmentdetail.clinicservice.systemservice','billingrecord')->first();
+        $data = PatientEncounter::where('id',$id)->with('user','user.cities','user.countries','clinic','doctor','medicalHistroy','prescriptions','EncounterOtherDetails','medicalReport','appointmentdetail','billingrecord')->first();
         $data['selectedProblemList'] =  $data->medicalHistroy()->where('type','encounter_problem')->get();
         $data['selectedObservationList'] = $data->medicalHistroy()->where('type', 'encounter_observations')->get();
         $data['notesList'] = $data->medicalHistroy()->where('type', 'encounter_notes')->get();

@@ -144,29 +144,19 @@ class BillingRecordController extends Controller
 
 
         if (isset($filter)) {
-            if (isset($filter['doctor_name']) && $filter['doctor_name'] !== '') {
+            if (isset($filter['doctor_name'])) {
                 $query->where('doctor_id', $filter['doctor_name']);
             }
-            if (isset($filter['patient_name']) && $filter['patient_name'] !== '') {
+            if (isset($filter['patient_name'])) {
                 $query->where("user_id", $filter['patient_name']);
             }
-            if (isset($filter['clinic_name']) && $filter['clinic_name'] !== '') {
+            if (isset($filter['clinic_name'])) {
                 $query->where("clinic_id", $filter['clinic_name']);
             }
-            if (isset($filter['service_name']) && $filter['service_name'] !== '') {
+            if (isset($filter['service_name'])) {
                 $query->where('service_id', $filter['service_name']);
             }
-        
-            
-            if (!empty($filter['date_start']) && !empty($filter['date_end'])) {
-                $query->whereBetween('date', [$filter['date_start'], $filter['date_end']]);
-            } elseif (!empty($filter['date_start'])) {
-                $query->whereDate('date', '>=', $filter['date_start']);
-            } elseif (!empty($filter['date_end'])) {
-                $query->whereDate('date', '<=', $filter['date_end']);
-            }
         }
-        
 
 
         $datatable = $datatable->eloquent($query)
@@ -186,7 +176,7 @@ class BillingRecordController extends Controller
             })
 
             ->editColumn('date', function ($data) {
-                return $data->date ? DateFormate($data->date) : '--';
+                return $data->date ? date('Y-m-d', strtotime($data->date)) : '--';
             })
 
             ->editColumn('doctor_id', function ($data) {
@@ -225,7 +215,7 @@ class BillingRecordController extends Controller
 
             ->filterColumn('doctor_id', function ($query, $keyword) {
                 if (!empty($keyword)) {
-                    $query->whereHas('doctor', function ($query) use ($keyword) {
+                    $query->whereHas('user', function ($query) use ($keyword) {
                         $query->where('first_name', 'like', '%' . $keyword . '%')
                             ->orWhere('last_name', 'like', '%' . $keyword . '%')
                             ->orWhere('email', 'like', '%' . $keyword . '%');
@@ -249,13 +239,6 @@ class BillingRecordController extends Controller
                     $query->whereHas('clinic', function ($query) use ($keyword) {
                         $query->where('name', 'like', '%' . $keyword . '%')
                             ->orWhere('email', 'like', '%' . $keyword . '%');
-                    });
-                }
-            })
-            ->filterColumn('service_id', function ($query, $keyword) {
-                if (!empty($keyword)) {
-                    $query->whereHas('clinicservice', function ($query) use ($keyword) {
-                        $query->where('name', 'like', '%' . $keyword . '%');
                     });
                 }
             })
@@ -334,7 +317,7 @@ class BillingRecordController extends Controller
     {
 
         $data = $request->all();
- 
+
         $encounter_details = PatientEncounter::where('id', $data['encounter_id'])->with('appointment', 'billingrecord')->first();
 
         $service_price_data = $data['service_details']['service_price_data'] ?? null;
@@ -362,14 +345,14 @@ class BillingRecordController extends Controller
             ]);
 
             $data['final_discount'] = $data['final_discount_enabled'] ?? 0;
-// dd($data['final_discount']);
+
             $serviceController = new ClinicsServiceController();
             $serviceDetailsResponse = $serviceController->ServiceDetails($newRequest);
 
             $serviceDetailsData = $serviceDetailsResponse->getData();
 
             $serviceDetails = $serviceDetailsData->data ?? [];
-// dd($serviceDetails->id);
+
             $service_id = $serviceDetails->id;
             $service_price_data = (array) $serviceDetails->service_price_data;
 
@@ -448,35 +431,8 @@ class BillingRecordController extends Controller
                 $earning_data['commission_data']['commission_status'] = $paymentStatus == 1 ? 'unpaid' : 'pending';
                 $commissionEarning = new CommissionEarning($earning_data['commission_data']);
                 $appointment->commission()->save($commissionEarning);
-                
-                // $vendor_id = $data['service_details']['vendor_id'] ?? null;
-                // Get vendor_id from the service through billing record relationship
-                $vendor_id = null;
-                // if ($billingData && $billingData->service_id) {
-                //     $service = ClinicsService::find($billingData->service_id);
-                //     $vendor_id = $service ? $service->vendor_id : null;
-                // }
-                if ($billingData && $billingData->count() > 0) {
-                    foreach ($billingData as $item) {
-                        $serviceId = $item->service_id ?? $item->item_id ?? null;
 
-                        if ($item->service_id) {
-                            $service = ClinicsService::find($item->service_id);
-                            if ($service && $service->vendor_id) {
-                                $vendor_id = $service->vendor_id;
-                                break; // Exit loop once vendor_id is found
-                            }
-                        }
-                    }
-                }
-                
-                // Fallback: If vendor_id not found in billing data, try from service_details
-                if (!$vendor_id) {
-                    $vendor_id = $data['service_details']['vendor_id'] ?? null;
-                }
-                
-                \Log::info('vendor_id', [$vendor_id]);
-            // }
+                $vendor_id = $data['service_details']['vendor_id'] ?? null;
 
                 $vendor = User::find($vendor_id);
 
@@ -652,38 +608,9 @@ class BillingRecordController extends Controller
     {
         $data = $request->all();
         $quantity = $data['quantity'] ?? 1;
-            $serviceAmount = $data['total_amount']; // total before tax and discount
+            $serviceAmount = $data['total_amount']; // total before tax and discount    
             $unitPrice = $data['service_amount'];
 
-            // $discountAmount = 0;
-            // if (isset($data['discount_value'], $data['discount_type']) &&
-            //     $data['discount_value'] != null && $data['discount_type'] != null) {
-
-            //     if ($data['discount_type'] == 'fixed') {
-            //         $discountAmount = $data['discount_value'];
-            //     } elseif ($data['discount_type'] == 'percentage') {
-            //         $discountAmount = ($unitPrice * $data['discount_value']) / 100;
-            //     }
-
-            // }
-
-            // $discountedUnitPrice = $unitPrice - $discountAmount;
-            // Decode inclusive tax array
-            $totalInclusiveTax = 0;
-            if($data['inclusive_tax'] != null){
-                $inclusiveTaxes = json_decode($data['inclusive_tax'], true);
-
-                foreach ($inclusiveTaxes as $tax) {
-                    if ($tax['type'] == 'fixed') {
-                        $totalInclusiveTax += $tax['value'];
-                    } elseif ($tax['type'] == 'percent') {
-                        $totalInclusiveTax += ($unitPrice * $tax['value']) / 100;
-                    }
-
-                }
-            }
-
-            // $finalTotal = ($discountedUnitPrice + $totalInclusiveTax) * $quantity;
             $discountAmount = 0;
             if (isset($data['discount_value'], $data['discount_type']) &&
                 $data['discount_value'] != null && $data['discount_type'] != null) {
@@ -691,17 +618,27 @@ class BillingRecordController extends Controller
                 if ($data['discount_type'] == 'fixed') {
                     $discountAmount = $data['discount_value'];
                 } elseif ($data['discount_type'] == 'percentage') {
-                    $discountAmount = (($unitPrice + $totalInclusiveTax) * $data['discount_value']) / 100;
+                    $discountAmount = ($unitPrice * $data['discount_value']) / 100;
                 }
 
             }
             
-            $discountedUnitPrice = ($unitPrice + $totalInclusiveTax) - $discountAmount;
-            
+            $discountedUnitPrice = $unitPrice - $discountAmount;
             // Decode inclusive tax array
+            $totalInclusiveTax = 0;
+            if($data['inclusive_tax'] != null){
+                $inclusiveTaxes = json_decode($data['inclusive_tax'], true);
+                
+                foreach ($inclusiveTaxes as $tax) {
+                    if ($tax['type'] == 'fixed') {
+                        $totalInclusiveTax += $tax['value'];
+                    } elseif ($tax['type'] == 'percent') {
+                        $totalInclusiveTax += ($discountedUnitPrice * $tax['value']) / 100;
+                    }
+                }
+            }
             
-            
-            $finalTotal = $discountedUnitPrice * $quantity;
+            $finalTotal = ($discountedUnitPrice + $totalInclusiveTax) * $quantity;
             $data['inclusive_tax_amount'] = $totalInclusiveTax;
             $data['total_amount'] = $finalTotal;
 
@@ -710,7 +647,7 @@ class BillingRecordController extends Controller
         $html = '';
 
         $data['item_name'] = $item ? $item->name : '';
-
+         
         $billing_item = BillingItem::updateOrCreate(
             [
                 'billing_id' => $data['billing_id'],
@@ -780,7 +717,7 @@ class BillingRecordController extends Controller
                     $taxDetails = getBookingTaxamount($service_details['service_total'] - $service_details['final_discount_amount'], null);
                     $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
 
-                    $service_details['total_amount'] = ($service_details['service_total'] - $service_details['final_discount_amount']) + $service_details['total_tax'];
+                    $service_details['total_amount'] = $service_details['total_tax'] + $service_details['service_total']-$service_details['final_discount_amount'] ;
 
                     $service_details['service_total'] = $service_details['service_total'] ;
 
@@ -925,7 +862,7 @@ class BillingRecordController extends Controller
               $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
 
 
-                $service_details['total_amount'] = ($service_details['service_total'] - $service_details['final_discount_amount']) + $service_details['total_tax'];
+                $service_details['total_amount'] = $service_details['total_tax'] + $service_details['service_total']-$service_details['final_discount_amount'];
             }
 
             return response()->json([
@@ -939,12 +876,13 @@ class BillingRecordController extends Controller
     public function getBillingItem($id)
     {
 
-       
+
         $service_details = [];
         $html = '';
 
         $data = BillingRecord::where('id', $id)->with('billingItem')->first();
         $encounter = PatientEncounter::where('id', $data['encounter_id'])->first();
+
 
         $service_details['service_total'] = 0; // Default value
         $service_details['total_tax'] = 0;
@@ -956,14 +894,14 @@ class BillingRecordController extends Controller
         $service_details['final_discount_type'] = 'percentage';
         $service_details['final_discount_amount']=0;
 
+
+
+
+
         if (!empty($data->billingItem) && is_array($data->billingItem->toArray())) {
 
             $service_details['service_total'] = array_sum(array_column($data->billingItem->toArray(), 'total_amount'));
 
-                $netAmount = $service_details['service_total'];
-                $tax_details=$data->appointmentTransaction->tax_data ?? null;
-                $taxDetails = getBookingTaxamount($netAmount,$tax_details);
-                $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
 
 
             if ($data['final_discount'] == 1 && $data['final_discount_value'] > 0) {
@@ -977,20 +915,23 @@ class BillingRecordController extends Controller
 
                     $service_details['final_discount_amount'] = $data['final_discount_value'];
 
+                    $taxDetails = getBookingTaxamount($service_details['service_total'] - $service_details['final_discount_amount'], null);
+                    $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
+
                 } else {
 
                     $service_details['final_discount_amount'] = ($data['final_discount_value'] * $service_details['service_total']) / 100;
+
+                    $taxDetails = getBookingTaxamount($service_details['service_total'] - $service_details['final_discount_amount'], null);
+                    $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
                 }
-                
-                // Calculate tax on the net amount (service_total - discount_amount)
-                $netAmount = $service_details['service_total'] - $service_details['final_discount_amount'];
-                $tax_details=$data->appointmentTransaction->tax_data ?? null;
-                $taxDetails = getBookingTaxamount($netAmount,$tax_details);
-                $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
             }
 
-            // Calculate final total: net amount + tax
-            $service_details['total_amount'] = ($service_details['service_total'] - $service_details['final_discount_amount']) + $service_details['total_tax'];
+            $taxDetails = getBookingTaxamount($service_details['service_total']- $service_details['final_discount_amount'], null);
+
+            $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
+
+            $service_details['total_amount'] = $service_details['total_tax'] + $service_details['service_total'] - $service_details['final_discount_amount'];
         }
 
         $service_details['service_total'] = $service_details['service_total'] ;
@@ -1012,7 +953,7 @@ class BillingRecordController extends Controller
         $encounter = PatientEncounter::where('id', $data['encounter_id'])->first();
 
 
-        $service_details['service_total'] = 0;  
+        $service_details['service_total'] = 0; // Default value
         $service_details['total_tax'] = 0;
         $service_details['total_amount'] = 0;
         $service_details['final_discount_amount'] = 0;
@@ -1029,19 +970,22 @@ class BillingRecordController extends Controller
 
                     $service_details['final_discount_amount'] = $request->discount_value;
 
+                    $taxDetails = getBookingTaxamount($service_details['service_total'] - $service_details['final_discount_amount'], null);
+                    $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
+                    $service_details['service_total'] = $service_details['service_total'] ;
+
                 } else {
 
                     $service_details['final_discount_amount'] = ($request->discount_value * $service_details['service_total']) / 100;
+
+                    $taxDetails = getBookingTaxamount($service_details['service_total'] - $service_details['final_discount_amount'], null);
+                    $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
+                    $service_details['service_total'] = $service_details['service_total'] ;
+
                 }
-                
-                // Calculate tax on the net amount (service_total - discount_amount)
-                $netAmount = $service_details['service_total'] - $service_details['final_discount_amount'];
-                $taxDetails = getBookingTaxamount($netAmount, null);
-                $service_details['total_tax'] = $taxDetails['total_tax_amount'] ?? 0;
             }
 
-            // Calculate final total: net amount + tax
-            $service_details['total_amount'] = ($service_details['service_total'] - $service_details['final_discount_amount']) + $service_details['total_tax'];
+            $service_details['total_amount'] = ($service_details['total_tax'] + $service_details['service_total']) - $service_details['final_discount_amount'];
 
 
 
@@ -1061,7 +1005,6 @@ class BillingRecordController extends Controller
         $data = $request->all();
         $billingData = BillingRecord::where('encounter_id', $data['encount_id'])->with('billingItem')->first();
         $encounter = PatientEncounter::find($data['encount_id']);
- 
 
         $serviceDetails = [
             'service_total' => 0,
@@ -1077,17 +1020,8 @@ class BillingRecordController extends Controller
             $discountValue = $request->final_discount_value ?? 0;
             $discountType = $request->final_discount_type ?? 'fixed';
 
-            if ($request->service_id == null) {
-                $service_id = $billingItems[0]['item_id'] ?? null; // 👈 safe array access
-            } else {
-                $service_id = $request->service_id;
-            }
 
-
-            $data['service_details'] = ClinicsService::where('id', $service_id)->first() ?? null;
-
-
-
+        
             $serviceDetails['final_discount_amount'] = $discountType === 'fixed'
                 ? $discountValue
                 : ($discountValue * $serviceDetails['service_total']) / 100;
@@ -1117,7 +1051,7 @@ class BillingRecordController extends Controller
         }
 
         $encounter_details = PatientEncounter::find($data['encount_id']);
-      
+
         if ($encounter_details['appointment_id'] !== null && $data['payment_status'] == 1) {
             $finalTotalAmount = $serviceDetails['total_amount'] ?? 0;
             $paymentStatus = $data['payment_status'];
@@ -1138,17 +1072,11 @@ class BillingRecordController extends Controller
                 $earning_data['commission_data']['commission_status'] = $paymentStatus == 1 ? 'unpaid' : 'pending';
                 $commissionEarning = new CommissionEarning($earning_data['commission_data']);
                 $appointment->commission()->save($commissionEarning);
- 
-                // $vendor_id = $data['service_details']['vendor_id'] ?? null;
-                // Get vendor_id from the service through billing record relationship
-                $vendor_id = null;
-                if ($billingData && $billingData->service_id) {
-                    $service = ClinicsService::find($billingData->service_id);
-                    $vendor_id = $service ? $service->vendor_id : null;
-                }
+
+                $vendor_id = $data['service_details']['vendor_id'] ?? null;
 
                 $vendor = User::find($vendor_id);
-//  dd($vendor);
+
                 // Determine admin and vendor commission logic
                 if (multiVendor() != 1) {
                     // Admin commission when not multi-vendor
@@ -1249,4 +1177,3 @@ class BillingRecordController extends Controller
     }
 
 }
-

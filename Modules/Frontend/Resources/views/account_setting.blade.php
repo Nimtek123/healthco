@@ -34,7 +34,7 @@
                                     <h6 class="mb-2 pb-1">
                                         {{ __('frontend.update_password') }}
                                     </h6>
-                                    <form id="update-password-form" method="POST" novalidate>
+                                    <form id="update-password-form" method="POST">
                                         @csrf
                                         <div class="mb-3">
                                             <div class="input-group custom-input-group">

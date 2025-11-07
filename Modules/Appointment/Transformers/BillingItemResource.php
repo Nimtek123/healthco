@@ -26,12 +26,11 @@ class BillingItemResource extends JsonResource
             'item_name' => $this->item_name,
             'discount_value' => $this->discount_value,
             'discount_type' => $this->discount_type,
-            'discount_amount' => $this->discount_type == 'percentage' ? ($this->service_amount + $this->inclusive_tax_amount) * $this->discount_value / 100 : $this->discount_value,
+            'discount_amount' => $this->discount_type == 'percentage' ? $this->service_amount * $this->discount_value / 100 : $this->discount_value,
             'quantity' => $this->quantity,
             'service_amount' => $this->service_amount,
             'total_amount' => $this->total_amount,
-            'service_amount_with_inclusive_tax' => $this->service_amount + $this->inclusive_tax_amount,
-            'inclusive_tax_data' => $this->inclusive_tax ? $this->calculateTaxAmounts($this->inclusive_tax, $this->service_amount) : [],
+            'inclusive_tax_data' => $this->inclusive_tax ? $this->calculateTaxAmounts($this->inclusive_tax, $this->service_amount - $discount_amount) : [],
             'total_inclusive_tax' => $this->inclusive_tax_amount,
             'clinic_services' => $this->clinicservice ? 
                 new ServiceResource(tap($this->clinicservice, function($clinicservice) {

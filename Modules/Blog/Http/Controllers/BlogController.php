@@ -7,7 +7,6 @@ use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Modules\Blog\Models\Blog;
-use Mews\Purifier\Facades\Purifier;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Modules\Blog\Http\Requests\BlogRequest;
@@ -99,8 +98,7 @@ class BlogController extends Controller
 
             return $datatable->eloquent($query)
                 ->addColumn('check', function ($query) {
-                    $isDeleted = $query->deleted_at ? 1 : 0;
-                    return '<input type="checkbox" class="form-check-input select-table-row" id="datatable-row-'.$query->id.'" name="datatable_ids[]" value="'.$query->id.'" data-type="blog" data-deleted="'.$isDeleted.'" onclick="dataTableRowCheck('.$query->id.',this)">';
+                    return '<input type="checkbox" class="form-check-input select-table-row" id="datatable-row-'.$query->id.'" name="datatable_ids[]" value="'.$query->id.'" data-type="blog" onclick="dataTableRowCheck('.$query->id.',this)">';
                 })
                 ->editColumn('title', function ($query) {
                     return auth()->user()->can('blog edit') 
@@ -126,13 +124,14 @@ class BlogController extends Controller
                 })
 
                 ->editColumn('status', function ($row) {
-                    $checked = $row->status ? 'checked="checked"' : '';
-                    $disabled = $row->deleted_at ? 'disabled' : '';
-                    $title = $row->deleted_at ? 'title="'.__('messages.item_is_deleted').'"' : '';
-
+                    $checked = '';
+                    if ($row->status) {
+                        $checked = 'checked="checked"';
+                    }
+    
                     return '
                         <div class="form-check form-switch ">
-                            <input type="checkbox" data-url="'.route('backend.blog.update_status', $row->id).'" data-token="'.csrf_token().'" class="switch-status-change form-check-input"  id="datatable-row-'.$row->id.'"  name="status" value="'.$row->id.'" '.$checked.' '.$disabled.' '.$title.'>
+                            <input type="checkbox" data-url="'.route('backend.blog.update_status', $row->id).'" data-token="'.csrf_token().'" class="switch-status-change form-check-input"  id="datatable-row-'.$row->id.'"  name="status" value="'.$row->id.'" '.$checked.'>
                         </div>
                     ';
                 })
@@ -157,8 +156,7 @@ class BlogController extends Controller
         $data = $request->all();
         $data = $request->except('blog_attachment');
         if ($request->has('description')) {
-            // Preserve user formatting while sanitizing dangerous HTML
-            $data['description'] = Purifier::clean($request->description);
+            $data['description'] = strip_tags($request->description);
         }
         $data['tags'] = isset($request->tags) ? json_encode($request->tags) : null;
         $data['author_id'] = !empty($request->author_id) ? $request->author_id : auth()->user()->id;
@@ -277,10 +275,6 @@ class BlogController extends Controller
 
     public function update_status(Request $request, Blog $id)
     {
-        // Prevent enabling status for soft-deleted blogs
-        if ($id->trashed()) {
-            return response()->json(['status' => false, 'message' => __('messages.item_is_deleted')], 422);
-        }
         $id->update(['status' => $request->status]);
 
         return response()->json(['status' => true, 'message' => __('service_providers.status_update')]);
@@ -306,7 +300,6 @@ class BlogController extends Controller
                     return response()->json(['message' => __('messages.permission_denied'), 'status' => false], 200);
                 }
 
-                // Soft delete and auto-disable handled by model event
                 Blog::whereIn('id', $ids)->delete();
                 $message = __('messages.bulk_service_delete');
                 break;

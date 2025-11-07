@@ -11,7 +11,6 @@
     <meta name="keyword" content="{{ setting('meta_keyword') }}">
     <meta name="description" content="{{ setting('meta_description') }}">
     <meta name="setting_options" content="{{ setting('customization_json') }}">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <script>
         (function() {
@@ -24,8 +23,10 @@
     <!-- Shortcut Icon -->
     <link rel="shortcut icon" href="{{ asset(setting('favicon')) }}">
     <link rel="icon" type="image/ico" href="{{ asset(setting('favicon')) }}" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
 
     <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="app_name" content="{{ app_name() }}">
 
     <meta name="data_table_limit" content="{{ setting('data_table_limit') }}">
@@ -49,8 +50,6 @@
     <link rel="stylesheet" href="{{ mix('css/backend.css') }}">
     <link rel="stylesheet" href="{{ mix('css/custom.css') }}">
     <link rel="stylesheet" href="{{ asset('custom-css/dashboard.css') }}">
-    
- 
 
     @if (language_direction() == 'rtl')
         <link rel="stylesheet" href="{{ asset('css/rtl.css') }}">
@@ -239,7 +238,7 @@
     </div>
 
     <div data-render="global-booking">
-        @include('appointment::backend.appointment.global-appoitment')
+        <global-appointment-offcanvas booking-type="GLOBAL_BOOKING"></global-appointment-offcanvas>
     </div>
 
     @php
@@ -269,12 +268,9 @@
     <script src="{{ asset('js/app.js') }}"></script>
     <script src="{{ asset('js/vue.js') }}"></script>
     <script src="{{ asset('laravel-js/modal-view.js') }}" defer></script>
-    
-    <!-- Select2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script>
         const currencyFormat = (amount) => {
-            
             const DEFAULT_CURRENCY = JSON.parse(@json(json_encode(Currency::getDefaultCurrency(true))))
             const noOfDecimal = DEFAULT_CURRENCY.no_of_decimal
             const decimalSeparator = DEFAULT_CURRENCY.decimal_separator
@@ -399,12 +395,6 @@
         } else {
             document.documentElement.setAttribute('data-bs-theme', theme_mode)
         }
-
-        // Force full page reload on language change for all admin pages
-        $(document).on('click', 'a[href*="language/"]', function (e) {
-            e.preventDefault();
-            window.location.href = $(this).attr('href');
-        });
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

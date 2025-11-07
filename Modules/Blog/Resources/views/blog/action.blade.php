@@ -26,8 +26,8 @@ data-confirm="{{ __('messages.are_you_sure?', ['form' => e($blog->title) ?? __('
         </a>
 
         <a class="btn text-primary p-0 fs-5 restore-tax"
-            data-confirm-message="{{ __('messages.are_you_sure_delete_permanently') }}"
-            data-success-message="{{ __('messages.permanently_deleted') }}"
+            data-confirm-message="{{ __('messages.are_you_sure_restore') }}"
+            data-success-message="{{ __('messages.restore_form') }}"
             href="{{ route('backend.blog.action',['id' => $blog->id, 'type' => 'forcedelete']) }}" title="{{ __('messages.permanent_delete') }} "data-bs-toggle="tooltip">
             <i class="ph ph-trash align-middle"></i>
         </a>

@@ -3,12 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Customer\Http\Controllers\Backend\CustomersController;
 use Modules\Customer\Http\Controllers\Backend\VitalsController;
-use Modules\Clinic\Http\Controllers\ClinicsServiceController;
-use Modules\Clinic\Http\Controllers\ClinicesController;
-use Modules\Tax\Http\Controllers\Backend\TaxesController;
-use Modules\Clinic\Http\Controllers\DoctorController;
-use Modules\Appointment\Http\Controllers\Backend\AppointmentsController;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -61,16 +55,6 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::post('import-users', [CustomersController::class, 'importUsers'])->name('import-users');
         Route::get('download-sample/{type}', [CustomersController::class, 'downloadSample'])->name('download-sample');
     });
-
-        Route::get('customers/backend/customers/{id}/services/index_list', [ClinicsServiceController::class, 'index_list'])->name("customers.services.index_list");
-        Route::get('customers/backend/customers/{id}/clinics/index_list', [ClinicesController::class, 'index_list'])->name('customers.clinics.index_list');
-        Route::get('customers/backend/customers/{id}/customers/index_list', [CustomersController::class, 'index_list'])->name('customers.index_list');
-        Route::get('customers/backend/customers/{id}/tax/index_list', [TaxesController::class, 'index_list'])->name('customers.tax.index_list');
-        Route::get('customers/backend/customers/{id}/appointment/other-patientlist', [AppointmentsController::class, 'otherpatientlist'])->name('customers.other_patientlist');
-        Route::get('customers/backend/customers/{id}/doctor/index_list', [DoctorController::class, 'index_list'])->name('customers.doctor.index_list');
-        Route::get('customers/backend/customers/{id}/services/service-price', [ClinicsServiceController::class, 'service_price'])->name('customers.service_price');
-        Route::get('customers/backend/customers/patient_detail/doctor/get-available-slot', [DoctorController::class, 'availableSlot'])->name('availableSlot');
-
     Route::resource('customers', CustomersController::class);
 });
 //     Route::get("index_list", [VitalsController::class, 'index_list'])->name("index_list");

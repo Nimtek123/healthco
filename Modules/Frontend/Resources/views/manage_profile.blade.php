@@ -62,7 +62,7 @@
                                     <div class="d-flex align-items-center justify-content-center p-3">
                                         <img id="miniLogoViewer" src="{{ asset('img/avatar/avatar.webp') }}" class="img-fluid avatar-130 rounded-pill" alt="Profile Picture" />
                                     </div>
-
+                                
                                     <div class="d-flex align-items-center gap-3 justify-content-center mt-5">
                                         <input type="file" class="form-control d-none" id="mini_logo" name="profile_image" accept=".jpeg, .jpg, .png, .gif">
                                             <button type="button" class="btn btn-info" onclick="document.getElementById('mini_logo').click();">{{ __('messages.upload') }}</button>
@@ -75,14 +75,14 @@
                         <div class="col-lg-7">
                             <div class="row g-3">
                                 <!-- Name Fields -->
-                                <div class="form-group col-xl-6 col-lg-12">
+                                <div class="col-xl-6 col-lg-12">
                                     <label class="form-label">{{ __('clinic.lbl_first_name') }} <span class="text-danger">*</span></label>
                                     <div class="input-group custom-input-group mb-1">
                                         <input type="text" class="form-control" name="first_name" placeholder="First Name" id="firstName" required>
                                         <span class="input-group-text"><i class="ph ph-user"></i></span>
                                     </div>
                                 </div>
-                                <div class="form-group col-xl-6 col-lg-12">
+                                <div class="col-xl-6 col-lg-12">
                                     <label class="form-label">{{ __('clinic.lbl_last_name') }} <span class="text-danger">*</span></label>
                                     <div class="input-group custom-input-group mb-1">
                                         <input type="text" class="form-control" name="last_name" id="lastName" placeholder="Last Name" required>
@@ -91,7 +91,7 @@
                                 </div>
 
                                 <!-- Contact Information -->
-                                <div class="form-group col-xl-6 col-lg-12">
+                                <div class="col-xl-6 col-lg-12">
                                     <label class="form-label">{{ __('clinic.lbl_phone_number') }} <span class="text-danger">*</span></label>
                                     <div class="input-group custom-input-group mb-1">
                                         <input type="tel" class="form-control" name="contactNumber" id="contactNumber" placeholder="Phone Number" id="mobile" required>
@@ -100,7 +100,7 @@
                                 </div>
 
                                 <!-- Date of Birth -->
-                                <div class="form-group col-xl-6 col-lg-12">
+                                <div class="col-xl-6 col-lg-12">
                                     <label class="form-label">{{ __('clinic.date_of_birth') }} <span class="text-danger">*</span></label>
                                     <div class="input-group custom-input-group mb-1">
                                             <input type="date" class="form-control" name="dob" id="dob" placeholder="DOB" required>
@@ -109,7 +109,7 @@
                                 </div>
 
                                 <!-- Gender Selection -->
-                                <div class="form-group col-lg-12">
+                                <div class="col-lg-12">
                                     <label class="form-label">{{ __('clinic.lbl_gender') }} <span class="text-danger">*</span></label>
                                     <div class="d-flex flex-wrap align-items-center gap-2">
                                         <div class="form-check custom-radio-btn">
@@ -128,32 +128,32 @@
                                 </div>
                                 <!-- Relationship Selection -->
                                 <!-- Replace the relationship select field with radio buttons -->
-                                <div class=" form-group col-lg-12">
+                                <div class="col-lg-12">
                                     <label class="form-label mb-3">{{ __('clinic.relation') }} <span class="text-danger">*</span></label>
                                     <div class="d-flex flex-wrap align-items-center gap-2">
                                         <div class="form-check custom-radio-btn">
-                                            <input class="form-check-input" type="radio" name="relation"
+                                            <input class="form-check-input" type="radio" name="relation" 
                                                 id="relationParent" value="Parents" required>
                                             <label class="form-check-label rounded-pill" for="relationParent">
                                                 {{ __('clinic.parents') }}
                                             </label>
                                         </div>
                                         <div class="form-check custom-radio-btn">
-                                            <input class="form-check-input" type="radio" name="relation"
+                                            <input class="form-check-input" type="radio" name="relation" 
                                                 id="relationSibling" value="Siblings" required>
                                             <label class="form-check-label rounded-pill" for="relationSibling">
                                                 {{ __('clinic.sibling') }}
                                             </label>
                                         </div>
                                         <div class="form-check custom-radio-btn">
-                                            <input class="form-check-input" type="radio" name="relation"
+                                            <input class="form-check-input" type="radio" name="relation" 
                                                 id="relationSpouse" value="Spouse" required>
                                             <label class="form-check-label rounded-pill" for="relationSpouse">
                                                 {{ __('clinic.spouse') }}
                                             </label>
                                         </div>
                                         <div class="form-check custom-radio-btn">
-                                            <input class="form-check-input" type="radio" name="relation"
+                                            <input class="form-check-input" type="radio" name="relation" 
                                                 id="relationOther" value="Other" required>
                                             <label class="form-check-label rounded-pill" for="relationOther">
                                                 {{ __('messages.lbl_other') }}
@@ -297,7 +297,16 @@
                         separateDialCode: true,
                         utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
                     });
-                    window.manageProfileIti = iti; // expose for edit/use later
+
+                    input.addEventListener("countrychange", function () {
+                        const fullPhoneNumber = iti.getNumber();
+                        input.value = fullPhoneNumber;
+                    });
+
+                    input.addEventListener("blur", function () {
+                        const fullPhoneNumber = iti.getNumber();
+                        input.value = fullPhoneNumber;
+                    });
 
 
                     flatpickr('#dob', {
@@ -347,10 +356,6 @@
                 $('#patientId').val('');
                 $('#modalTitle').text('{{ __('customer.add_new_patient') }}');
                 $('#miniLogoViewer').attr('src', '{{ asset('img/avatar/avatar.webp') }}');
-                // Reset intl-tel-input to default country
-                if (window.manageProfileIti) {
-                    window.manageProfileIti.setNumber('');
-                }
             });
 
             // Handle edit and delete actions
@@ -365,12 +370,7 @@
                             $('#patientId').val(patient.id);
                             $('#firstName').val(patient.first_name);
                             $('#lastName').val(patient.last_name);
-                            if (window.manageProfileIti && patient.contactNumber) {
-                                // sets both country and formatted number
-                                window.manageProfileIti.setNumber(patient.contactNumber);
-                            } else {
-                                $('#contactNumber').val(patient.contactNumber || '');
-                            }
+                            $('#contactNumber').val(patient.contactNumber);
                             $('#dob').val(patient.dob);
                             $(`input[name="gender"][value="${patient.gender}"]`).prop('checked', true);
                             $(`input[name="relation"][value="${patient.relation}"]`).prop('checked', true);
@@ -427,7 +427,7 @@
             const today = new Date().toISOString().split('T')[0];
             $('input[name="dob"]').attr('max', today);
 
-            // Allow only digits in the phone number input
+            // Allow only numbers in contact number
             $('input[name="contactNumber"]').on('input', function () {
                 this.value = this.value.replace(/[^0-9]/g, '');
             });
@@ -443,8 +443,7 @@
 
                 const firstName = formData.get('first_name');
                 const lastName = formData.get('last_name');
-                // Get full international number with country code
-                const contactNumber = window.manageProfileIti ? window.manageProfileIti.getNumber() : formData.get('contactNumber');
+                const contactNumber = formData.get('contactNumber');
                 const dob = formData.get('dob');
                 const gender = formData.get('gender');
                 const relation = formData.get('relation');
@@ -481,9 +480,6 @@
                     // Show loading state
                     $saveButton.addClass('btn-loading').html('Saving...').prop('disabled', true);
 
-                    // Update formData with full international number
-                    formData.set('contactNumber', contactNumber);
-
                     const patientId = $('#patientId').val();
                     const url = patientId ? '{{ route('other-patients.update', ['id' => '__patientId__']) }}'.replace('__patientId__', patientId) : '{{ route('other-patients.store') }}';
                     const method = 'POST';
@@ -498,10 +494,6 @@
                             window.successSnackbar("{{ __('messages.patient_saved_successfully') }}");
                             $('#addPatientModal').modal('hide');
                             $('#patientForm')[0].reset();
-                            // Reset intl-tel-input
-                            if (window.manageProfileIti) {
-                                window.manageProfileIti.setNumber('');
-                            }
 
                             if (window.renderedDataTable) {
                             window.renderedDataTable.ajax.reload(null, false);
@@ -520,9 +512,9 @@
                 function showError(fieldName, message) {
                     const input = $(`[name="${fieldName}"]`);
                     if (input.length > 0) {
-                        input.closest('.form-group').append(`<div class="text-danger">${message}</div>`);
+                        input.closest('.form-group').append(`<small class="text-danger">${message}</small>`);
                     } else {
-                        $(`#${fieldName}`).closest('.form-group').append(`<div class="text-danger">${message}</div>`);
+                        $(`#${fieldName}`).closest('.form-group').append(`<small class="text-danger">${message}</small>`);
                     }
                 }
             });

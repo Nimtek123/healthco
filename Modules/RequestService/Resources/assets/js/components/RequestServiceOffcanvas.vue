@@ -4,14 +4,8 @@
       <FormHeader :currentId="currentId" :editTitle="editTitle" :createTitle="createTitle"></FormHeader>
       <div class="offcanvas-body">
         <label class="form-label">{{ $t('service.lbl_name') }} <span class="text-danger">*</span></label>
-        <InputField class="col-md-12" type="text" :is-required="true" 
-          :label="$t('service.lbl_name')" 
-          :placeholder="$t('service.lbl_name')" 
-          v-model="name" 
-          :error-message="errors['name']" 
-          :error-messages="errorMessages['name']">
-        </InputField>
-
+        <InputField class="col-md-12" type="text" :is-required="true" :label="$t('service.lbl_name')" placeholder=""
+          v-model="name" :error-message="errors['name']" :error-messages="errorMessages['name']"></InputField>
         <div class="form-group col-md-12">
           <label class="form-label" for="description">{{ $t('service.lbl_description') }}<span
               class="text-danger">*</span></label>
@@ -27,15 +21,7 @@
 
         <div class="form-group">
           <label class="form-label" for="type">{{ $t('service.lbl_type') }} <span class="text-danger">*</span> </label>
-          <Multiselect 
-            v-model="type" 
-            :value="type" 
-            v-bind="type_data" 
-            id="type" 
-            autocomplete="off"
-            :placeholder="$t('service.lbl_type')">
-          </Multiselect>
-
+          <Multiselect v-model="type" :value="type" v-bind="type_data" id="type" autocomplete="off"></Multiselect>
           <span v-if="errorMessages['type']">
             <ul class="text-danger">
               <li v-for="err in errorMessages['type']" :key="err">{{ err }}</li>
