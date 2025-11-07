@@ -43,7 +43,7 @@
                                         <div>
                                             <p class="fw-medium font-size-14 footer-action-info mb-2" class="">
                                                 {{ __('frontend.helpline_number') }}</p>
-                                            <a href="tel:{{ $helplineNumber }}"
+                                            <a href="tel: +14 652 789 1234"
                                                 class="footer-action-link">{{ $helplineNumber }}</a>
                                         </div>
                                     </div>
@@ -56,7 +56,7 @@
                                         </div>
                                         <div>
                                             <p class="fw-medium font-size-14 footer-action-info mb-2" class="">{{ __('frontend.mail') }}</p>
-                                            <a href="mailto:{{ $inquriyEmail }}"
+                                            <a href="mailto: $inquriyEmail"
                                                 class="footer-action-link">{{ $inquriyEmail }}</a>
                                         </div>
                                     </div>

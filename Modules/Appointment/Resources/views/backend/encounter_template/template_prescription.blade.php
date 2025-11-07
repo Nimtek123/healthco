@@ -34,7 +34,7 @@
 
                         <div class="form-group">
                             <input type="text" name="name" id="name" class="form-control"
-                                placeholder="{{ __('clinic.lbl_name') }}" required data-toggle="validator"
+                                placeholder="{{ __('clinic.lbl_select_patient') }}" required data-toggle="validator"
                                 list="prescription-list" />
                         </div>
                         <div class="invalid-feedback">
