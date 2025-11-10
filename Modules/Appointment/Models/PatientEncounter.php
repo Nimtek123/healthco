@@ -53,8 +53,16 @@ class PatientEncounter extends BaseModel
     protected function description(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => (isset($value) && !empty($value)) ? Crypt::decrypt($value) : '',
-            set: fn(string $value) => (isset($value) && !empty($value)) ? Crypt::encrypt($value) : '',
+            get: fn($value) => !empty($value)
+                ? (function () use ($value) {
+                    try {
+                        return Crypt::decrypt($value);
+                    } catch (\Exception $e) {
+                        return $value;
+                    }
+                })()
+                : '',
+            set: fn($value) => !empty($value) ? Crypt::encrypt($value) : null,
         );
     }
 

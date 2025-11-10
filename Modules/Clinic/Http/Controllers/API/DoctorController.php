@@ -27,6 +27,7 @@ use Modules\Clinic\Transformers\ReceptionistResource;
 use Modules\Clinic\Models\DoctorServiceMapping;
 use Modules\Clinic\Trait\ClinicTrait;
 use Modules\Clinic\Models\ClinicsService;
+use Modules\Commission\Models\EmployeeCommission;
 use Modules\FrontendSetting\Models\FrontendSetting;
 
 class DoctorController extends Controller
@@ -55,7 +56,7 @@ class DoctorController extends Controller
             $sectionData = [];
             $section = FrontendSetting::where('key', 'section_6')->first();
             $sectionData = $section ? json_decode($section->value, true) : null;
-            
+
             $doctorIds = $sectionData['doctor_id'] ?? [];
             if (is_array($doctorIds) && !empty($doctorIds)) {
                 $doctor_list->whereIn('id', $doctorIds);
@@ -73,15 +74,18 @@ class DoctorController extends Controller
         if($request->filled('service_id')){
 
             $serviceId=$request->service_id;
+              if (!is_array($serviceId)) {
+                    $serviceId = explode(',', $serviceId); // if comma-separated string
+                }
             $doctor_list->whereHas('doctorService', function ($query) use ($serviceId) {
-                $query->where('service_id',$serviceId);
+                $query->whereIn('service_id',$serviceId);
             });
         }
 
         if($request->filled('vendor_id')){
             $doctor_list->where('vendor_id',$request->vendor_id);
          }
-        
+
         if ($request->filled('is_rating_min') || $request->filled('is_rating_max')) {
             $minRating = $request->input('is_rating_min', 0);
             $maxRating = $request->input('is_rating_max', 5);
@@ -218,7 +222,9 @@ class DoctorController extends Controller
 
     public function doctorCommissionList(Request $request){
         $perPage = $request->input('per_page', 10);
-        $commission_list = Commission::where('type', 'doctor_commission')->where('status', 1);
+        $doctor_id = auth()->user()->id;
+        $doctor_commission_ids = EmployeeCommission::where('employee_id', $doctor_id)->pluck('commission_id');
+        $commission_list = Commission::whereIn('id', $doctor_commission_ids)->where('status', 1);
 
         $commission = $commission_list->orderBy('updated_at', 'desc');
 
@@ -316,6 +322,10 @@ class DoctorController extends Controller
         $perPage = $request->input('per_page', 10);
         $receptionist_list = Receptionist::with('users', 'clinics');
 
+        if(auth()->user()->hasRole('vendor')){
+            $receptionist_list = $receptionist_list->where('vendor_id', auth()->user()->id);
+        }
+
         if ($request->has('search')) {
             $searchTerm = $request->input('search');
             $receptionist_list->where('first_name', 'like', "%{$searchTerm}%")
@@ -386,7 +396,7 @@ class DoctorController extends Controller
             foreach($assign_doctors as $doctor) {
                 $service['charges'] = $doctor['price'] ?? 0;
                 if($service['discount']==0){
-    
+
                     $service['discount_value']=0;
                     $service['discount_type']=null;
                     $service['service_discount_price'] = $service['charges'];
@@ -423,6 +433,69 @@ class DoctorController extends Controller
         ], 200);
     }
 
+    public function assignDoctorService(Request $request)
+    {
+        $user = auth()->user();
+
+        $serviceIds = $request->input('service_ids', []); // array of service IDs
+        $clinicId   = $request->input('clinic_id');
+        $doctorId = $request->input('doctor_id'); // array of doctor_id(s)
+
+        if (empty($serviceIds) || !$doctorId || !$clinicId) {
+            return response()->json([
+                'status' => false,
+                'message' => __('clinic.no_data_available'),
+            ], 422);
+        }
+
+        foreach ($serviceIds as $serviceId) {
+            $service = ClinicsService::findOrFail($serviceId);
+
+            if (!$service) {
+                continue; // skip invalid service id
+            }
+
+                $price = $service->charges ?? 0;
+
+                // discount calculation
+                if ($service->discount == 0) {
+                    $service->discount_value = 0;
+                    $service->discount_type = null;
+                    $service->service_discount_price = $price;
+                } else {
+                    $discountPrice = $service->discount_type == 'percentage' ? $price * $service->discount_value / 100 : $service->discount_value;
+                    $service->service_discount_price = $price - $discountPrice;
+                }
+
+                // tax calculation
+                $inclusiveTaxPrice = $this->inclusiveTaxPrice($service);
+
+                $data = [
+                    'service_id'          => $serviceId,
+                    'clinic_id'           => $clinicId,
+                    'doctor_id'           => $doctorId,
+                    'charges'             => $price,
+                    'inclusive_tax_price' => $inclusiveTaxPrice['inclusive_tax_price'] ?? 0,
+                ];
+
+                DoctorServiceMapping::updateOrCreate(
+                    [
+                        'service_id' => $serviceId,
+                        'clinic_id'  => $clinicId,
+                        'doctor_id'  => $doctorId
+                    ],
+                    $data
+                );
+
+        }
+
+        $message = __('clinic.assign_doctor');
+
+        return response()->json([
+            'status'  => true,
+            'message' => $message,
+        ], 200);
+    }
 
 
 

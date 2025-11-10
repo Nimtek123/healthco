@@ -238,7 +238,7 @@ class QuickBookingsController extends Controller
         $system_service_id = $request->system_service_id;
 
         $data = ClinicsService::query();
-
+// dd($data);
         if (multiVendor() == 1) {
 
             $data = $data->where('system_service_id', $system_service_id);
@@ -259,7 +259,7 @@ class QuickBookingsController extends Controller
         $data = $data->where('status', 1)->where('is_enable_advance_payment',0)->get();
 
         $data = ServiceResource::collection($data);
-
+// dd($data);
         return $this->sendResponse($data, __('booking.booking_sevice'));
 
     }
@@ -348,17 +348,19 @@ class QuickBookingsController extends Controller
     {
 
         $userRequest = $request->user;
+        // dd($userRequest);
         $user = User::where('email', $userRequest['email'])->first();
 
         if (!isset($user)) {
             $userRequest['password'] = Hash::make('12345678');
+            $userRequest['user_type'] = 'user';
             $user = User::create($userRequest);
 
             $roles = ['user'];
             $user->syncRoles($roles);
 
             \Artisan::call('cache:clear');
-
+ 
             event(new UserCreated($user));
 
             $data = [
@@ -391,6 +393,7 @@ class QuickBookingsController extends Controller
         $data['total_amount'] = $serviceData['total_amount'];
         $data['duration'] = $serviceData['duration'];
         $data['status'] = 'pending';
+        // $data['is_quick_booking'] = 1;
         $data = Appointment::create($data);
         // $is_telemet = SystemService::where('id', $data['service_id'])->pluck('is_video_consultancy')->first();
         // if ($is_telemet == 1) {
@@ -442,7 +445,17 @@ class QuickBookingsController extends Controller
         $serviceDetails = ClinicsService::where('id', $appointment->service_id)->with('vendor')->first();
         $vendor = $serviceDetails->vendor ?? null;
         //   $serviceData = $this->getServiceAmount($appointment->service_id, $appointment->doctor_id, $appointment->clinic_id);
-        $tax = $data['tax_percentage'] ?? Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('status', 1)->get();
+        $tax = $data['tax_percentage'] ?? Tax::active()->whereNull('module_type')->orWhere('module_type', 'services')->where('tax_type', 'exclusive')->where('status', 1)->get();
+
+        // Get inclusive tax data from service
+        $serviceDetails = ClinicsService::where('id', $appointment->service_id)->first();
+        $inclusive_tax_data = null;
+        $inclusive_tax_price = 0;
+        
+        if ($serviceDetails && $serviceDetails->is_inclusive_tax == 1) {
+            $inclusive_tax_data = $serviceDetails->inclusive_tax;
+            $inclusive_tax_price = $serviceData['total_inclusive_tax'] ?? 0;
+        }
 
         $transactionData = [
             'appointment_id' => $appointment->id,
@@ -454,6 +467,8 @@ class QuickBookingsController extends Controller
             'discount_amount' => $serviceData['discount_amount'] ?? 0,
             'external_transaction_id' => null,
             'tax_percentage' => json_encode($tax),
+            'inclusive_tax' => $inclusive_tax_data,
+            'inclusive_tax_price' => $inclusive_tax_price,
         ];
 
         $payment = AppointmentTransaction::updateOrCreate(
@@ -533,3 +548,5 @@ class QuickBookingsController extends Controller
         ];
     }
 }
+
+

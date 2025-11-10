@@ -26,17 +26,24 @@
         <small class="help-block with-errors text-danger"></small>
     </div>
 
-    <div class="form-group" id='enable_select_category'>
+    <div class="form-group landing-page-select" id='enable_select_category'>
         {{ html()->label(__('messages.select_category_name', ['select' => __('messages.category')]) . ' <span class="text-danger">*</span>', 'name')->class('form-control-label') }}
+         <i class="fa-solid fa-info-circle ms-1 text-muted"
+       data-bs-toggle="tooltip"
+       data-bs-placement="top"
+       title="Only featured categories are displayed here."></i>
         <br />
         {{ html()->select('category_id[]', [], old('category_id'))->class('select2js form-control category_id')->id('category_id')->attribute('data-placeholder', __('messages.select_category_name', ['select' => __('messages.category')]))->attribute('data-ajax--url', route('ajax-list', ['type' => 'category', 'is_featured' => 1]))->multiple() }}
     </div>
 
 </div>
+<style>
+   .landing-page-select .select2-container .select2-selection--multiple .select2-selection__rendered{
+        display: inline-block;
+    }
+    </style>
 {{ html()->submit(__('messages.save'))->class('btn btn-md btn-primary float-md-end submit_section1') }}
 {{ html()->form()->close() }}
-
-
 <script>
     var enable_section_2 = $("input[name='status']").prop('checked');
     checkSection2(enable_section_2);
@@ -66,6 +73,7 @@
 
 
     $(document).ready(function() {
+        $('[data-bs-toggle="tooltip"]').tooltip();
         $('.select2js').select2();
 
         $('#category_id').on('change', function() {

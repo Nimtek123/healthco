@@ -22,6 +22,7 @@ return[
     'select_time'=>'Select Time',
     'book_now'=>'Book Now',
     'payment_method'=>'Choose Payment Method',
+    'payment_type'=>'Payment Method',
     'submit'=>'Submit',
     'helpline_number'=>'Helpline number',
     'mail'=>'Email us',
@@ -139,6 +140,7 @@ return[
     'choose_doctors' => 'Choose Doctor',
     'choose_date_time_payment' => 'Choose Date, Time & Payment',
     'choose_date_time'=>'Choose Date And Time',
+    'choose_date'=>'Choose Date',
     'next'=>'Next',
     'previous_step'=>'Previous Step',
     'upload_medical_report'=>'Upload Your Medical Report',
@@ -208,7 +210,8 @@ return[
     // ],
     'incidence' => 'Incidence Report',
     'no_services_available' => 'No Services Available',
-    'no_services_message' => 'This doctor currently has no services available for booking.'
+    'no_services_message' => 'This doctor currently has no services available for booking.',
+    'cancel_reason'=>'Cancel Resaon',
     
 
 ];

@@ -10,12 +10,12 @@
         <tbody>
             @foreach ($data['medicalReport'] as $index => $medicalreport)
                 <tr>
-                    <td>
+                     <td>
                         <span>{{ $medicalreport['name'] }}</span>
                     </td>
                     <td>
                         {{ $medicalreport['date'] }}
-                    </td>
+                    </td> 
                     <td class="action">
                         @if ($data['status'] == 1)
                             <div class="d-flex align-items-center gap-3">

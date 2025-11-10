@@ -38,6 +38,10 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
     Route::group(['prefix' => 'multivendors', 'as' => 'multivendors.'],function () {
       Route::get("index_list", [MultiVendorsController::class, 'index_list'])->name("index_list");
       Route::get("index_data", [MultiVendorsController::class, 'index_data'])->name("index_data");
+      Route::get('check-email', [MultiVendorsController::class, 'checkEmail'])->name('check_email');
+      Route::get('check-mobile', [MultiVendorsController::class, 'checkMobile'])->name('check_mobile');
+      Route::get('get-all-mobiles', [MultiVendorsController::class, 'getAllMobiles'])->name('get_all_mobiles');
+      Route::get('test-mobile/{mobile}', [MultiVendorsController::class, 'testMobileCheck'])->name('test_mobile');
       Route::get('export', [MultiVendorsController::class, 'export'])->name('export');
       Route::post('block-vendor/{id}', [MultiVendorsController::class, 'block_vendor'])->name('block-vendor');
       Route::post('verify-vendor/{id}', [MultiVendorsController::class, 'verify_vendor'])->name('verify-vendor');

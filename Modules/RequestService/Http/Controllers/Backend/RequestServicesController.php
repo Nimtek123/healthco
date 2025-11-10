@@ -25,7 +25,7 @@ class RequestServicesController extends Controller
     public function __construct()
     {
         // Page Title
-        $this->module_title = 'Request Service';
+        $this->module_title = 'service.request_service';
         // module name
         $this->module_name = 'requestservices';
 
@@ -115,6 +115,10 @@ class RequestServicesController extends Controller
                     </div>
                 ';
             })
+            ->editColumn('type', function ($data) {
+                $typeKey = 'type_' . $data->type;
+                return __('service.' . $typeKey);
+            })
             ->editColumn('updated_at', function ($data) {
                 $module_name = $this->module_name;
 
@@ -126,12 +130,15 @@ class RequestServicesController extends Controller
                     return $data->updated_at->isoFormat('llll');
                 }
             })
-
+            ->addColumn('action', function ($data) {
+                $module_name = $this->module_name;
+                return view('requestservice::backend.requestservices.action_column', compact('module_name', 'data'));
+            })
             ->orderColumns(['id'], '-:column $1');
 
         $customFieldColumns = CustomField::customFieldData($datatable, RequestService::CUSTOM_FIELD_MODEL, null);
 
-        return $datatable->rawColumns(array_merge([ 'status', 'check'], $customFieldColumns))
+        return $datatable->rawColumns(array_merge([ 'status', 'type', 'check', 'action'], $customFieldColumns))
             ->toJson();
     }
 
@@ -238,7 +245,7 @@ class RequestServicesController extends Controller
             'vendor_id' => $data->vendor_id,
         ];
         sendNotificationOnBookingUpdate('reject_request_service', $notification_data);
-        $message = 'RequestServices Rejected';
+        $message = 'Request Service has been deleted successfully';
 
         return response()->json(['message' => $message, 'status' => true], 200);
     }

@@ -62,7 +62,8 @@ return [
     'save_patient'=>'Save Patient',
     'add_other_patient'=>'+ Add Other Patient',
     'other_patient'=>'Other Patient',
-    'book_for_other'=>'Book For Others'
+    'book_for_other'=>'Book For Others',
+    'select_date_of_birth'=>'select date of birth'
 
 
 ];

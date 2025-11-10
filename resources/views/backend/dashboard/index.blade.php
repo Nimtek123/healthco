@@ -44,7 +44,7 @@
                 <div class="col-lg-8">
                     <div class="row">
                         <div class="col-sm-6 col-lg-4">
-                            <a href="{{ route('backend.appointments.index') }}" class="text-secondary">
+                            <a href="{{ route('backend.appointments.index') }}" class="text-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Data Filter Wise Total Appointment Count">
                                 <div class="card dashboard-cards appointments">
                                     <div class="card-body">
                                         <p class="mb-0">{{ __('appointment.total_number_appointment') }} </p>
@@ -58,7 +58,7 @@
                             </a>
                         </div>
                         <div class="col-sm-6 col-lg-4">
-                            <a href="{{ route('backend.services.index') }}" class="text-secondary">
+                            <a href="{{ route('backend.services.index') }}" class="text-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Data Filter Wise Total Active Service Count">
                                 <div class="card dashboard-cards appointments">
                                     <div class="card-body">
                                         <p class="mb-0">{{ __('dashboard.total_active_service') }}</p>
@@ -88,7 +88,7 @@
                             </div>
                         @endif
                         <div class="col-sm-6 col-lg-4">
-                            <a href="{{ route('backend.clinics.index') }}" class="text-secondary">
+                            <a href="{{ route('backend.clinics.index') }}" class="text-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Data Filter Wise Total Clinic Count">
                                 <div class="card dashboard-cards appointments">
                                     <div class="card-body">
                                         <p class="mb-0">{{ __('dashboard.total_clinics') }}</p>
@@ -101,7 +101,7 @@
                             </a>
                         </div>
                         <div class="col-sm-6 {{ multivendor() == 1 ? 'col-lg-4' : 'col-lg-6' }}">
-                            <a href="{{ route('backend.customers.index') }}" class="text-secondary">
+                            <a href="{{ route('backend.customers.index') }}" class="text-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Data Filter Wise Total Patient Count">
                                 <div class="card dashboard-cards appointments">
                                     <div class="card-body">
                                         <p class="mb-0">{{ __('dashboard.total_users') }}</p>
@@ -114,7 +114,7 @@
                             </a>
                         </div>
                         <div class="col-sm-6 {{ multivendor() == 1 ? 'col-lg-4' : 'col-lg-6' }}">
-                            <div class="card dashboard-cards appointments">
+                            <div class="card dashboard-cards appointments" data-bs-toggle="tooltip" data-bs-placement="top" title="Data Filter Wise Total Revenue Generated">
                                 <div class="card-body">
                                     <p class="mb-0">{{ __('dashboard.total_revenue') }}</p>
                                     <div class="d-flex align-items-center justify-content-between gap-3 mt-5">
@@ -202,6 +202,11 @@
                     </div>
                 </div>
                 <div class="card-body pt-0">
+                    <div id="revenue_loader" class="text-center d-none">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
                     <div id="total-revenue"></div>
                 </div>
             </div>
@@ -224,7 +229,7 @@
                                         <div class="row align-items-center">
                                             <div class="col-3">
                                                 <p class="mb-0 text-primary">
-                                                    {{ date($data['dateformate'], strtotime($upcomming_appointments->appointment_date)) }}
+                                                    {{ \Carbon\Carbon::parse($upcomming_appointments->appointment_date)->timezone($timeZone)->format($data['dateformate']) }}
                                                 </p>
                                                 <span class="mb-0 text-primary">
                                                     {{ $upcomming_appointments->appointment_time
@@ -283,8 +288,7 @@
                         <h4 class="card-title mb-0">{{ __('dashboard.register_vendor') }} </h4>
                         @if (count($data['register_vendor']) >= 4)
                             <a id="vendor_view_all_link" href="{{ route('backend.multivendors.index') }}"
-                                class="text-secondary d-none" contenteditable="false"
-                                style="cursor: pointer;">{{ __('dashboard.view_all') }}</a>
+                                class="text-secondary d-none cursor-pointer" contenteditable="false">{{ __('dashboard.view_all') }}</a>
                         @endif
                     </div>
                     <div class="card-body pt-0">
@@ -303,9 +307,9 @@
                                             <div class="text-sm-start text-center">
                                                 <h6 class="mb-0">{{ $register_vendors->full_name }}</h6>
                                                 <small
-                                                    class="m-0">{{ date($data['dateformate'], strtotime($register_vendors->created_at)) }}
+                                                    class="m-0">{{ \Carbon\Carbon::parse($register_vendors->created_at)->timezone($timeZone)->format($data['dateformate']) }}
                                                     At
-                                                    {{ date($data['timeformate'], strtotime($register_vendors->created_at)) }}</small>
+                                                    {{ \Carbon\Carbon::parse($register_vendors->created_at)->timezone($timeZone)->format($data['timeformate']) }}</small>
                                             </div>
                                         </div>
                                         <div class="flex-shrink-0">
@@ -335,8 +339,7 @@
                 <h4 class="card-title mb-0">{{ __('dashboard.payment_history') }}</h4>
                 @if (count($data['payment_history']) >= 5)
                     <a id="payment_view_all_link" href="{{ route('backend.appointments.index') }}"
-                        class="text-secondary d-none" contenteditable="false"
-                        style="cursor: pointer;">{{ __('dashboard.view_all') }}</a>
+                        class="text-secondary d-none cursor-pointer" contenteditable="false">{{ __('dashboard.view_all') }}</a>
                 @endif
             </div>
             <div class="card-body pt-0">
@@ -375,9 +378,9 @@
                                 @if ($transaction)
                                     <tr>
                                         <td>{{ optional($paymenthistory->user)->full_name }}</td>
-                                        <td>{{ date($data['dateformate'], strtotime($paymenthistory->appointment_date)) }}
+                                        <td>{{ \Carbon\Carbon::parse($paymenthistory->appointment_date)->timezone($timeZone)->format($data['dateformate']) }}
                                             At
-                                            {{ date($data['timeformate'], strtotime($paymenthistory->appointment_time)) }}
+                                            {{ \Carbon\Carbon::parse($paymenthistory->appointment_time)->timezone($timeZone)->format($data['timeformate']) }}
                                         </td>
                                         <td>{{ optional($paymenthistory->cliniccenter)->name }}</td>
                                         <td>{{ optional($paymenthistory->clinicservice)->name }}</td>
@@ -403,51 +406,13 @@
     </div>
 @endsection
 
-@push('after-styles')
-    <style>
-        .list-group {
-            --bs-list-group-item-padding-y: 1.5rem;
-            --bs-list-group-color: inherit !important;
-        }
-
-        .date-calender {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .date-calender .date {
-            width: 12%;
-            display: flex;
-            align-items: center;
-            flex-direction: column
-        }
-
-        .upcoming-appointments {
-            min-height: 23.5rem;
-            max-height: 23.5rem;
-            overflow-y: scroll;
-        }
-
-        .register-vendors-list {
-            height: 22rem;
-            overflow-y: auto;
-        }
-
-        .iq-upcomming {
-            display: flex !important;
-            justify-content: center;
-            align-items: center;
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.40.0/apexcharts.min.css"
-        integrity="sha512-tJYqW5NWrT0JEkWYxrI4IK2jvT7PAiOwElIGTjALSyr8ZrilUQf+gjw2z6woWGSZqeXASyBXUr+WbtqiQgxUYg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
-@endpush
 @push('after-scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.40.0/apexcharts.min.js"
         integrity="sha512-Kr1p/vGF2i84dZQTkoYZ2do8xHRaiqIa7ysnDugwoOcG0SbIx98erNekP/qms/hBDiBxj336//77d0dv53Jmew=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+@php
+$currency = GetCurrencySymbol();
+@endphp
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const dateInput = document.getElementById('revenuedateRangeInput');
@@ -455,8 +420,26 @@
             const form = document.getElementById('dateRangeForm');
 
             function isValidDateRange(dateRange) {
+                if (!dateRange || dateRange.trim() === '') {
+                    return false;
+                }
+
                 const datePattern = /^\d{4}-\d{2}-\d{2} to \d{4}-\d{2}-\d{2}$/;
-                return datePattern.test(dateRange.trim());
+                if (!datePattern.test(dateRange.trim())) {
+                    return false;
+                }
+
+                const dates = dateRange.split(' to ');
+                const startDate = new Date(dates[0]);
+                const endDate = new Date(dates[1]);
+
+                // Check if dates are valid
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                    return false;
+                }
+
+                // Check if start date is before or equal to end date
+                return startDate <= endDate;
             }
 
             function toggleSubmitButton() {
@@ -472,15 +455,29 @@
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
                 if (isValidDateRange(dateInput.value)) {
+                    // Show loading state
+                    submitBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Loading...';
+                    submitBtn.disabled = true;
+
                     const encodedDateRange = encodeURIComponent(dateInput.value);
-                    const formAction = `{{ url('app/daterange') }}/${encodedDateRange}`;
+                    const formAction = `{{ route('backend.daterange', ['daterange' => 'PLACEHOLDER']) }}`.replace('PLACEHOLDER', encodedDateRange);
+
+                    // Redirect to the date range page
                     window.location.href = formAction;
+                } else {
+                    alert('Please select a valid date range. Make sure the start date is before or equal to the end date.');
                 }
             });
 
             toggleSubmitButton();
         });
         $(document).ready(function() {
+            // Initialize Bootstrap tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+
             Scrollbar.init(document.querySelector('.upcoming-appointments'), {
                 continuousScrolling: false,
                 alwaysShowTracks: false
@@ -529,12 +526,14 @@
 
         var chart = null;
         let revenueInstance;
-
+        const CURRENCY_CODE = "{{ $currency['code'] }}";
+        const CURRENCY_SYMBOL = "{{ $currency['symbol'] }}";
         function revanue_chart(type, startDate, endDate) {
             var Base_url = "{{ url('/') }}";
             var url = Base_url + "/app/get_revnue_chart_data/" + type;
 
-            $("#revenue_loader").show();
+            $("#revenue_loader").removeClass('d-none');
+            $("#total-revenue").hide();
 
 
             $.ajax({
@@ -545,13 +544,31 @@
                     end_date: endDate
                 },
                 success: function(response) {
-                    $("#revenue_loader").hide();
+                    $("#revenue_loader").addClass('d-none');
+                    $("#total-revenue").show();
                     $(".total_revenue").text(type);
                     if (document.querySelectorAll('#total-revenue').length) {
                         const variableColors = IQUtils.getVariableColor();
                         const colors = [variableColors.primary, variableColors.info];
                         const monthlyTotals = response.data.chartData;
                         const category = response.data.category;
+                        const formatCurrency = function(value) {
+                            try {
+                                const formatted = new Intl.NumberFormat('{{ app()->getLocale() }}', {
+                                    style: 'decimal',
+                                    minimumFractionDigits: 2
+                                }).format(value);
+
+                                // ✅ show only symbol if exists, else code
+                                if (CURRENCY_SYMBOL && CURRENCY_SYMBOL.trim() !== "") {
+                                    return CURRENCY_SYMBOL + formatted;
+                                } else {
+                                    return CURRENCY_CODE + ' ' + formatted;
+                                }
+                            } catch (e) {
+                                return (CURRENCY_SYMBOL || CURRENCY_CODE) + ' ' + value;
+                            }
+                        };
                         const options = {
                             series: [{
                                 name: "{{ __('messages.total_revenue') }}",
@@ -584,13 +601,7 @@
                                         colors: "#8A92A6",
                                     },
                                     offsetX: -15,
-                                    formatter: function(value) {
-                                        // Format the value with currency symbol
-                                        return new Intl.NumberFormat('{{ app()->getLocale() }}', {
-                                            style: 'currency',
-                                            currency: '{{ GetcurrentCurrency() }}'
-                                        }).format(value);
-                                    }
+                                    formatter: formatCurrency,
                                 },
                             },
                             legend: {
@@ -630,13 +641,7 @@
                             tooltip: {
                                 enabled: true,
                                 y: {
-                                    formatter: function(value) {
-                                        // Format tooltip values with currency symbol
-                                        return new Intl.NumberFormat('{{ app()->getLocale() }}', {
-                                            style: 'currency',
-                                            currency: '{{ GetcurrentCurrency() }}'
-                                        }).format(value);
-                                    }
+                                    formatter: formatCurrency,
                                 }
                             },
                         };
@@ -648,6 +653,12 @@
                             revenueInstance.render();
                         }
                     }
+                },
+                error: function(xhr, status, error) {
+                    $("#revenue_loader").addClass('d-none');
+                    $("#total-revenue").show();
+                    console.error('Error loading revenue chart:', error);
+                    alert('Error loading revenue chart data. Please try again.');
                 }
             })
         };

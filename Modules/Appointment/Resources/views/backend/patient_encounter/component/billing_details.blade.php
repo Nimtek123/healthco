@@ -17,11 +17,11 @@
                     <p class="d-inline-flex gap-1">
                    <div class="d-flex align-items-center justify-content-between gap-3">
                         <h4>
-                            Add Item In Billing
+                            {{ __('appointment.add_item_in_billing') }}
                         </h4>
                         <button class="btn btn-primary" type="button" id="toggleButton" data-bs-toggle="collapse"
                             data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
-                            Add Item
+                            {{ __('appointment.add_item') }}
                         </button>
                     </div>
                     </p>
@@ -68,7 +68,7 @@
                                         for="category-discount">{{ __('service.lbl_discount_type') }}
                                         <span class="text-danger">*</span></label>
                                     <select id="final_discount_type" name="final_discount_type"
-                                        class="form-control select2" placeholder="{{ __('service.lbl_discount_type') }}"
+                                        class="select2 form-select" placeholder="{{ __('service.lbl_discount_type') }}"
                                         data-filter="select" onchange="updateDiscount()">
                                         <option value="percentage"
                                             {{ old('final_discount_type', $data['final_discount_type'] ?? '') === 'percentage' ? 'selected' : '' }}>
@@ -84,8 +84,8 @@
                                     <label class="form-label">{{ __('service.lbl_discount_value') }} <span
                                             class="text-danger">*</span> </label>
                                             <input type="number" name="final_discount_value" id="final_discount_value"
-                            class="form-control" placeholder="{{ __('service.lbl_discount_value') }}" step="0.01"
-                            value="{{ old('final_discount_value', $data['final_discount_value'] ?? 0) }}"
+                            class="form-control" placeholder="{{ __('service.lbl_discount_value') }}" step="1.00"
+                            value="{{ old('final_discount_value', $data['final_discount_value'] ?? 1) }}"
 
                             oninput="validateDiscount(this)"
                              required />
@@ -159,6 +159,17 @@
 
                                         </div>
                                     </div>
+                                    
+                                    @if (optional(optional($data['appointmentdetail'])->appointmenttransaction)->advance_payment_status == 1)
+                                        <div class="d-flex justify-content-between align-items-center form-control">
+                                            <label class="form-label m-0">{{ __('service.advance_payment_amount') }} ({{ optional($data['appointmentdetail'])->advance_payment_amount ?? 0 }}%)</label>
+                                            <div class="form-check" id="advance_payment_amount">
+                                                <input type="hidden" id="advance_paid_amount" value="{{ optional($data['appointmentdetail'])->advance_paid_amount ?? 0 }}">
+                                                {{ Currency::format(optional($data['appointmentdetail'])->advance_paid_amount ?? 0) }}
+                                            </div>
+                                        </div>
+                                    @endif
+                                    
                                     <div class="d-flex justify-content-between align-items-center form-control">
                                         <label
                                             class="form-label m-0">{{ __('appointment.total_payable_amount') }}</label>
@@ -182,7 +193,7 @@
                                         <div class="form-check billing-detail-select">
 
                                             <select id="payment_status" name="payment_status"
-                                                class="form-control select2"
+                                                class="select2 form-select"
                                                 placeholder="{{ __('service.lbl_discount_type') }}"
                                                 data-filter="select">
                                                 <option value="0"
@@ -204,8 +215,8 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" id="save-button" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('appointment.close') }}</button>
+                    <button type="submit" id="save-button" class="btn btn-primary">{{ __('appointment.save') }}</button>
                 </div>
             </div>
 
@@ -218,15 +229,22 @@
 @push('after-scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Select2
+            if (typeof $.fn.select2 !== 'undefined') {
+                $('.select2').select2({
+                    width: '100%'
+                });
+            }
+
             const button = document.getElementById('toggleButton');
             const collapse = document.getElementById('collapseExample');
 
             collapse.addEventListener('shown.bs.collapse', () => {
-                button.textContent = 'Close';
+                button.textContent = '{{ __('appointment.close') }}';
             });
 
             collapse.addEventListener('hidden.bs.collapse', () => {
-                button.textContent = 'Add Item';
+                button.textContent = '{{ __('appointment.add_item') }}';
             });
         });
 
@@ -314,12 +332,12 @@
     const discountValue = parseFloat(input.value);
 
     if (discountType_value === 'percentage' && input.value > maxAmount) {
-        $('#discount_amount_error').text('Discount value should be less than 100');
+        $('#discount_amount_error').text('{{ __('appointment.discount_value_less_than_100') }}');
         input.value = 0;
         updateDiscount();
     } else {
         if (discountValue > totalServiceAmount) {
-            $('#discount_amount_error').text('Discount amount cannot be greater than total service amount');
+            $('#discount_amount_error').text('{{ __('appointment.discount_amount_exceed_service_amount') }}');
             input.value = 0;
         } else {
             $('#discount_amount_error').text('');
@@ -369,6 +387,7 @@
                     $('#total_service_amount').val(data.service_details.service_total);
                     $('#total_tax_amount').val(data.service_details.total_tax);
                     $('#total_amount').val(data.service_details.total_amount);
+                    $('#final_total_amount').val(data.service_details.total_amount);
 
                     $('#service_amount').text(currencyFormat(data.service_details.service_total));
                     $('#tax_amount').text(currencyFormat(data.service_details.total_tax));

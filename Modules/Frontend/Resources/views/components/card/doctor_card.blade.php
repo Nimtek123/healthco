@@ -28,7 +28,7 @@
                     @endif
                 @endfor
             </div>
-            <small class="doctor-rate m-0 fw-bold">{{ $rating }}</small>
+            {{-- <small class="doctor-rate m-0 fw-bold">{{ $rating }}</small> --}}
         </div>
 
         <span class="text-primary font-size-14 fw-semibold">{{ $doctor->total_appointment }} {{ __('frontend.patient_served') }}

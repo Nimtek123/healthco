@@ -1070,8 +1070,8 @@ $form-range-thumb-transition:              background-color .15s ease-in-out, bo
 
 // scss-docs-start form-file-variables
 $form-file-button-color:          $input-color !default;
-$form-file-button-bg:             var(--#{$prefix}gray-100) !default;
-$form-file-button-hover-bg:       var(--#{$prefix}dark-gray) !default;
+$form-file-button-bg:             var(--#{$prefix}gray-500) !default;
+$form-file-button-hover-bg:       var(--#{$prefix}primary-bg-subtle) !default;
 // scss-docs-end form-file-variables
 
 // scss-docs-start form-floating-variables

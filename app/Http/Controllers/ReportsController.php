@@ -190,31 +190,34 @@ class ReportsController extends Controller
         return view('backend.reports.appointment-overview', compact('module_title'));
     }
 
+    // se how i take oin this
+
     public function appointment_overview_index_data(Datatables $datatable, Request $request)
     {
         $module_title = __('report.title_commission_revenue');
-        $query = Appointment::SetRole(auth()->user())->with('user', 'doctor', 'clinicservice', 'cliniccenter', 'appointmenttransaction');
+        $query = Appointment::SetRole(auth()->user())
+            ->with('user', 'doctor', 'clinicservice', 'cliniccenter', 'appointmenttransaction', 'patientEncounter');
 
         $query = $query->where('status', 'checkout');
 
-
         $filter = $request->filter;
 
+        // Date range filter
         if (isset($filter['appointment_date'])) {
             try {
-                $startDate = explode(' to ', $filter['appointment_date'])[0];
-                $startDate = date('Y-m-d', strtotime($startDate));
-                $endDate = explode(' to ', $filter['appointment_date'])[1];
-                $endDate = date('Y-m-d', strtotime($endDate));
-                $query = $query->whereDate('start_date_time', '>=', $startDate)
-                    ->whereDate('start_date_time', '<=', $endDate);
+                $dateParts = explode(' to ', $filter['appointment_date']);
+                $startDate = isset($dateParts[0]) ? date('Y-m-d', strtotime($dateParts[0])) : null;
+                $endDate = isset($dateParts[1]) ? date('Y-m-d', strtotime($dateParts[1])) : null;
+                if ($startDate && $endDate) {
+                    $query = $query->whereDate('start_date_time', '>=', $startDate)
+                        ->whereDate('start_date_time', '<=', $endDate);
+                }
             } catch (\Exception $e) {
                 \Log::error($e->getMessage());
             }
         }
 
         return $datatable->eloquent($query)
-
             ->editColumn('user_id', function ($appointment) {
                 return optional($appointment->user)->first_name . ' ' . optional($appointment->user)->last_name;
             })
@@ -228,14 +231,63 @@ class ReportsController extends Controller
                 return optional($appointment->clinicservice)->name;
             })
             ->editColumn('service_amount', function ($appointment) {
-                return Currency::format($appointment->service_amount);
+                // Take into account patient encounter billing items (like in appointment_detail)
+                $serviceTotal = 0;
+
+                if (
+                    $appointment->relationLoaded('patientEncounter') &&
+                    $appointment->patientEncounter &&
+                    optional(optional($appointment->patientEncounter)->billingrecord)->billingItem != null
+                ) {
+                    // Sum each billing item (taking quantity and discount per item)
+                    foreach ($appointment->patientEncounter->billingrecord->billingItem as $billingItem) {
+                        $quantity = $billingItem->quantity ?? 1;
+                        $service_price = $billingItem->service_amount;
+                        $inclusive_tax = $billingItem->inclusive_tax_amount ?? 0;
+                        $price_per_unit = $service_price + $inclusive_tax;
+                        $item_total = $price_per_unit * $quantity;
+
+                        $discount = 0;
+                        if ($billingItem->discount_value > 0) {
+                            if ($billingItem->discount_type === 'percentage') {
+                                $discount = $item_total * ($billingItem->discount_value / 100);
+                            } else {
+                                $discount = $billingItem->discount_value;
+                            }
+                        }
+
+                        $final_total = $item_total - $discount;
+                        $serviceTotal += $final_total;
+                    }
+                    return Currency::format($serviceTotal);
+                } else {
+                    // Fallback: use appointment's service_amount and check for appointment-level discount and inclusive_tax
+                    $service_amount = $appointment->service_amount ?? 0;
+                    $inclusive_tax = optional($appointment->clinicservice)->inclusive_tax_price ?? 0;
+                    $serviceTotalWithTax = $service_amount + $inclusive_tax;
+
+                    // Appointment transaction discount
+                    $discount_percent = optional($appointment->appointmenttransaction)->discount_value;
+                    $discount_type = optional($appointment->appointmenttransaction)->discount_type ?? 'percentage';
+
+                    $discount_amount = 0;
+                    if ($discount_percent > 0) {
+                        if ($discount_type === 'percentage') {
+                            $discount_amount = $serviceTotalWithTax * ($discount_percent / 100);
+                        } else {
+                            $discount_amount = $discount_percent;
+                        }
+                    }
+
+                    $serviceAfterDiscount = $serviceTotalWithTax - $discount_amount;
+                    return Currency::format($serviceAfterDiscount);
+                }
             })
             ->editColumn('total_amount', function ($appointment) {
                 return Currency::format($appointment->total_amount);
             })
             ->editColumn('start_date_time', function ($appointment) {
                 $timezone = Setting::where('name', 'default_time_zone')->value('val') ?? 'UTC';
-
                 $dateSetting = Setting::where('name', 'date_formate')->first();
                 $dateformate = $dateSetting ? $dateSetting->val : 'Y-m-d';
 
@@ -243,8 +295,8 @@ class ReportsController extends Controller
                 $timeformate = $timeSetting ? $timeSetting->val : 'h:i A';
 
                 $combinedFormat = $dateformate . ' ' . $timeformate;
-                $date = Carbon::parse($appointment->start_date_time)->timezone($timezone)->format($combinedFormat);
-                // return customDate($appointment->start_date_time);
+                // $date = Carbon::parse($appointment->start_date_time)->timezone($timezone)->format($combinedFormat);
+                $date = Carbon::parse($appointment->start_date_time)->format($combinedFormat);
                 return $date;
             })
             ->editColumn('status', function ($appointment) {
@@ -257,15 +309,24 @@ class ReportsController extends Controller
 
                 return ucfirst($status_value);
             })
-
             ->editColumn('payment_status', function ($appointment) {
                 return optional($appointment->appointmenttransaction)->payment_status == 1 ? 'Paid' : 'Pending';
             })
-
             // Add other columns as needed
-            ->rawColumns(['action', 'user_id', 'doctor_id', 'service_id', 'service_amount', 'total_amount', 'start_date_time', 'status', 'payment_status'])
+            ->rawColumns([
+                'action',
+                'user_id',
+                'doctor_id',
+                'service_id',
+                'service_amount',
+                'total_amount',
+                'start_date_time',
+                'status',
+                'payment_status'
+            ])
             ->toJson();
     }
+
 
     public function clinic_overview(Request $request)
     {
@@ -470,6 +531,9 @@ class ReportsController extends Controller
                     ->whereHas('appointmenttransaction', function ($query) {
                         $query->where('payment_status', 1);
                     })->sum('total_amount');
+
+              
+                \Log::info('Total appointment amount calculated: ' . $appointment_amount);
 
                 return Currency::format($appointment_amount);
             })

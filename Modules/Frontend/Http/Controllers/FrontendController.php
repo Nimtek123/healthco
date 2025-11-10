@@ -401,7 +401,7 @@ class FrontendController extends Controller
         if ($categories->isNotEmpty()) {
             foreach ($categories as $index => $category) {
                 $html .= '<div class="col">';
-                $html .= '<a href="' . route('category-details', ['id' => $category->id]) . '" class="d-block text-decoration-none">'; // Replaced the first div with an anchor tag
+                $html .= '<a href="' . route('services', ['category_id' => $category->id]) . '" class="d-block text-decoration-none">'; // Link to services filtered by category
                 $html .= '<div class="serach-card p-3 text-center rounded">'; // Inner card structure remains
                 $html .= '<div class="position-relative">';
                 $html .= '<div class="d-block clinics-img">';

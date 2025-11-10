@@ -142,10 +142,16 @@
 	}
 }
 
+.form-control::file-selector-button {
+    border-color: var(--bs-gray-200);
+}
+
 .iti {
+  display: flex;
+  .form-control {
+    flex-grow: 1;
+  }
   .iti__country-list {
-    min-width: 320px;
-    width: 100%;
     background-color: var(--bs-body-bg);
     border-color: var(--bs-border-color);
   }

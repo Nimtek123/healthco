@@ -25,6 +25,10 @@ class RegisterResource extends JsonResource
             'login_type' => $this->login_type,
             'qr_image' => $this->qr_image,
             'user_role' => $this->getRoleNames() ?? [],
+            'country_id' => $this->country,
+            'state_id' => $this->state,
+            'city_id' => $this->city,
+            'postal_code' => $this->pincode,
         ];
     }
 }

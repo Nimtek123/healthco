@@ -366,7 +366,9 @@
 @endpush
 @push('after-scripts')
 <script src="https://cdnjs.cloudflare.com/ajax/libs/apexcharts/3.40.0/apexcharts.min.js" integrity="sha512-Kr1p/vGF2i84dZQTkoYZ2do8xHRaiqIa7ysnDugwoOcG0SbIx98erNekP/qms/hBDiBxj336//77d0dv53Jmew==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+@php
+$currency = GetCurrencySymbol();
+@endphp
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const dateInput = document.getElementById('revenuedateRangeInput');
@@ -526,13 +528,14 @@
 
     var chart = null;
     let revenueInstance;
+    const CURRENCY_CODE = "{{ $currency['code'] }}";
+    const CURRENCY_SYMBOL = "{{ $currency['symbol'] }}";
 
     function revanue_chart(type, startDate, endDate) {
         var Base_url = "{{ url('/') }}";
         var url = Base_url + "/app/get_revnue_chart_data/" + type;
 
         $("#revenue_loader").show();
-
 
         $.ajax({
             url: url,
@@ -544,11 +547,31 @@
             success: function(response) {
                 $("#revenue_loader").hide();
                 $(".total_revenue").text(type);
+
                 if (document.querySelectorAll('#total-revenue').length) {
                     const variableColors = IQUtils.getVariableColor();
                     const colors = [variableColors.primary, variableColors.info];
                     const monthlyTotals = response.data.chartData;
                     const category = response.data.category;
+
+                    const formatCurrency = function(value) {
+                        try {
+                            const formatted = new Intl.NumberFormat('{{ app()->getLocale() }}', {
+                                style: 'decimal',
+                                minimumFractionDigits: 2
+                            }).format(value);
+
+                            // ✅ show only symbol if exists, else code
+                            if (CURRENCY_SYMBOL && CURRENCY_SYMBOL.trim() !== "") {
+                                return CURRENCY_SYMBOL + formatted;
+                            } else {
+                                return CURRENCY_CODE + ' ' + formatted;
+                            }
+                        } catch (e) {
+                            return (CURRENCY_SYMBOL || CURRENCY_CODE) + ' ' + value;
+                        }
+                    };
+
                     const options = {
                         series: [{
                             name: 'Total Revenue',
@@ -558,52 +581,25 @@
                             fontFamily: '"Inter", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
                             height: 300,
                             type: 'area',
-                            toolbar: {
-                                show: false
-                            },
-                            sparkline: {
-                                enabled: false,
-                            },
+                            toolbar: { show: false },
+                            sparkline: { enabled: false },
                         },
                         colors: colors,
-                        dataLabels: {
-                            enabled: false
-                        },
-                        stroke: {
-                            curve: 'smooth',
-                            width: 3,
-                        },
+                        dataLabels: { enabled: false },
+                        stroke: { curve: 'smooth', width: 3 },
                         yaxis: {
                             show: true,
                             labels: {
                                 show: true,
-                                style: {
-                                    colors: "#8A92A6",
-                                },
+                                style: { colors: "#8A92A6" },
                                 offsetX: -15,
-                                formatter: (value) => {
-
-                                    if (value === 2) return "00";
-                                    if (value === 4) return "20";
-                                    if (value === 6) return "40";
-                                    if (value === 8) return "60";
-                                    if (value === 10) return "80";
-                                    return value;
-                                }
+                                formatter: formatCurrency,
                             },
                         },
-                        legend: {
-                            show: false,
-                        },
+                        legend: { show: false },
                         xaxis: {
-                            labels: {
-                                minHeight: 22,
-                                maxHeight: 22,
-                                show: true,
-                            },
-                            lines: {
-                                show: false
-                            },
+                            labels: { minHeight: 22, maxHeight: 22, show: true },
+                            lines: { show: false },
                             categories: category
                         },
                         grid: {
@@ -611,23 +607,13 @@
                             borderColor: 'var(--bs-body-bg)',
                             strokeDashArray: 0,
                             position: 'back',
-                            xaxis: {
-                                lines: {
-                                    show: true
-                                }
-                            },
-                            yaxis: {
-                                lines: {
-                                    show: true
-                                }
-                            },
+                            xaxis: { lines: { show: true } },
+                            yaxis: { lines: { show: true } },
                         },
-                        fill: {
-                            type: 'solid',
-                            opacity: 0
-                        },
+                        fill: { type: 'solid', opacity: 0 },
                         tooltip: {
                             enabled: true,
+                            y: { formatter: formatCurrency }
                         },
                     };
 
@@ -639,8 +625,8 @@
                     }
                 }
             }
-        })
-    };
+        });
+    }
 
     $(document).on('click', '.revenue-dropdown-item', function() {
         var type = $(this).data('type');

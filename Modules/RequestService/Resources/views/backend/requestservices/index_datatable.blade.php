@@ -9,7 +9,7 @@
             @if(auth()->user()->can('add_request_service'))
             <x-backend.quick-action url="{{ route('backend.services.bulk_action') }}">
                 <div class="">
-                    <select name="action_type" class="form-control select2 col-12" id="quick-action-type" style="width:100%">
+                    <select name="action_type" class="select2 form-select col-12" id="quick-action-type" style="width:100%">
                         <option value="">{{ __('messages.no_action') }}</option>
                         @can('add_request_service')
                         <option value="change-status">{{ __('messages.status') }}</option>
@@ -20,7 +20,7 @@
                     </select>
                 </div>
                 <div class="select-status d-none quick-action-field" id="change-status-action">
-                    <select name="status" class="form-control select2" id="status" style="width:100%">
+                    <select name="status" class="select2 form-select" id="status" style="width:100%">
                         <option value="1" selected>{{ __('messages.active') }}</option>
                         <option value="0">{{ __('messages.inactive') }}</option>
                     </select>
@@ -40,7 +40,7 @@
 
             <div>
                 <div class="datatable-filter">
-                    <select name="column_status" id="column_status" class="select2 form-control" data-filter="select" style="width: 100%">
+                    <select name="column_status" id="column_status" class="select2 form-select" data-filter="select" style="width: 100%">
                         <option value="">{{__('messages.all')}}</option>
                         <option value="0" {{ $filter['status'] == '0' ? 'selected' : '' }}>
                             {{ __('messages.inactive') }}
@@ -57,9 +57,16 @@
                 <input type="text" class="form-control dt-search" placeholder="{{ __('messages.search') }}..." aria-label="Search" aria-describedby="addon-wrapping">
             </div>
            {{-- <button class="btn btn-secondary d-flex align-items-center gap-1 btn-group" data-bs-toggle="offcanvas" data-bs-target="#offcanvasExample" aria-controls="offcanvasExample"><i class="ph ph-funnel"></i>{{__('messages.advance_filter')}}</button>--}}
-            @if(auth()->user()->hasRole('vendor'))
+            {{-- @if(auth()->user()->hasRole('vendor'))
             <x-buttons.offcanvas target='#form-offcanvas' title="{{ __('messages.create') }} {{ __('service.request_title') }}">
             {{ __('messages.new') }}</x-buttons.offcanvas>
+            @endif --}}
+            @if(auth()->user()->hasAnyRole(['vendor', 'admin']))
+                <x-buttons.offcanvas 
+                    target='#form-offcanvas' 
+                    title="{{ __('messages.create') }} {{ __('service.request_title') }}">
+                    {{ __('messages.new') }}
+                </x-buttons.offcanvas>
             @endif
 
         </x-slot>
@@ -148,21 +155,21 @@
         },
 
     ]
-    // const actionColumn = [{
-    //     data: 'action',
-    //     name: 'action',
-    //     orderable: false,
-    //     searchable: false,
-    //     title: "{{ __('service.lbl_action') }}",
-    //     width: '5%'
-    // }]
+    const actionColumn = [{
+        data: 'action',
+        name: 'action',
+        orderable: false,
+        searchable: false,
+        title: "{{ __('service.lbl_action') }}",
+        width: '5%'
+    }]
 
     const customFieldColumns = JSON.parse(@json($columns))
 
     let finalColumns = [
         ...columns,
         ...customFieldColumns,
-        // ...actionColumn
+        ...actionColumn
     ]
 
     document.addEventListener('DOMContentLoaded', (event) => {

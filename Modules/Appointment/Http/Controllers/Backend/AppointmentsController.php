@@ -36,6 +36,7 @@ use Modules\Appointment\Models\PatientEncounter;
 use Modules\Appointment\Trait\BillingRecordTrait;
 use Modules\Wallet\Models\Wallet;
 use Modules\Wallet\Models\WalletHistory;
+use Modules\Clinic\Models\Receptionist;
 
 class AppointmentsController extends Controller
 {
@@ -171,7 +172,7 @@ class AppointmentsController extends Controller
 
     public function otherpatient(Request $request)
     {
-
+        // dd($request->all());
         $data = $request->except('profile_image');
 
         $otherPatient = OtherPatient::create($data);
@@ -190,134 +191,238 @@ class AppointmentsController extends Controller
         ], 201);
     }
 
+    // public function store(Request $request)
+    // {                                                                                                                                                                                       
+    //     $data = $request->all();
+         
+    //     \Log::info($data);
+    //     if (!empty($data['otherpatient_id'])) {
+    //         $data['otherpatient_id'] = (int) $data['otherpatient_id'];
+    //     } else {
+    //         $data['otherpatient_id'] = null;
+    //     }
+
+    //     $data['start_date_time'] = Carbon::createFromFormat('Y-m-d H:i', $data['appointment_date'] . ' ' . $data['appointment_time'], setting('default_time_zone'));
+
+    //     $serviceData = $this->getServiceAmount($data['service_id'], $data['doctor_id'], $data['clinic_id']);
+
+    //     $taxes = Tax::active()
+    //         ->whereNull('module_type')
+    //         ->orWhere('module_type', 'services')
+    //         ->where('tax_type', 'exclusive')
+    //         ->where('status', 1)
+    //         ->get();
+
+    //     $data['service_price'] = $serviceData['service_price'];
+    //     $data['service_amount'] = $serviceData['service_amount'];
+    //     $data['total_amount'] = $serviceData['total_amount'];
+    //     $data['duration'] = $serviceData['duration'];
+    //     $data['status'] = $data['status'] ? $data['status'] : 'confirmed';
+
+    //     $service = ClinicsService::where('id', $data['service_id'])->first();
+    //     if ($service->is_enable_advance_payment == 1) {
+    //         $data['advance_payment_amount'] = $service->advance_payment_amount;
+    //     }
+    //     $data['appointment_extra_info'] = $data['description'] ?? null;
+    //     $data = Appointment::create($data);
+    //     $is_telemet = ClinicsService::where('id', $data['service_id'])->pluck('is_video_consultancy')->first();
+    //     if ($is_telemet == 1) {
+    //         $setting = Setting::where('name', 'google_meet_method')->orwhere('name', 'is_zoom')->first();
+    //         if ($data && $setting) {
+    //             if ($setting->name == 'google_meet_method' && $setting->val == 1) {
+    //                 $meetLink = $this->generateMeetLink($request, $data['start_date_time'], $data['duration'], $data);
+    //             } else {
+    //                 $zoom_url = getzoomVideoUrl($data);
+    //                 if (!empty($zoom_url) && isset($zoom_url['start_url']) && isset($zoom_url['join_url'])) {
+    //                     $startUrl = $zoom_url['start_url'];
+    //                     $joinUrl = $zoom_url['join_url'];
+
+    //                     $data->start_video_link = $startUrl;
+    //                     $data->join_video_link = $joinUrl;
+    //                     $data->save();
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     if ($request->hasFile('file_url')) {
+    //         storeMediaFile($data, $request->file('file_url'));
+    //     }
+
+    //     if ($request->is('api/*')) {
+
+    //         $service_data = ClinicsService::where('id', $data['service_id'])->with('systemservice')->first();
+
+    //         $clinic_data = Clinics::where('id', $data['clinic_id'])->first();
+
+    //         $data['service_name'] = $service_data->name ?? '--';
+    //         $data['clinic_name'] = $clinic_data->name ?? '--';
+    //         $notification_data = [
+    //             'id' => $data->id,
+    //             'description' => $data->description,
+    //             'appointment_duration' => $data->duration,
+    //             'user_id' => $data->user_id,
+    //             'user_name' => optional($data->user)->first_name ?? default_user_name(),
+    //             'doctor_id' => $data->doctor_id,
+    //             'doctor_name' => optional($data->doctor)->first_name,
+    //             'appointment_date' => $data->start_date_time->format('d/m/Y'),
+    //             'appointment_time' => $data->start_date_time->format('h:i A'),
+    //             'appointment_services_names' => optional($data->clinicservice)->name ?? '--',
+    //             'appointment_services_image' => optional($data->clinicservice)->file_url,
+    //             'appointment_date_and_time' => $data->start_date_time->format('Y-m-d H:i'),
+    //             'latitude' => null,
+    //             'longitude' => null,
+    //             'clinic_name' => $data->clinic_name,
+    //             'clinic_id' => $clinic_data->id
+
+    //         ];
+    //         $startTime = Carbon::parse($data->appointment_time);
+    //         $endTime = $startTime->copy()->addMinutes($data->duration);
+    //         $data['end_time'] = $endTime->format('H:i:s') ?? '-';
+    //         $appointmentTime = new \DateTime($data->appointment_time);
+    //         $data['appointment_time'] = $appointmentTime->format('H:i:s') ?? '-';
+    //         $this->sendNotificationOnBookingUpdate('new_appointment', $notification_data);
+    //         $message = 'Your Appointment has been booked successfully.';
+    //         $service = ClinicsService::where('id', $data['service_id'])->first();
+    //         if ($service->is_enable_advance_payment == 1) {
+    //             $total_amount = $serviceData['total_amount'];
+    //             $percentage = (float)  $service->advance_payment_amount;
+    //             $data['advance_paid_amount'] = ($total_amount * $percentage) / 100;
+    //         }
+    //         $data['advance_paid_amount'] = $data['advance_paid_amount'] ?? 0;
+    //         return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
+    //     } else {
+    //         $clinic_data = Clinics::where('id', $data['clinic_id'])->first();
+    //         $data['clinic_name'] = $clinic_data->name ?? '--';
+
+    //         $notification_data = [
+    //             'id' => $data->id,
+    //             'description' => $data->description,
+    //             'appointment_duration' => $data->duration,
+    //             'user_id' => $data->user_id,
+    //             'user_name' => optional($data->user)->first_name ?? default_user_name(),
+    //             'doctor_id' => $data->doctor_id,
+    //             'doctor_name' => optional($data->doctor)->first_name,
+    //             'appointment_date' => $data->start_date_time->format('d/m/Y'),
+    //             'appointment_time' => $data->start_date_time->format('h:i A'),
+    //             'appointment_services_names' => optional($data->clinicservice)->name ?? '--',
+    //             'appointment_services_image' => optional($data->clinicservice)->file_url,
+    //             'appointment_date_and_time' => $data->start_date_time->format('Y-m-d H:i'),
+    //             'latitude' => null,
+    //             'longitude' => null,
+    //             'clinic_name' => $data->clinic_name,
+    //             'clinic_id' => $clinic_data->id,
+    //             'clinic_address' => $clinic_data->address ?? '',
+
+    //         ];
+    //         $this->sendNotificationOnBookingUpdate('new_appointment', $notification_data);
+
+    //         $message = __('messages.create_form', ['form' => __('apponitment.singular_title')]);
+    //         return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
+    //     }
+    // }
+
     public function store(Request $request)
-    {
-        $data = $request->all();
-        if (!empty($data['otherpatient_id'])) {
-            $data['otherpatient_id'] = (int) $data['otherpatient_id'];
-        } else {
-            $data['otherpatient_id'] = null;
-        }
+{
+    $formData = $request->all(); // keep original form data separate
 
-        $data['start_date_time'] = Carbon::createFromFormat('Y-m-d H:i', $data['appointment_date'] . ' ' . $data['appointment_time'], setting('default_time_zone'));
+    \Log::info($formData);
 
-        $serviceData = $this->getServiceAmount($data['service_id'], $data['doctor_id'], $data['clinic_id']);
+    $formData['otherpatient_id'] = !empty($formData['otherpatient_id']) ? (int) $formData['otherpatient_id'] : null;
 
-        $taxes = Tax::active()
-            ->whereNull('module_type')
-            ->orWhere('module_type', 'services')
-            ->where('tax_type', 'exclusive')
-            ->where('status', 1)
-            ->get();
+    $formData['start_date_time'] = Carbon::createFromFormat(
+        'Y-m-d H:i',
+        $formData['appointment_date'] . ' ' . $formData['appointment_time'],
+        setting('default_time_zone')
+    );
 
-        $data['service_price'] = $serviceData['service_price'];
-        $data['service_amount'] = $serviceData['service_amount'];
-        $data['total_amount'] = $serviceData['total_amount'];
-        $data['duration'] = $serviceData['duration'];
-        $data['status'] = $data['status'] ? $data['status'] : 'confirmed';
+    $serviceData = $this->getServiceAmount($formData['service_id'], $formData['doctor_id'], $formData['clinic_id']);
+// dd($serviceData);
+    $formData['service_price'] = $serviceData['service_price'];
+    $formData['service_amount'] = $serviceData['service_amount'];
+    $formData['total_amount'] = $serviceData['total_amount'];
+    $formData['duration'] = $serviceData['duration'];
+    $formData['status'] = $formData['status'] ?? 'confirmed';
 
-        $service = ClinicsService::where('id', $data['service_id'])->first();
-        if ($service->is_enable_advance_payment == 1) {
-            $data['advance_payment_amount'] = $service->advance_payment_amount;
-        }
-        $data['appointment_extra_info'] = $data['description'] ?? null;
-        $data = Appointment::create($data);
-        $is_telemet = ClinicsService::where('id', $data['service_id'])->pluck('is_video_consultancy')->first();
-        if ($is_telemet == 1) {
-            $setting = Setting::where('name', 'google_meet_method')->orwhere('name', 'is_zoom')->first();
-            if ($data && $setting) {
-                if ($setting->name == 'google_meet_method' && $setting->val == 1) {
-                    $meetLink = $this->generateMeetLink($request, $data['start_date_time'], $data['duration'], $data);
-                } else {
-                    $zoom_url = getzoomVideoUrl($data);
-                    if (!empty($zoom_url) && isset($zoom_url['start_url']) && isset($zoom_url['join_url'])) {
-                        $startUrl = $zoom_url['start_url'];
-                        $joinUrl = $zoom_url['join_url'];
+    $service = ClinicsService::find($formData['service_id']);
+    if ($service && $service->is_enable_advance_payment == 1) {
+        $formData['advance_payment_amount'] = $service->advance_payment_amount;
+    }
+    $formData['appointment_extra_info'] = $formData['appointment_extra_info'] ?? null;
+// dd($formData);
+    // Create appointment record
+    $appointment = Appointment::create($formData);
 
-                        $data->start_video_link = $startUrl;
-                        $data->join_video_link = $joinUrl;
-                        $data->save();
-                    }
+    // Telemedicine link creation
+    if ($service && $service->is_video_consultancy == 1) {
+        $setting = Setting::whereIn('name', ['google_meet_method', 'is_zoom'])->first();
+        if ($setting) {
+            if ($setting->name == 'google_meet_method' && $setting->val == 1) {
+                $this->generateMeetLink($request, $appointment->start_date_time, $appointment->duration, $appointment);
+            } else {
+                $zoom_url = getzoomVideoUrl($appointment);
+                if (!empty($zoom_url['start_url']) && !empty($zoom_url['join_url'])) {
+                    $appointment->update([
+                        'start_video_link' => $zoom_url['start_url'],
+                        'join_video_link' => $zoom_url['join_url'],
+                    ]);
                 }
             }
         }
-
-        if ($request->hasFile('file_url')) {
-            storeMediaFile($data, $request->file('file_url'));
-        }
-
-        if ($request->is('api/*')) {
-
-            $service_data = ClinicsService::where('id', $data['service_id'])->with('systemservice')->first();
-
-            $clinic_data = Clinics::where('id', $data['clinic_id'])->first();
-
-            $data['service_name'] = $service_data->name ?? '--';
-            $data['clinic_name'] = $clinic_data->name ?? '--';
-            $notification_data = [
-                'id' => $data->id,
-                'description' => $data->description,
-                'appointment_duration' => $data->duration,
-                'user_id' => $data->user_id,
-                'user_name' => optional($data->user)->first_name ?? default_user_name(),
-                'doctor_id' => $data->doctor_id,
-                'doctor_name' => optional($data->doctor)->first_name,
-                'appointment_date' => $data->start_date_time->format('d/m/Y'),
-                'appointment_time' => $data->start_date_time->format('h:i A'),
-                'appointment_services_names' => optional($data->clinicservice)->name ?? '--',
-                'appointment_services_image' => optional($data->clinicservice)->file_url,
-                'appointment_date_and_time' => $data->start_date_time->format('Y-m-d H:i'),
-                'latitude' => null,
-                'longitude' => null,
-                'clinic_name' => $data->clinic_name,
-                'clinic_id' => $clinic_data->id
-
-            ];
-            $startTime = Carbon::parse($data->appointment_time);
-            $endTime = $startTime->copy()->addMinutes($data->duration);
-            $data['end_time'] = $endTime->format('H:i:s') ?? '-';
-            $appointmentTime = new \DateTime($data->appointment_time);
-            $data['appointment_time'] = $appointmentTime->format('H:i:s') ?? '-';
-            $this->sendNotificationOnBookingUpdate('new_appointment', $notification_data);
-            $message = 'Your Appointment has been booked successfully.';
-            $service = ClinicsService::where('id', $data['service_id'])->first();
-            if ($service->is_enable_advance_payment == 1) {
-                $total_amount = $serviceData['total_amount'];
-                $percentage = (float)  $service->advance_payment_amount;
-                $data['advance_paid_amount'] = ($total_amount * $percentage) / 100;
-            }
-            $data['advance_paid_amount'] = $data['advance_paid_amount'] ?? 0;
-            return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
-        } else {
-            $clinic_data = Clinics::where('id', $data['clinic_id'])->first();
-            $data['clinic_name'] = $clinic_data->name ?? '--';
-
-            $notification_data = [
-                'id' => $data->id,
-                'description' => $data->description,
-                'appointment_duration' => $data->duration,
-                'user_id' => $data->user_id,
-                'user_name' => optional($data->user)->first_name ?? default_user_name(),
-                'doctor_id' => $data->doctor_id,
-                'doctor_name' => optional($data->doctor)->first_name,
-                'appointment_date' => $data->start_date_time->format('d/m/Y'),
-                'appointment_time' => $data->start_date_time->format('h:i A'),
-                'appointment_services_names' => optional($data->clinicservice)->name ?? '--',
-                'appointment_services_image' => optional($data->clinicservice)->file_url,
-                'appointment_date_and_time' => $data->start_date_time->format('Y-m-d H:i'),
-                'latitude' => null,
-                'longitude' => null,
-                'clinic_name' => $data->clinic_name,
-                'clinic_id' => $clinic_data->id,
-                'clinic_address' => $clinic_data->address ?? '',
-
-            ];
-            $this->sendNotificationOnBookingUpdate('new_appointment', $notification_data);
-
-            $message = __('messages.create_form', ['form' => __('apponitment.singular_title')]);
-            return response()->json(['message' => $message, 'data' => $data, 'status' => true], 200);
-        }
     }
+
+    // Upload medical files
+    // if ($request->hasFile('medical_report')) {
+    //     storeMediaFile($appointment, $request->file('medical_report'));
+    // }
+    if ($request->hasFile('file_url')) {
+        storeMediaFile($appointment, $request->file('file_url'));
+    }
+
+    // Common notification data
+    $clinic_data = Clinics::with('receptionist')->where('id', $appointment->clinic_id)->first();
+    $receptionist = Receptionist::with('users')->where('clinic_id',$appointment->clinic_id)->first();
+    $appointment->clinic_name = $clinic_data->name ?? '--';
+
+    $notification_data = [
+        'id' => $appointment->id,
+        'description' => $appointment->description,
+        'appointment_duration' => $appointment->duration,
+        'user_id' => $appointment->user_id,
+        'user_name' => optional($appointment->user)->first_name ?? default_user_name(),
+        'doctor_id' => $appointment->doctor_id,
+        'doctor_name' => optional($appointment->doctor)->first_name,
+        'appointment_date' => $appointment->start_date_time->format('d/m/Y'),
+        'appointment_time' => $appointment->start_date_time->format('h:i A'),
+        'appointment_services_names' => optional($appointment->clinicservice)->name ?? '--',
+        'appointment_services_image' => optional($appointment->clinicservice)->file_url,
+        'appointment_date_and_time' => $appointment->start_date_time->format('Y-m-d H:i'),
+        'latitude' => null,
+        'longitude' => null,
+        'clinic_name' => $appointment->clinic_name,
+        'clinic_id' => $clinic_data->id,
+        'vendor_id' => $clinic_data->vendor_id,
+        'receptionist_id' => $clinic_data->receptionist->receptionist_id ?? $receptionist->receptionist_id ?? null,
+        'receptionist_name' => isset($receptionist) ? $receptionist->users->first_name.' '.$receptionist->users->last_name : 'unknown',
+        'clinic_address' => $clinic_data->address ?? '',
+    ];
+
+    $this->sendNotificationOnBookingUpdate('new_appointment', $notification_data);
+
+    // Advance payment calculation
+    if ($service && $service->is_enable_advance_payment == 1) {
+        $percentage = (float) $service->advance_payment_amount;
+        $appointment->advance_paid_amount = ($serviceData['total_amount'] * $percentage) / 100;
+    }
+    $appointment->advance_paid_amount = $appointment->advance_paid_amount ?? 0;
+
+    return response()->json([
+        'message' => 'Your Appointment has been booked successfully.',
+        'data' => $appointment,
+        'status' => true
+    ], 200);
+}
+
 
 
     /**
@@ -398,8 +503,17 @@ class AppointmentsController extends Controller
     }
     public function updateStatus($id, Request $request)
     {
+        // dd('csd');
+        \Log::info('Appointment status update triggered', [
+            'appointment_id' => $id,
+            'new_status'     => $request->value,
+            'reason'         => $request->reason ?? null,
+            'cancellation_charge' => $request->cancellation_charge_amount ?? 0,
+            'user'           => auth()->user()->id,
+        ]);
         $appointment = Appointment::where('id', $id)->with('user', 'doctor')->first();
-
+        $clinic_data = Clinics::where('id', $appointment->clinic_id)->first();
+        $receptionist = Receptionist::with('users')->where('clinic_id',$appointment->clinic_id)->first();
         $startDate = Carbon::parse($appointment['start_date_time']);
         $status = $request->status;
 
@@ -538,6 +652,7 @@ class AppointmentsController extends Controller
                     'refund_amount' => $refund_amount,
                     'cancellation_charge' => $cancellation_charge_amount,
                     'reason' => $cancellation_reason,
+                    'vendor_id' => $clinic_data->vendor_id,
                 ];
 
                 $this->sendNotificationOnBookingUpdate('wallet_refund', $notification_data);
@@ -564,7 +679,6 @@ class AppointmentsController extends Controller
                 $notify_type = 'cancel_appointment';
                 break;
         }
-        $clinic_data = Clinics::where('id', $appointment->clinic_id)->first();
 
 
         $notification_data = [
@@ -585,6 +699,9 @@ class AppointmentsController extends Controller
             'clinic_id' => $appointment->clinic_id,
             'clinic_name' => $clinic_data->name ?? '--',
             'updated_by_role' => auth()->user()->user_type ?? '',
+            'vendor_id' => $clinic_data->vendor_id,
+            'receptionist_id' => $clinic_data->receptionist->receptionist_id ?? $receptionist->receptionist_id ?? null,
+            'receptionist_name' => isset($receptionist) ? $receptionist->users->first_name.' '.$receptionist->users->last_name : 'unknown',
         ];
         $this->sendNotificationOnBookingUpdate($notify_type, $notification_data);
         $message = __('appointment.status_update');

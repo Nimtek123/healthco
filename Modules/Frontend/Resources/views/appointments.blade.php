@@ -30,22 +30,34 @@
                         </ul>
                     </div>
                     <div class="col-xl-1 d-xl-block d-none"></div>
-                    <div class="col-xl-3 col-lg-5 col-md-4 mt-md-0 mt-3">
+                    <div class="col-xl-3 col-lg-5 col-md-6 mt-3">
                         <div class="d-flex flex-wrap gap-3 align-items-center">
                                 <h6 class="m-0 flex-shrink-0">{{ __('frontend.filter_by') }}</h6>
-                                <div class="form-group flex-grow-1 datatable-filter">
-                                    <select name="doctor" id="doctor" class="form-select select2" data-filter="select">
-                                        <option value="">Doctor
-                                        </option>
-                                        @foreach ($doctors as $doctor)
-                                            <option value="{{ optional($doctor->user)->id }}">
 
-                                              {{getDisplayName($doctor->user)}} 
-                                             
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                            <!-- Filter Type Dropdown -->
+                            <div class="form-group flex-grow-1 datatable-filter">
+                                <select id="filter_type" class="form-select select2" data-filter="select">
+                                    <option value="">Select Filter Type</option>
+                                    <option value="doctor">Doctor</option>
+                                    <option value="clinic">Clinic</option>
+                                    <option value="service">Service</option>
+                                    <option value="category">Category</option>
+                                    <option value="consultation_type">Consultation Type</option>
+                                    <option value="payment_status">Payment Status</option>
+                                    <option value="date">Date</option>
+                                </select>
+                            </div>
+
+                            <!-- Dynamic Filter Options -->
+                            <div class="form-group flex-grow-1" id="filter_options_container">
+                                <!-- Options will load here dynamically -->
+                            </div>
+                        <div class="form-group flex-shrink-0" id="reset_filter_container" >
+                            <button type="button" id="reset_filter" class="btn btn-sm btn-outline-danger d-none">
+                                Reset
+                            </button>
+                        </div>
+
                         </div>
                     </div>
                 </div>
@@ -157,7 +169,7 @@
                         </svg>
                 </div>
 
-                <h5 class="mt-3 fw-bold text-dark">Your Appointment has been Cancelled</h5>
+                <h5 class="mt-3 fw-bold heading-color">Your Appointment has been Cancelled</h5>
                 <p class="text-muted mb-3" style="font-size: 14px;">
                     Your booking has successfully been cancelled. Applicable refund will be processed within 24 hours.
                 </p>
@@ -166,7 +178,7 @@
                     *Note: Check your booking history for refund details
                 </div>
 
-                <button type="button" class="btn btn-secondary px-4 py-2" data-bs-dismiss="modal" style="border-radius: 10px;">Ok</button>
+                <button type="button" class="btn btn-secondary px-4 py-2" id="ok-cancel-success" data-bs-dismiss="modal" style="border-radius: 10px;">Ok</button>
             </div>
         </div>
     </div>
@@ -199,6 +211,7 @@
             searchable: true
         }];
         let appointmentIdToCancel = null;
+        let cancelledAppointmentId = null;
         let charge = null;
         let cancellation_charge = @json(setting('cancellation_charge'));
         let cancelltion_Type = @json(setting('cancellation_type'));
@@ -255,10 +268,28 @@
                 url: '{{ route('appointment.index_data') }}',
                 finalColumns,
                 cardColumnClass: 'row-cols-1',
-                advanceFilter: () => {
+                  advanceFilter: () => {
+                    const filterType = $('#filter_type').val();
+                    let filterValue = null;
+
+                    if(filterType) {
+                        // If the dynamic filter is a select
+                        const dynamicSelect = $('#filter_options_container select');
+                        if(dynamicSelect.length) {
+                            filterValue = dynamicSelect.val();
+                        }
+
+                        // If the dynamic filter is a date input
+                        const dynamicDate = $('#filter_options_container input[type="text"]');
+                        if(dynamicDate.length) {
+                            filterValue = dynamicDate.val();
+                        }
+                    }
+
                     return {
                         activeTab: activeTab,
-                        doctor_id: $('#doctor').val(),
+                        filter_type: filterType,
+                        filter_value: filterValue
                     }
                 },
                 onLoadStart: () => {
@@ -309,11 +340,12 @@
                     reason: reason,
                     cancellation_charge_amount : charge,
                     cancellation_type : cancelltion_Type,
-                    cancellation_charge :cancellation_charge,    
+                    cancellation_charge :cancellation_charge,
                 },
                 success: function(response) {
                     if (response.status) {
                         successSnackbar(response.message);
+                        cancelledAppointmentId = appointmentIdToCancel; // Store the cancelled appointment ID
                         $('#cancel-appointment').modal('hide');
                         $('#confirm_btn').html(confirm_btn_text);
                         $('#cancel_reason').val('');
@@ -327,5 +359,161 @@
             });
         }
 
+        // Handle redirect to appointment details when Ok button is clicked
+        $(document).on('click', '#ok-cancel-success', function() {
+            if (cancelledAppointmentId) {
+                window.location.href = "{{ route('appointment-details', '') }}/" + cancelledAppointmentId;
+            }
+        });
+
     </script>
+<script>
+    const doctors = @json($doctorOptions ?? []);
+    const clinics = @json($clinicOptions ?? []);
+    const categories = @json($categoryOptions ?? []);
+    const services = @json($serviceOptions ?? []);
+
+    // Debug: Check if data is loaded
+    console.log('Doctors:', doctors);
+    console.log('Clinics:', clinics);
+    console.log('Categories:', categories);
+    console.log('Services:', services);
+</script>
+
+<script>
+    $(document).ready(function() {
+
+        // Filter type change handler
+        $('#filter_type').on('change', function() {
+            const type = $(this).val();
+            const container = $('#filter_options_container');
+            const resetBtn = $('#reset_filter');
+
+            console.log('Filter type selected:', type);
+
+            container.html(''); // clear previous options
+            resetBtn.addClass('d-none');
+
+            let select;
+
+            if(type === 'doctor') {
+                select = $('<select name="doctor" class="form-select select2"></select>');
+                select.append('<option value="">Select Doctor</option>');
+                if(doctors && doctors.length > 0) {
+                    doctors.forEach(d => {
+                        select.append(`<option value="${d.id}">${d.name}</option>`);
+                    });
+                }
+            }
+            else if(type === 'clinic') {
+                select = $('<select name="clinic" class="form-select select2"></select>');
+                select.append('<option value="">Select Clinic</option>');
+                if(clinics && clinics.length > 0) {
+                    clinics.forEach(c => {
+                        select.append(`<option value="${c.id}">${c.name}</option>`);
+                    });
+                }
+            }
+            else if(type === 'category') {
+                select = $('<select name="category" class="form-select select2"></select>');
+                select.append('<option value="">Select Category</option>');
+                if(categories && categories.length > 0) {
+                    categories.forEach(c => {
+                        select.append(`<option value="${c.id}">${c.name}</option>`);
+                    });
+                }
+            }
+            else if(type === 'service') {
+                select = $('<select name="service" class="form-select select2"></select>');
+                select.append('<option value="">Select Service</option>');
+                if(services && services.length > 0) {
+                    services.forEach(s => {
+                        select.append(`<option value="${s.id}">${s.name}</option>`);
+                    });
+                }
+            }
+            else if(type === 'consultation_type') {
+                select = $('<select name="consultation_type" class="form-select select2"></select>');
+                select.append(`
+                    <option value="">Select Consultation Type</option>
+                    <option value="online">Online</option>
+                    <option value="inclinic">In-Clinic</option>
+                `);
+            }
+            else if(type === 'payment_status') {
+                select = $('<select name="payment_status" class="form-select select2"></select>');
+                select.append(`
+                    <option value="">Select Payment Status</option>
+                    <option value="paid">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="advance_paid">Advance Paid</option>
+                    <option value="advance_refunded">Advance Refunded</option>
+                    <option value="payment_refunded">Payment Refunded</option>
+                `);
+            }
+            else if(type === 'date') {
+                const inputGroup = $(`
+                    <div class="input-group">
+                        <input type="text" id="date" name="date"
+                            class="form-control" placeholder="Select date" />
+                        <span class="input-group-text" id="calendar-icon">
+                            <i class="ph ph-calendar"></i>
+                        </span>
+                    </div>
+                `);
+
+                container.append(inputGroup);
+
+                const appointmentDateInput = document.getElementById('date');
+                const calendarIcon = document.getElementById('calendar-icon');
+
+                const picker = flatpickr(appointmentDateInput, {
+                    mode: "range",
+                    dateFormat: "d-m-Y",
+                    clickOpens: false,
+                    allowInput: true,
+                    onClose: function(selectedDates, dateStr) {
+                        if (dateStr) {
+                            resetBtn.removeClass('d-none');
+                            window.renderedDataTable.draw();
+                        }
+                    }
+                });
+
+                appointmentDateInput.addEventListener('click', () => picker.open());
+                calendarIcon.addEventListener('click', () => picker.open());
+
+                return;
+            }
+
+            if(select) {
+                container.append(select);
+                console.log('Select appended to container');
+                
+                // Initialize Select2 for dynamically created select
+                select.select2({
+                    width: '100%',
+                    placeholder: 'Select an option',
+                    allowClear: true
+                });
+                
+                $(select).on('change', function() {
+                    if ($(this).val()) {
+                        resetBtn.removeClass('d-none');
+                        window.renderedDataTable.draw();
+                    }
+                });
+            }
+        });
+
+        // Reset button logic
+        $('#reset_filter').on('click', function() {
+            $('#filter_type').val('').trigger('change');
+            $('#filter_options_container').html('');
+            $(this).addClass('d-none');
+            window.renderedDataTable.draw();
+        });
+
+    });
+</script>
 @endpush

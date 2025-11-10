@@ -1,5 +1,5 @@
 <div class="d-flex gap-3 align-items-center">
-   
+    {{-- <button type='button' data-assign-module="{{$data->id}}" data-assign-event='clinic-details' class='btn text-secondary p-0 fs-5' data-bs-toggle='tooltip' title='View'><i class="ph ph-eye align-middle"></i> --}}
 @hasPermission('customer_password')
 <button type='button' data-assign-module="{{ $data->id }}" data-assign-target='#receptionist_change_password' data-assign-event='receptionist_assign' class='btn text-info p-0 fs-5' data-bs-toggle="tooltip" title="{{ __('messages.change_password') }}"><i class="ph ph-key"></i></button>
 @endhasPermission

@@ -36,7 +36,10 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::post('gallery-images/{id}', [ClinicesController::class, 'uploadGalleryImages']);
         Route::get('export', [ClinicesController::class, 'export'])->name('export');
         Route::get('clinic-details/{id}', [ClinicesController::class, 'clinicDetails'])->name('clinic_details');
+        Route::get('clinic-session/{id}', [ClinicSessionController::class, 'show'])->name('clinic_session_show');
         Route::get('clinic_list', [ClinicesController::class, 'clinicList'])->name('clinic_list');
+        Route::post('check-email', [ClinicesController::class, 'checkEmail']);
+        Route::get('speciality', [ClinicesController::class, 'speciality']);
     });
     Route::resource('clinics', ClinicesController::class);
 
@@ -59,6 +62,8 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::post('update_featured/{id}', [ClinicsCategoryController::class, 'update_featured'])->name('update_featured');
         Route::post('update-clinic-category/{id}', [ClinicsCategoryController::class, 'update'])->name('update_clinic_category');
         Route::get('export', [ClinicsCategoryController::class, 'export'])->name('export');
+        Route::get('parent-categories', [ClinicsCategoryController::class, 'parentCategories'])->name('parent_categories');
+        Route::get('custom-fields', [ClinicsCategoryController::class, 'customFields'])->name('custom_fields');
     });
     Route::get('category-table-view', [ClinicsCategoryController::class, 'datatable_view'])->name('category.datatable_view');
 
@@ -81,7 +86,7 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::get('service-details', [ClinicsServiceController::class, 'ServiceDetails']);
         Route::post('assign-doctor-store/{id}', [ClinicsServiceController::class, 'assign_doctor_update'])->name('assign_doctor_update');
         Route::get('service-price', [ClinicsServiceController::class, 'service_price'])->name('service_price');
-
+        Route::get('init-data', [ClinicsServiceController::class, 'initData'])->name('init_data');
     });
     Route::resource('services', ClinicsServiceController::class);
 
@@ -95,6 +100,8 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::post('update-status/{id}', [SystemServiceController::class, 'update_status'])->name('update_status');
         Route::post('update-featured/{id}', [SystemServiceController::class, 'update_featured'])->name('update_featured');
         Route::get('export', [SystemServiceController::class, 'export'])->name('export');
+        Route::get('get-subcategories', [SystemServiceController::class, 'getSubcategories'])->name('subcategories');
+
     });
     Route::resource('system-service', SystemServiceController::class);
 
@@ -142,11 +149,20 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::get('/assign-doctor-list', [ClinicsServiceController::class, 'assign_doctor_list'])->name('assign_doctor_list');
         // Route::get('view', [DoctorController::class, 'view'])->name('view');
         Route::get('doctor-details/{id}', [DoctorController::class, 'doctorDeatails'])->name('doctorDeatails');
+        // Route
+        Route::get('doctor-detail/{id}', [DoctorController::class, 'doctorDetail'])->name('doctor.detail');
+        Route::get('appointment-doctor-detail/{id}', [DoctorController::class, 'appoitmentdoctorDetail'])->name('appointment.doctor.detail');
+
         Route::get('review_data', [DoctorController::class, 'review_data'])->name('review_data');
         Route::post('bulk-action-review', [DoctorController::class, 'bulk_action_review'])->name('bulk_action_review');
         Route::delete('destroy_review/{id}', [DoctorController::class, 'destroy_review'])->name('destroy_review');
         Route::get('service_list', [DoctorController::class, 'service_list'])->name('service_list');
         Route::get('user-list', [DoctorController::class, 'user_list'])->name('user_list');
+        Route::get('get-clinics-by-vendor', [DoctorController::class, 'getClinicsByVendor'])->name('get_clinics_by_vendor');
+        
+        // AJAX routes for Select2
+        Route::get('get-clinics', [DoctorController::class, 'getClinics'])->name('get-clinics');
+        Route::get('get-vendors', [DoctorController::class, 'getVendors'])->name('get-vendors');
 
     });
     Route::get('doctors-review', [DoctorController::class, 'review'])->name('doctors.review');
@@ -164,8 +180,10 @@ Route::group(['prefix' => 'app', 'as' => 'backend.', 'middleware' => ['auth','au
         Route::get('day-list', [DoctorSessionController::class, 'session_list'])->name('session_list');
         Route::get('edit-session-data', [DoctorSessionController::class, 'EditSessionData']);
         Route::get('edit-doctor-mapping', [DoctorSessionController::class, 'EditDoctorMapping']);
-
-
+        Route::get('doctor-clinics', [DoctorSessionController::class, 'doctorClinics'])->name('doctor_clinics');
+        
+        Route::get('doctor/{doctor_id}/sessions', [DoctorSessionController::class, 'getDoctorSessions'])
+        ->name('doctor_sessions');
 
     });
 

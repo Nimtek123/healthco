@@ -26,7 +26,6 @@
           </div>
         </div>
         <div class="offcanvas-footer">
-          <p class="text-center"><small>{{ $t('clinic.gallery_for_clinic') }}</small></p>
           <div class="d-grid d-sm-flex justify-content-sm-end gap-3">
             <button class="btn btn-white d-block" type="button" data-bs-dismiss="offcanvas">{{ $t('messages.close') }}</button>
             <!-- <button class="btn btn-secondary d-block">{{ $t('messages.upload') }}</button> -->
@@ -116,7 +115,12 @@ const formData=new FormData()
 IS_SUBMITED.value = true
   const files = uppy.value.getFiles(); // Accessing uppy's value before calling getFiles
   files.forEach((file) => {
-    featureImages.value.push({file: file.data, full_url: '', id: null})
+    featureImages.value.push({
+      file: file.data,
+      full_url: URL.createObjectURL(file.data),
+      id: null
+    })
+
 
   });
 

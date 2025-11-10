@@ -356,7 +356,7 @@ class CustomersController extends Controller
         $data = $request->except('profile_image');
         $data = $request->all();
 
-        $data['mobile'] = str_replace(' ', '', $data['mobile']);
+        // $data['mobile'] = str_replace(' ', '', $data['mobile']);
         $data['user_type'] = 'user';
         $data['password'] = Hash::make($data['password']);
         $data = User::create($data);
@@ -416,7 +416,7 @@ class CustomersController extends Controller
         $data = User::findOrFail($id);
 
         $request_data = $request->except('profile_image', 'password');
-        $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']);
+        // $request_data['mobile'] = str_replace(' ', '', $request_data['mobile']);
 
         $data->update($request_data);
 
@@ -505,22 +505,27 @@ class CustomersController extends Controller
             'password' => [
                 'required',
                 'string',
-                'min:6',             // must be at least 10 characters in length
+                'min:8',             // must be at least 8 characters in length
+                'max:14',            // must not be more than 14 characters
                 'regex:/[a-z]/',      // must contain at least one lowercase letter
                 'regex:/[A-Z]/',      // must contain at least one uppercase letter
                 'regex:/[0-9]/',      // must contain at least one digit
                 'regex:/[@$!%*#?&]/', // must contain a special character
-            ],            
+            ],
             'confirm_password' => 'required_with:password|same:password'
         ], [
             'password.regex' => 'Password must contain at least one uppercase / one lowercase / one number and one symbol.',
+            'password.min' => 'Password must be 8 to 14 characters.',
+            'password.max' => 'Password must be 8 to 14 characters.',
+            'confirm_password.required_with' => 'Please fill confirm password.',
+            'confirm_password.same' => 'Confirm password must match the password.',
         ]);
 
         if ($validator->fails())
         {
             return response()->json(['errors'=>$validator->errors()]);
         }
-                
+
         $data = $request->all();
 
         $user_id = $data['user_id'];
@@ -597,7 +602,7 @@ class CustomersController extends Controller
             'email' => $patient->email,
             'contact' => $patient->mobile,
             'dob' => $patient->date_of_birth,
-            'id' => $patient->id, 
+            'id' => $patient->id,
         ],
     ];
 

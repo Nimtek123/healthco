@@ -88,7 +88,7 @@ class AuthController extends Controller
     {
         $user = $this->registerTrait($request);
 
-
+// dd($user);
         // Check if response is an error response
         if ($user instanceof \Illuminate\Http\JsonResponse) {
             return $user;
@@ -96,7 +96,7 @@ class AuthController extends Controller
         $success['token'] = $user->createToken(setting('app_name'))->plainTextToken;
         $success['name'] = $user->name;
         $userResource = new RegisterResource($user);      
-
+// dd($userResource);
         return $this->sendResponse($userResource, __('messages.register_successfull'));
     }
 

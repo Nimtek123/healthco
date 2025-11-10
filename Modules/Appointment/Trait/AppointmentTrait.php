@@ -35,13 +35,41 @@ trait AppointmentTrait
             return ['service_price' => 0, 'service_amount' => 0, 'total_amount' => 0, 'duration' => 0, 'discount_type' => null, 'discount_value' => 0, 'discount_amount' => 0];
         }
 
-        $service_price = $data->doctor_service->first()->charges ?? 0;
+        $service_price = $data->doctor_service->first()->charges ?? $data->charges ?? 0;
 
-        $service_amount = $data->doctor_service->first()->charges ?? 0;
+        $service_amount = $data->doctor_service->first()->charges ?? $data->charges ?? 0;
         $discount_amount = 0;
 
-        if ($data->discount == 1) {
+        // FIXED CALCULATION FLOW: Add inclusive tax BEFORE applying discount
+        // OLD FLOW (COMMENTED): Discount → Inclusive Tax → Exclusive Tax
+        // NEW FLOW: Base Price → Inclusive Tax → Discount → Exclusive Tax
+        // This matches the frontend display and billing record calculations
 
+        // if ($data->discount == 1) {
+        //     $discount_amount = ($data->discount_type == 'percentage')
+        //         ? $service_amount * $data->discount_value / 100
+        //         : $data->discount_value;
+        //     $service_amount = $service_amount - $discount_amount;
+        // }
+
+        $inclusive_tax = 0;
+        $inclusive_tax_amount = 0;
+        $service_inclusive_tax = null;
+        $inclusive_tax_data = [];
+
+        // Step 1: Add inclusive tax to base price FIRST
+        if ($data->is_inclusive_tax == 1) {
+            $service_inclusive_tax = $data->inclusive_tax ?? null;
+            // Calculate inclusive tax on BASE service amount (before discount)
+            $inclusive_tax_data = $this->calculateTaxAmounts($service_inclusive_tax, $service_amount);
+            $inclusive_tax = $this->calculate_inclusive_tax($service_amount, $service_inclusive_tax);
+            $inclusive_tax_amount = $inclusive_tax['total_inclusive_tax'];
+            $service_amount = $service_amount + $inclusive_tax_amount;
+        }
+
+        // Step 2: Now apply discount on (base price + inclusive tax)
+        if ($data->discount == 1) {
+            // Discount is calculated on total with inclusive tax
             $discount_amount = ($data->discount_type == 'percentage')
                 ? $service_amount * $data->discount_value / 100
                 : $data->discount_value;
@@ -49,19 +77,11 @@ trait AppointmentTrait
             $service_amount = $service_amount - $discount_amount;
         }
 
-        $inclusive_tax = 0;
-
-        if ($data->is_inclusive_tax == 1) {
-            $service_inclusive_tax = $data->inclusive_tax ?? null;
-            $inclusive_tax_data = $this->calculateTaxAmounts($service_inclusive_tax, $service_amount);
-            $inclusive_tax = $this->calculate_inclusive_tax($service_amount, $service_inclusive_tax);
-            $inclusive_tax_amount = $inclusive_tax['total_inclusive_tax'];
-            $service_amount = $service_amount + $inclusive_tax_amount;
-        }
-
+        // Step 3: Calculate exclusive tax on subtotal (after discount)
         $tax_amount = 0;
         $tax_amount = $service_amount > 0 ? $this->TaxCalculation($service_amount) : 0;
 
+        // Step 4: Final total
         $total_amount = $service_amount + $tax_amount;
 
         return [
@@ -109,11 +129,12 @@ trait AppointmentTrait
         $appointment = Appointment::where('id', $data['appointment_id'])
             ->with('doctor.commissionData')
             ->first();
-
+        \Log::info('appointment', ['appointment' => $appointment]);
         if (!$appointment || !$appointment->doctor) {
             return null;
         }
         $billing_record = BillingRecord::where('doctor_id', $appointment->doctor_id)->orderBy('updated_at', 'desc')->first();
+        \Log::info('billing_record', ['billing_record' => $billing_record]);
         $doctor = $billing_record->doctor;
         $total_service_amount = $billing_record->final_total_amount;
         $commission_amount = $this->calculateCommission($doctor, $total_service_amount);
@@ -123,6 +144,7 @@ trait AppointmentTrait
             ->toArray();
 
         $commission_list = Commission::whereIn('id', $commission_list)->get();
+        \Log::info('commission_list', ['commission_list' => $commission_list]);
 
         $commissionStatus = $data->payment_status === 1 ? 'unpaid' : 'pending';
 
@@ -140,7 +162,8 @@ trait AppointmentTrait
             'tip_status' => 'pending',
             'payment_date' => null,
         ];
-
+        \Log::info('commission_data', ['commission_data' => $commission_data]);
+        \Log::info('tip_data', ['tip_data' => $tip_data]);
         return [
             'commission_data' => $commission_data,
             'tip_data' => $tip_data,
@@ -153,7 +176,9 @@ trait AppointmentTrait
     {
 
         $total_amount = $data['total_amount'];
+   
         $commissions = Commission::where('type', 'admin_fees')->get();
+        // dd($commissions,$total_amount);
         $admin_commission = $this->calculateAdminfees($commissions, $total_amount);
         $commissionStatus = $data->payment_status === 1 ? 'unpaid' : 'pending';
         $user = User::where('user_type', 'admin')->first();

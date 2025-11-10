@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical Certificate</title>
+    <title>{{ __('appointment.medical_certificate') }}</title>
     <style>
         /* Add CSS styles here */
         .custom-table {
@@ -102,7 +102,7 @@
                         <div class="col-md-6">
                             <h2 class="mb-0">{{ $info['cliniccenter']['name'] ?? '--' }}</h2>
                             <h3 class="mb-0 font-weight-bold"> {{ setting('inv_prefix') ?: __('messages.invoice_id') }} <span
-                                    class="text-primary">#{{ $info['id'] ?? '--' }}</span></h3>
+                                    class="text-primary">{{ $info['id'] ?? '--' }}</span></h3>
                             @php
 
                                 $setting = App\Models\Setting::where('name', 'date_formate')->first();
@@ -179,37 +179,82 @@
                                             <tr>
                                                 <th>{{ __('messages.sr_no') }}</th>
                                                 <th>{{ __('messages.item_name') }}</th>
-                                                <th style="text-align: right;">{{ __('messages.price') }}</th>
+                                                <th style="text-align: right;">
+                                                    {{ __('messages.price') }}
+                                                    
+                                                </th>
                                                 <th style="text-align: right;">{{ __('messages.qty') }}</th>
-                                                <th style="text-align: right;">{{ __('service.inclusive_tax') }}</th>
+                                                @php
+                                                    // Check if any billing item has discount or inclusive tax to show the fields dynamically
+                                                    $showDiscount = false;
+                                                    $showInclusiveTax = false;
+                                                    if (!empty($info['patient_encounter']['billingrecord']['billing_item'])) {
+                                                        foreach ($info['patient_encounter']['billingrecord']['billing_item'] as $billingItemCheck) {
+                                                            if (!empty($billingItemCheck['discount_value']) && $billingItemCheck['discount_value'] > 0) {
+                                                                $showDiscount = true;
+                                                            }
+                                                            if (!empty($billingItemCheck['inclusive_tax_amount']) && $billingItemCheck['inclusive_tax_amount'] > 0) {
+                                                                $showInclusiveTax = true;
+                                                            }
+                                                        }
+                                                    }
+                                                @endphp
+                                                @if($showDiscount)
+                                                    <th style="text-align: right;">{{ __('service.discount') }}</th>
+                                                @endif
+                                                {{-- @if($showInclusiveTax)
+                                                    <th style="text-align: right;">{{ __('service.inclusive_tax') }}</th>
+                                                @endif --}}
                                                 <th style="text-align: right;">{{ __('messages.total') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @php $index = 1 @endphp
+                                            @php $index = 1; @endphp
                                             @foreach ($info['patient_encounter']['billingrecord']['billing_item'] as $billingItem)
                                                 <tr>
                                                     <td>{{ $index }}</td>
-                                                    @if ($billingItem['discount_value'] != 0)
-                                                        @if ($billingItem['discount_type'] === 'percentage')
-                                                            <td>{{ $billingItem['clinicservice']['name'] ?? '--' }}
-                                                                (<span>{{ $billingItem['discount_value'] ?? '--' }}%</span>)
-                                                            </td>
-                                                        @else
-                                                            <td>{{ $billingItem['clinicservice']['name'] ?? '--' }}
-                                                                (<span>{{ Currency::format($billingItem['discount_value']) ?? '--' }}</span>)
-                                                            </td>
-                                                        @endif
-                                                    @else
-                                                        <td>{{ $billingItem['clinicservice']['name'] ?? '--' }}</td>
+                                                    <td>
+                                                        {{ $billingItem['clinicservice']['name'] ?? '--' }}
+                                                    </td>
+                                                    <td style="text-align: right;">
+                                                        @php
+                                                            // Add inclusive tax in the price for clarity
+                                                            $price_with_inclusive = ($billingItem['service_amount'] ?? 0) + ($billingItem['inclusive_tax_amount'] ?? 0);
+                                                        @endphp
+                                                        {{ Currency::format($price_with_inclusive) ?? '--' }}
+                                                    </td>
+                                                    <td style="text-align: right;">
+                                                        {{ $billingItem['quantity'] ?? '--' }}
+                                                    </td>
+                                                    @if($showDiscount)
+                                                        <td style="text-align: right;">
+                                                            @php
+                                                                $discount_display = '-';
+                                                                $discount_amount = 0;
+                                                                $amount_for_discount = ($billingItem['service_amount'] ?? 0) + ($billingItem['inclusive_tax_amount'] ?? 0);
+
+                                                                if (!empty($billingItem['discount_value']) && $billingItem['discount_value'] > 0) {
+                                                                    if ($billingItem['discount_type'] === 'percentage') {
+                                                                        $discount_amount = $amount_for_discount * ($billingItem['discount_value'] / 100);
+                                                                        $discount_display = '-' . Currency::format($discount_amount) . ' (' . $billingItem['discount_value'] . '%)';
+                                                                    } else {
+                                                                        $discount_amount = $billingItem['discount_value'];
+                                                                        $discount_display = '-' . Currency::format($discount_amount);
+                                                                    }
+                                                                }
+                                                            @endphp
+                                                            {{ $discount_display }}
+                                                        </td>
                                                     @endif
-                                                    <td style="text-align: right;">
-                                                        {{ Currency::format($billingItem['service_amount']) ?? '--' }}
-                                                    </td>
-                                                    <td style="text-align: right;">{{ $billingItem['quantity'] ?? '--' }}</td>
-                                                    <td style="text-align: right;">
-                                                        {{ Currency::format($billingItem['inclusive_tax_amount']) ?? '--' }}
-                                                    </td>
+                                                    {{-- @if($showInclusiveTax)
+                                                        <td style="text-align: right;">
+                                                            @if(!empty($billingItem['inclusive_tax_amount']) && $billingItem['inclusive_tax_amount'] > 0)
+                                                                {{ Currency::format($billingItem['inclusive_tax_amount']) }}
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </td>
+                                                    @endif --}}
                                                     <td style="text-align: right;">
                                                         {{ Currency::format($billingItem['total_amount']) ?? '--' }}
                                                     </td>
@@ -220,9 +265,10 @@
                                         @if ($info['clinicservice'] == null)
                                             <tbody>
                                                 <tr>
-                                                    <td colspan="6">
+                                                    <td colspan="{{ 4 + ($showDiscount ? 1 : 0) + ($showInclusiveTax ? 1 : 0) + 1 }}">
                                                         <h4 class="text-primary mb-0">
-                                                            {{ __('messages.no_record_found') }}</h4>
+                                                            {{ __('messages.no_record_found') }}
+                                                        </h4>
                                                     </td>
                                                 </tr>
                                             </tbody>
@@ -400,10 +446,10 @@
                                                 <th colspan="6" class="text-right">{{ __('messages.discount') }}
                                                     ( @if ($transaction['final_discount_type'] === 'percentage')
                                                         <span
-                                                            class="text-dark">{{ $transaction['final_discount_value'] ?? '--' }}%</span>
+                                                            class="heading-color">{{ $transaction['final_discount_value'] ?? '--' }}%</span>
                                                     @else
                                                         <span
-                                                            class="text-dark">{{ Currency::format($transaction['final_discount_value']) ?? '--' }}</span>
+                                                            class="heading-color">{{ Currency::format($transaction['final_discount_value']) ?? '--' }}</span>
                                                     @endif
                                                     )
 

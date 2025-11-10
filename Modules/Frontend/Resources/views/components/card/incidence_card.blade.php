@@ -14,22 +14,24 @@
 
         <p class="text-break font-size-14 mb-2"> {{ $incidence->description }} </p>
 
-        <ul class="list-inline m-0 p-0 d-flex align-items-center flex-wrap row-gap-2 column-gap-3">
-           @if(isset($incidence->file_url) && !empty($incidence->file_url))   
-            <li>
-                <div class="d-flex align-items-center gap-1 font-size-12 heading-color">
-                    <i class="ph ph-file-text"></i>
-                    <a href="{{ $incidence->file_url }}" target="_blank" class="text-inherit"> {{ __('messages.lbl_image_attchemnet') }} </a>
-                </div>
-            </li>
-           @endif
-            <li>
-                <div class="d-flex align-items-center gap-1 font-size-12 heading-color">
-                    <i class="ph ph-clock"></i>
-                    <span>{{ timeAgo($incidence->created_at) }}</span>
-                </div>
-            </li>
-        </ul>
+       <ul class="list-inline m-0 p-0 d-flex align-items-center flex-wrap row-gap-2 column-gap-3">
+   @if(isset($incidence->file_url) && !empty($incidence->file_url))   
+    <li>
+        <div class="d-flex align-items-center gap-1 font-size-12 bg-warning bg-opacity-10 border border-warning rounded px-2 py-1">
+            <i class="ph ph-file-text text-warning"></i>
+            <a href="{{ $incidence->file_url }}" target="_blank" class="fw-semibold heading-color">
+                {{ __('messages.lbl_image_attchemnet') }}
+            </a>
+        </div>
+    </li>
+    @endif
+    <li>
+        <div class="d-flex align-items-center gap-1 font-size-12 heading-color">
+            <i class="ph ph-clock"></i>
+            <span>{{ timeAgo($incidence->created_at) }}</span>
+        </div>
+    </li>
+</ul>
 
         @if(!empty($incidence->reply))
             <div class="mt-3 py-2 px-3 bg-body rounded-3 incidence-card-reply"  style=" border-left: 3px solid var(--bs-primary);">

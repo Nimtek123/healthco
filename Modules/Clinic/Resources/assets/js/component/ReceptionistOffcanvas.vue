@@ -20,14 +20,24 @@
               <!-- File Upload Section -->
               <div class="d-flex align-items-center justify-content-center gap-2">
                 <!-- Hidden file input to trigger file dialog -->
-                <input type="file" ref="profileInputRef" class="form-control d-none" id="file_url" name="file_url" @change="fileUpload" accept=".jpeg, .jpg, .png, .gif" />
+                <input 
+                  type="file" 
+                  ref="profileInputRef" 
+                  class="form-control d-none" 
+                  id="file_url" 
+                  name="file_url" 
+                  @change="fileUpload" 
+                  accept=".jpeg, .jpg, .png, .gif" 
+                />
+
 
                 <!-- Button to trigger file selection -->
-                <label class="btn btn-info" for="file_url">{{ $t('messages.upload') }}</label>
+                <label class="btn btn-light" for="file_url">{{ $t('messages.upload') }}</label>
 
                 <!-- Button to remove the uploaded image -->
-                <input type="button" class="btn btn-danger" name="remove" :value="$t('messages.remove')" @click="removeLogo()" v-if="profile_image" />
+                <!-- <input type="button" class="btn btn-danger" name="remove" :value="$t('messages.remove')" @click="removeLogo()" v-if="profile_image" /> -->
               </div>
+              <span class="text-danger">Only .jpeg, .jpg, .png files are allowed.</span>
             </div>
 
             <!-- Display error message if any -->
@@ -38,15 +48,15 @@
           <div class="col-md-6">
             <div class="form-group">
               <label for="" class="form-label">{{ $t('receptionist.lbl_first_name') }} <span class="text-danger">*</span></label>
-              <InputField class="" :is-required="true" :label="$t('employee.lbl_first_name')" :placeholder="$t('clinic.lbl_first_name')" v-model="first_name" :error-message="errors['first_name']" :error-messages="errorMessages['first_name']"></InputField>
+              <InputField class="" :is-required="true" :label="$t('employee.lbl_first_name')" :placeholder="$t('receptionist.placeholder_first_name')" v-model="first_name" :error-message="errors['first_name']" :error-messages="errorMessages['first_name']"></InputField>
             </div>
             <div class="form-group">
               <label for="" class="form-label">{{ $t('receptionist.lbl_last_name') }} <span class="text-danger">*</span></label>
-              <InputField class="" :is-required="true" :label="$t('employee.lbl_last_name')" :placeholder="$t('clinic.lbl_last_name')" v-model="last_name" :error-message="errors['last_name']" :error-messages="errorMessages['last_name']" autocomplete="off"> </InputField>
+              <InputField class="" :is-required="true" :label="$t('employee.lbl_last_name')" :placeholder="$t('receptionist.placeholder_last_name')" v-model="last_name" :error-message="errors['last_name']" :error-messages="errorMessages['last_name']" autocomplete="off"> </InputField>
             </div>
             <div class="form-group">
               <label for="" class="form-label">{{ $t('receptionist.lbl_Email') }} <span class="text-danger">*</span></label>
-              <InputField class="" :is-required="true" :label="$t('employee.lbl_Email')" :placeholder="$t('clinic.lbl_Email')" v-model="email" :error-message="errors['email']" :error-messages="errorMessages['email']"></InputField>
+              <InputField class="" :is-required="true" :label="$t('employee.lbl_Email')" :placeholder="$t('receptionist.placeholder_email')" v-model="email" :error-message="errors['email']" :error-messages="errorMessages['email']"></InputField>
             </div>
           </div>
           <div class="col-md-6">
@@ -64,26 +74,26 @@
           <div class="col-md-6">
             <div class="form-group">
               <label class="form-label">{{ $t('employee.lbl_phone_number') }}<span class="text-danger">*</span> </label>
-              <vue-tel-input :value="mobile" @input="handleInput" v-bind="{ mode: 'international', maxLen: 15 }" autocomplete="new-password"></vue-tel-input>
+              <vue-tel-input :value="mobile" @input="handleInput" v-bind="{ mode: 'international', maxLen: 15, placeholder: $t('receptionist.placeholder_phone_number') }" autocomplete="new-password"></vue-tel-input>
               <span class="text-danger">{{ errors['mobile'] }}</span>
             </div>
           </div>
           <div class="col-md-6" v-if="currentId === 0">
             <div class="form-group">
               <label for="" class="form-label">{{ $t('receptionist.lbl_password') }} <span class="text-danger">*</span></label>
-              <InputField type="password" class="" :is-required="true" :label="$t('employee.lbl_password')" :placeholder="$t('clinic.lbl_password')" v-model="password" :error-message="errors['password']" :autocomplete="newpassword" :error-messages="errorMessages['password']"></InputField>
+              <InputField type="password" class="" :is-required="true" :label="$t('employee.lbl_password')" :placeholder="$t('receptionist.placeholder_password')" v-model="password" :error-message="errors['password']" :autocomplete="newpassword" :error-messages="errorMessages['password']"></InputField>
             </div>
           </div>
           <div class="col-md-6" v-if="currentId === 0">
             <div class="form-group">
               <label for="" class="form-label">{{ $t('receptionist.lbl_confirm_password') }} <span class="text-danger">*</span></label>
-              <InputField type="password" class="" :is-required="true" :label="$t('employee.lbl_confirm_password')" :placeholder="$t('clinic.lbl_confirm_password')" v-model="confirm_password" :error-message="errors['confirm_password']" :error-messages="errorMessages['confirm_password']"></InputField>
+              <InputField type="password" class="" :is-required="true" :label="$t('employee.lbl_confirm_password')" :placeholder="$t('receptionist.placeholder_confirm_password')" v-model="confirm_password" :error-message="errors['confirm_password']" :error-messages="errorMessages['confirm_password']"></InputField>
             </div>
           </div>
           <div class="col-md-6">
             <div class="form-group">
               <label class="form-label" for="date_of_birth">{{ $t('customer.lbl_date_of_birth') }} </label>
-              <flat-pickr placeholder="Select Date Of Birth" id="date_of_birth" class="form-control" v-model="date_of_birth" :value="date_of_birth" :config="config"></flat-pickr>
+              <flat-pickr :placeholder="$t('receptionist.placeholder_date_of_birth')" id="date_of_birth" class="form-control" v-model="date_of_birth" :value="date_of_birth" :config="config"></flat-pickr>
             </div>
           </div>
           <div class="col-md-6">
@@ -103,13 +113,13 @@
           <div class="col-md-6" v-if="enable_multi_vendor() == 1 && (role() === 'admin' || role() === 'demo_admin')">
             <div class="form-group">
               <label class="form-label">{{ $t('receptionist.select_vendors') }} </label>
-              <Multiselect class="form-group" v-model="vendor_id" :value="vendor_id" :options="vendors.options" v-bind="singleSelectOption" @select="getClinic" placeholder="Select Vendor" id="vendor_id"></Multiselect>
+              <Multiselect class="form-group" v-model="vendor_id" :value="vendor_id" :options="vendors.options" v-bind="singleSelectOption" @select="getClinic" :placeholder="$t('receptionist.placeholder_select_vendor')" id="vendor_id"></Multiselect>
             </div>
           </div>
           <div class="col-md-6">
             <div class="form-group">
               <label class="form-label" for="address">{{ $t('receptionist.select_clinic_centre') }} <span class="text-danger">*</span></label>
-              <Multiselect id="clinic_id" v-model="clinic_id" :value="clinic_id" placeholder="Select clinic Center" v-bind="singleSelectOption" :options="clinic_centers.options" class="form-group"> </Multiselect>
+              <Multiselect id="clinic_id" v-model="clinic_id" :value="clinic_id" :placeholder="$t('receptionist.placeholder_select_clinic_center')" v-bind="singleSelectOption" :options="clinic_centers.options" class="form-group"> </Multiselect>
               <span v-if="errorMessages['clinic_id']">
                 <ul class="text-danger">
                   <li v-for="err in errorMessages['clinic_id']" :key="err">{{ err }}</li>
@@ -119,13 +129,10 @@
             </div>
           </div>
 
-          <div class="col-md-6">
+          <div class="col-md-12">
             <div class="form-group">
               <label class="form-label" for="address">{{ $t('clinic.lbl_address') }}</label>
-              <div class="input-group">
-                <input class="form-control" v-model="address" id="address" :placeholder="$t('clinic.lbl_address')" />
-                <span class="input-group-text"></span>
-              </div>
+              <textarea class="form-control" v-model="address" id="address" :placeholder="$t('receptionist.placeholder_address')" rows="3"></textarea>
               <span v-if="errorMessages['address']">
                 <ul class="text-danger">
                   <li v-for="err in errorMessages['address']" :key="err">{{ err }}</li>
@@ -134,10 +141,10 @@
               <span class="text-danger">{{ errors.address }}</span>
             </div>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <div class="form-group">
               <label class="form-label">{{ $t('clinic.lbl_country') }}</label>
-              <Multiselect id="country-list" v-model="country" :value="country" :placeholder="$t('clinic.lbl_country')" v-bind="singleSelectOption" :options="countries.options" @select="getState" class="form-group"></Multiselect>
+              <Multiselect id="country-list" v-model="country" :value="country" :placeholder="$t('receptionist.placeholder_select_country')" v-bind="singleSelectOption" :options="countries.options" @select="getState" class="form-group"></Multiselect>
               <span v-if="errorMessages['country']">
                 <ul class="text-danger">
                   <li v-for="err in errorMessages['country']" :key="err">{{ err }}</li>
@@ -149,7 +156,7 @@
           <div class="col-md-4">
             <div class="form-group">
               <label class="form-label">{{ $t('clinic.lbl_state') }}</label>
-              <Multiselect id="state-list" v-model="state" :value="state" :placeholder="$t('clinic.lbl_state')" v-bind="singleSelectOption" :options="states.options" @select="getCity" class="form-group"></Multiselect>
+              <Multiselect id="state-list" v-model="state" :value="state" :placeholder="$t('receptionist.placeholder_select_state')" v-bind="singleSelectOption" :options="states.options" @select="getCity" class="form-group"></Multiselect>
               <span v-if="errorMessages['state']">
                 <ul class="text-danger">
                   <li v-for="err in errorMessages['state']" :key="err">{{ err }}</li>
@@ -161,7 +168,7 @@
           <div class="col-md-4">
             <div class="form-group">
               <label class="form-label">{{ $t('clinic.lbl_city') }}</label>
-              <Multiselect id="city-list" v-model="city" :value="city" :placeholder="$t('clinic.lbl_city')" v-bind="singleSelectOption" :options="cities.options" class="form-group"></Multiselect>
+              <Multiselect id="city-list" v-model="city" :value="city" :placeholder="$t('receptionist.placeholder_select_city')" v-bind="singleSelectOption" :options="cities.options" class="form-group"></Multiselect>
               <span v-if="errorMessages['city']">
                 <ul class="text-danger">
                   <li v-for="err in errorMessages['city']" :key="err">{{ err }}</li>
@@ -173,7 +180,7 @@
           <div class="col-md-4">
             <div class="form-group">
               <label for="" class="form-label">{{ $t('receptionist.postal_code') }}</label>
-              <InputField class="" type="text" :is-required="true" :label="$t('clinic.lbl_postal_code')" :placeholder="$t('clinic.lbl_postal_code')" v-model="pincode" :error-message="errors['pincode']" :error-messages="errorMessages['pincode']"></InputField>
+              <InputField class="" type="text" :is-required="true" :label="$t('clinic.lbl_postal_code')" :placeholder="$t('receptionist.placeholder_postal_code')" v-model="pincode" :error-message="errors['pincode']" :error-messages="errorMessages['pincode']"></InputField>
             </div>
           </div>
         </div>
@@ -203,12 +210,14 @@ import InputField from '@/vue/components/form-elements/InputField.vue'
 import FormElement from '@/helpers/custom-field/FormElement.vue'
 import FlatPickr from 'vue-flatpickr-component'
 import ImageComponent from '@/vue/components/form-elements/imageComponent.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 // props
 const props = defineProps({
   createTitle: { type: String, default: '' },
   editTitle: { type: String, default: '' },
-  defaultImage: { type: String, default: 'https://dummyimage.com/600x300/cfcfcf/000000.png' },
+  defaultImage: { type: String, default: 'https://dummyimage.com/140x140/cfcfcf/000000.png' },
   customefield: { type: Array, default: () => [] },
   selectedSessionServiceProviderId: { type: Number, default: null }
 })
@@ -255,7 +264,8 @@ const currentId = useModuleId(() => {
     getRequest({ url: EDIT_URL, id: currentId.value }).then((res) => {
       if (res.status && res.data) {
         setFormData(res.data)
-
+        console.log(res.data);
+        getClinic()
         getState(country.value)
         getCity(state.value)
       }
@@ -276,7 +286,11 @@ const getClinic = (value) => {
   if (!clinic_id.value) {
     clinic_id.value = ''
   }
-  useSelect({ url: CLINIC_CENTER_LIST, data: { id: value } }, { value: 'id', label: 'clinic_name' }).then((data) => (clinic_centers.value = data))
+  const currentClinicId = currentId.value > 0 ? String(clinic_id.value || '') : ''
+  useSelect({
+    url: CLINIC_CENTER_LIST,
+    data: { id: value, exclude_assigned_receptionist: true, current_receptionist_clinic_id: currentClinicId }
+  }, { value: 'id', label: 'clinic_name' }).then((data) => (clinic_centers.value = data))
 }
 onMounted(() => {
   setFormData(defaultData())
@@ -318,7 +332,7 @@ const defaultData = () => {
     password: '',
     confirm_password: '',
     gender: 'male',
-    profile_image: [],
+    profile_image: null,
     date_of_birth: '',
     address: '',
     city: '',
@@ -386,50 +400,57 @@ const EMAIL_REGX = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/
 const validationSchema = yup.object({
   first_name: yup
     .string()
-    .required('First name is a required field')
+    .required(t('messages.first_name_required'))
     .test('is-string', 'Only strings are allowed', (value) => {
-      // Regular expressions to disallow special characters and numbers
       const specialCharsRegex = /[!@#$%^&*(),.?":{}|<>\-_;'\/+=\[\]\\]/
       return !specialCharsRegex.test(value) && !numberRegex.test(value)
     }),
   last_name: yup
     .string()
-    .required('Last name is a required field')
+    .required(t('messages.last_name_required'))
     .test('is-string', 'Only strings are allowed', (value) => {
-      // Regular expressions to disallow special characters and numbers
       const specialCharsRegex = /[!@#$%^&*(),.?":{}|<>\-_;'\/+=\[\]\\]/
       return !specialCharsRegex.test(value) && !numberRegex.test(value)
     }),
   email: yup
     .string()
-    .required('Email is a required field')
-    .test('is-string', 'Only alphabetic characters are allowed at the beginning', (value) => !numberRegex.test(value))
+    .required(t('messages.email_required'))
+    .test('is-string', 'Only alphabetic characters are allowed at the beginning', 
+      (value) => !numberRegex.test(value))
     .matches(EMAIL_REGX, 'Must be a valid email'),
   mobile: yup
     .string()
-    .required('Phone Number is a required field')
+    .required(t('messages.phone_number_required'))
     .matches(/^(\+?\d+)?(\s?\d+)*$/, 'Phone Number must contain only digits'),
+
   password: yup
     .string()
-    .test('password', 'Password is required', function (value) {
-      if (currentId === 0 && !value) {
+    .test('password', t('messages.password_required'), function (value) {
+      if (currentId.value === 0 && !value) {
         return false
       }
       return true
     })
-    .min(8, 'Password must be at least 8 characters long'),
+    .matches(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])\S{8,14}$/,
+      'Password must be 8-14 chars, include upper, lower, digit, special, no spaces'
+    ),
+
   confirm_password: yup
     .string()
-    .test('confirm_password', 'Current password is required', function (value) {
-      if (currentId === 0 && !value) {
-        return false
+    .test('confirm_password', t('messages.passwords_must_match'), function (value) {
+      if (currentId.value === 0 && !value) {
+        return this.createError({ message: t('messages.confirm_password_required') })
+      }
+      if (value !== this.parent.password) {
+        return this.createError({ message: t('messages.passwords_must_match') })
       }
       return true
-    })
-    .oneOf([yup.ref('password')], 'Passwords must match'),
+    }),
 
-  clinic_id: yup.string().required('Clinic Center is required ')
+  clinic_id: yup.string().required (t('messages.clinic_center_required'))
 })
+
 
 const { handleSubmit, errors, resetForm } = useForm({
   validationSchema
@@ -456,8 +477,7 @@ const { value: status } = useField('status')
 
 const errorMessages = ref({})
 
-const defaultImage = '/path/to/default-image.jpg'  // Path to the default image if no image is selected
-
+ 
 
 
 // Method to handle file upload
@@ -477,18 +497,27 @@ const fileUpload = (event) => {
   }
 }
 
-// Method to remove the uploaded image and reset the input
+const profileInputRef = ref(null)
+
 const removeLogo = () => {
-  profile_image.value = null  // Reset the image
-  const fileInput = $refs.profileInputRef  // Get the file input element
-  fileInput.value = ''  // Clear the file input value
+  profile_image.value = null
+  if (profileInputRef.value) {
+    profileInputRef.value.value = '' // clear input
+  }
+  profileFile.value = null
 }
 
 // phone number
 const handleInput = (phone, phoneObject) => {
   // Handle the input event
-  if (phoneObject?.formatted) {
-    mobile.value = phoneObject.formatted
+ if (phoneObject?.countryCallingCode && phoneObject?.nationalNumber) {
+    // Ensure country code starts with "+"
+    const dialCode = phoneObject.countryCallingCode.startsWith('+')
+      ? phoneObject.countryCallingCode
+      : `+${phoneObject.countryCallingCode}`;
+    mobile.value = `${dialCode} ${phoneObject.nationalNumber}`;
+  } else if (phoneObject?.formatted) {
+    mobile.value = phoneObject.formatted;
   }
 }
 const IS_SUBMITED = ref(false)

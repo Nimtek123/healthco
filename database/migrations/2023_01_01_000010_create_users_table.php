@@ -43,6 +43,7 @@ return new class extends Migration
             $table->string('latitude')->nullable();
             $table->string('longitude')->nullable();
             $table->string('user_type')->nullable();
+         
             // $table->string('google2fa_secret')->nullable();
             $table->longText('google_access_token')->nullable();
             $table->tinyInteger('is_telmet')->default(0)->unsigned();

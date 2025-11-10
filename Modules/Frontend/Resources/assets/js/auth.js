@@ -397,10 +397,8 @@ function validateEmail(email) {
 // }
 
 function showValidationError(input, message) {
-  console.log(input)
   const container = input.closest('.input-group')
   const errorFeedback = container.querySelector('.invalid-feedback')
-  console.log(container, errorFeedback);
   if (errorFeedback) {
     errorFeedback.textContent = message
     input.classList.add('is-invalid')
